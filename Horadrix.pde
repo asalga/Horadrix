@@ -122,7 +122,7 @@ void resetBoard(){
   */
   
   if(false == validSwapExists()){
-    println("**** no moves remaining ****");
+    //println("**** no moves remaining ****");
   }
 }
   
@@ -169,7 +169,7 @@ void removeMarkedTokens(){
       Token tokenToDestroy = board[r][c];
       
       if(tokenToDestroy.isDying()){//.isMarkedForDeletion()){
-        println("marked for delection...");
+        //println("marked for delection...");
         //
         tokenToDestroy.destroy();
         dyingTokens.add(tokenToDestroy);
@@ -242,7 +242,7 @@ void update(){
       
       // If it was not a valid swap, animate it back from where it came.
       if(isValidSwap(swapToken1, swapToken2) == false){
-        println("not a valid swap");
+        //println("not a valid swap");
         
         int r1 = swapToken1.getRow();
         int c1 = swapToken1.getColumn();
@@ -278,7 +278,7 @@ void update(){
       
     }
     else if(swapToken1.arrivedAtDest() && swapToken1.isReturning()){
-      println("returned");
+      //println("returned");
       swapToken1.dropIntoCell();
       swapToken2.dropIntoCell();
       swapToken1.setReturning(false);
@@ -321,7 +321,7 @@ void update(){
     dropTokens();
     
     if(validSwapExists() == false){
-      println("no more moves available!");
+      //println("no more moves available!");
     }
     
     //if(markTokensForRemoval()){

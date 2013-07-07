@@ -205,7 +205,7 @@ public class Token{
       deathTicker.tick();
       if(deathTicker.getTotalTime() >= 1.0f){
         isLiving = false;
-        println("dead");
+        //println("dead");
       }
     }
   }
@@ -218,7 +218,7 @@ public class Token{
   }
   
   public void destroy(){
-    println("destroyed");
+    //println("destroyed");
     deathTicker = new Ticker();
     //animTicker = new Ticker();
   }

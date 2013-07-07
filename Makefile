@@ -6,7 +6,7 @@
 build: minify
 
 minify:
-	cat Horadrix/*.pde Horadrix/*.java > Horadrix.js
+	cat *.pde *.java > Horadrix.js
 	
 publish: minify
 	git add Horadrix-min.js

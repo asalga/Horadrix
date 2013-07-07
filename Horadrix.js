@@ -56,45 +56,9 @@ public class GemToken extends Token{
 
 }
 /**
- - refactor Token
-
- - allow doing match after row falls after failure or
- success to swap.
-
- - Create loading screen
- - Add statistics screen (score, leveltime, tokens destroyed, etc)
- - Measure and make efficient the making of a random board
- - Comment matchesLeft, right, up, down
- - Display Floating score
- - Add mechanism to match tokens with unlike tokens.
- - Prevent swapping a token that has been marked for removal
- - Add easing to falling tokens
- 
-Req:
- - users should be able to add their own gems with their own behaviours
- - Special gems need to match with regular gems
- 
- - prevent popping gems on invisible part of board
- 
-Bugs:
- - Fix redundant row/col values in board and tokens.
- - Prevent two layered tokens
-*/
-
-
-/**
-
-- on click, get row and column
-- on mouve, see if the cursor is now in a row above, below or to left or to right of token
-- if yes, 
-   swap(a,b);
-   keep track of a
-   
-   once a no longer is moving,
-   check if swap was valid, 
-     if no, swap back
-     
-
+  Horadrix
+  Andor Salga
+  June 2013
 */
 
 PApplet globalApplet;
@@ -215,7 +179,7 @@ void resetBoard(){
   */
   
   if(false == validSwapExists()){
-    println("**** no moves remaining ****");
+    //println("**** no moves remaining ****");
   }
 }
   
@@ -262,7 +226,7 @@ void removeMarkedTokens(){
       Token tokenToDestroy = board[r][c];
       
       if(tokenToDestroy.isDying()){//.isMarkedForDeletion()){
-        println("marked for delection...");
+        //println("marked for delection...");
         //
         tokenToDestroy.destroy();
         dyingTokens.add(tokenToDestroy);
@@ -335,7 +299,7 @@ void update(){
       
       // If it was not a valid swap, animate it back from where it came.
       if(isValidSwap(swapToken1, swapToken2) == false){
-        println("not a valid swap");
+        //println("not a valid swap");
         
         int r1 = swapToken1.getRow();
         int c1 = swapToken1.getColumn();
@@ -371,7 +335,7 @@ void update(){
       
     }
     else if(swapToken1.arrivedAtDest() && swapToken1.isReturning()){
-      println("returned");
+      //println("returned");
       swapToken1.dropIntoCell();
       swapToken2.dropIntoCell();
       swapToken1.setReturning(false);
@@ -414,7 +378,7 @@ void update(){
     dropTokens();
     
     if(validSwapExists() == false){
-      println("no more moves available!");
+      //println("no more moves available!");
     }
     
     //if(markTokensForRemoval()){
@@ -438,63 +402,60 @@ void update(){
  * they want to swap with.
  */
 public void mouseDragged(){
-  //println("moved: " + mouseX);
   
   // convert the mouse coords to grid coordinates
   int r = (int)map(mouseY,  START_Y, START_Y + BOARD_ROWS * TOKEN_SIZE, 0, BOARD_ROWS);
   int c = (int)map(mouseX,  START_X, START_X + BOARD_COLS * TOKEN_SIZE, 0, BOARD_COLS);
   
-  println("r: " + r + ", " + "c: " + c);
-  
-  if(currToken1 != null){
-  if(c != currToken1.getColumn() || r != currToken1.getRow() && currToken2 == null){
-  
-   if(currToken2 == null){
-      currToken2 = board[r][c];
-      
-      // We swap and unswap just to make the code easier to write and read.
-      // swapTokens(currToken1, currToken2);
-      
-      // User clicked on a token that's too far to swap with the one already selected
-      // In that case, what they are probably doing is starting the 'swap process' over.
-      
-      int token1Row = currToken1.getRow();
-      int token1Column = currToken1.getColumn();
-      
-      int token2Row = currToken2.getRow();
-      int token2Column = currToken2.getColumn();
-      
-      //
-      //if( Math.abs(currToken1.getRow() - currToken2.getRow()) > 1 || Math.abs(currToken1.getColumn() - currToken2.getColumn()) > 1 ||
-      if( abs(token1Row - token2Row) + abs(token1Column - token2Column) != 1){
-        //swapTokens(currToken1, currToken2);
-        currToken1.setSelect(false);
-        currToken1 = currToken2;
-        currToken1.setSelect(true);  
-        currToken2 = null;
-      }
-      else{
-        swapToken1 = currToken1;
-        swapToken2 = currToken2;
+  if(currToken1 != null && currToken2 == null){
+    if(c != currToken1.getColumn() || r != currToken1.getRow()){
+    
+     if(currToken2 == null){
+        currToken2 = board[r][c];
         
-        // Animate will detach the tokens from the board
-        swapToken1.animateTo(token2Row, token2Column);
-        swapToken2.animateTo(token1Row, token1Column);
+        // We swap and unswap just to make the code easier to write and read.
+        // swapTokens(currToken1, currToken2);
         
-        deselectTokens();
+        // User clicked on a token that's too far to swap with the one already selected
+        // In that case, what they are probably doing is starting the 'swap process' over.
+        
+        int token1Row = currToken1.getRow();
+        int token1Column = currToken1.getColumn();
+        
+        int token2Row = currToken2.getRow();
+        int token2Column = currToken2.getColumn();
+        
+        //
+        //if( Math.abs(currToken1.getRow() - currToken2.getRow()) > 1 || Math.abs(currToken1.getColumn() - currToken2.getColumn()) > 1 ||
+        if( abs(token1Row - token2Row) + abs(token1Column - token2Column) != 1){
+          //swapTokens(currToken1, currToken2);
+          currToken1.setSelect(false);
+          currToken1 = currToken2;
+          currToken1.setSelect(true);  
+          currToken2 = null;
+        }
+        else{
+          swapToken1 = currToken1;
+          swapToken2 = currToken2;
+          
+          // Animate will detach the tokens from the board
+          swapToken1.animateTo(token2Row, token2Column);
+          swapToken2.animateTo(token1Row, token1Column);
+          
+          deselectTokens();
+        }
+        
+          //deselectTokens();    
+        /*else if(!isValidSwap(currToken1, currToken2)){
+          swapTokens(currToken1, currToken2);
+          deselectTokens();
+        }else{
+          markTokensForRemoval();
+          gemRemovalTicker = new Ticker();
+          deselectTokens();
+        }*/
       }
-      
-        //deselectTokens();    
-      /*else if(!isValidSwap(currToken1, currToken2)){
-        swapTokens(currToken1, currToken2);
-        deselectTokens();
-      }else{
-        markTokensForRemoval();
-        gemRemovalTicker = new Ticker();
-        deselectTokens();
-      }*/
     }
-  }
   }
 }
 
@@ -1440,7 +1401,7 @@ public class Token{
       deathTicker.tick();
       if(deathTicker.getTotalTime() >= 1.0f){
         isLiving = false;
-        println("dead");
+        //println("dead");
       }
     }
   }
@@ -1453,7 +1414,7 @@ public class Token{
   }
   
   public void destroy(){
-    println("destroyed");
+    //println("destroyed");
     deathTicker = new Ticker();
     //animTicker = new Ticker();
   }
