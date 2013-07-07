@@ -94,7 +94,8 @@ ArrayList<Token> dyingTokens;
 
 boolean waitingForTokensToFall = false;
 
-
+// User can only be in the process of swapping two tokens
+// at any given time.
 Token swapToken1 = null;
 Token swapToken2 = null;
 
@@ -175,8 +176,8 @@ void resetBoard(){
     removeMarkedTokens();
     fillHoles();
     safeCounter++;
-  }while(markTokensForRemoval() == true/* && safeCounter <20 );
-  */
+  }while(markTokensForRemoval() == true && safeCounter < 20 );*/
+  
   
   if(false == validSwapExists()){
     //println("**** no moves remaining ****");
@@ -408,53 +409,11 @@ public void mouseDragged(){
   int c = (int)map(mouseX,  START_X, START_X + BOARD_COLS * TOKEN_SIZE, 0, BOARD_COLS);
   
   if(currToken1 != null && currToken2 == null){
-    if(c != currToken1.getColumn() || r != currToken1.getRow()){
     
-     if(currToken2 == null){
-        currToken2 = board[r][c];
-        
-        // We swap and unswap just to make the code easier to write and read.
-        // swapTokens(currToken1, currToken2);
-        
-        // User clicked on a token that's too far to swap with the one already selected
-        // In that case, what they are probably doing is starting the 'swap process' over.
-        
-        int token1Row = currToken1.getRow();
-        int token1Column = currToken1.getColumn();
-        
-        int token2Row = currToken2.getRow();
-        int token2Column = currToken2.getColumn();
-        
-        //
-        //if( Math.abs(currToken1.getRow() - currToken2.getRow()) > 1 || Math.abs(currToken1.getColumn() - currToken2.getColumn()) > 1 ||
-        if( abs(token1Row - token2Row) + abs(token1Column - token2Column) != 1){
-          //swapTokens(currToken1, currToken2);
-          currToken1.setSelect(false);
-          currToken1 = currToken2;
-          currToken1.setSelect(true);  
-          currToken2 = null;
-        }
-        else{
-          swapToken1 = currToken1;
-          swapToken2 = currToken2;
-          
-          // Animate will detach the tokens from the board
-          swapToken1.animateTo(token2Row, token2Column);
-          swapToken2.animateTo(token1Row, token1Column);
-          
-          deselectTokens();
-        }
-        
-          //deselectTokens();    
-        /*else if(!isValidSwap(currToken1, currToken2)){
-          swapTokens(currToken1, currToken2);
-          deselectTokens();
-        }else{
-          markTokensForRemoval();
-          gemRemovalTicker = new Ticker();
-          deselectTokens();
-        }*/
-      }
+    //
+    if(c != currToken1.getColumn() || r != currToken1.getRow()){
+      currToken2 = board[r][c];
+      animateSwapTokens(currToken1, currToken2);
     }
   }
 }
@@ -486,6 +445,55 @@ public void mousePressed(){
     currToken1 = board[r][c];
     currToken1.setSelect(true);
   }
+  
+  else if(currToken2 == null){
+    
+    currToken2 = board[r][c];
+    // User clicked on a token that's too far to swap with the one already selected
+    // In that case, what they are probably doing is starting the 'swap process' over.
+    
+    int token1Row = currToken1.getRow();
+    int token1Column = currToken1.getColumn();
+    
+    int token2Row = currToken2.getRow();
+    int token2Column = currToken2.getColumn();
+    
+    //
+    //if( Math.abs(currToken1.getRow() - currToken2.getRow()) > 1 || Math.abs(currToken1.getColumn() - currToken2.getColumn()) > 1 ||
+    if( abs(token1Row - token2Row) + abs(token1Column - token2Column) != 1){
+      //swapTokens(currToken1, currToken2);
+      currToken1.setSelect(false);
+      currToken1 = currToken2;
+      currToken1.setSelect(true);  
+      currToken2 = null;
+    }
+    else{
+      animateSwapTokens(currToken1, currToken2);
+    }
+  }
+}
+
+/*
+ * 
+ */
+void animateSwapTokens(Token t1, Token t2){
+  
+  // We need to cache these so we get get the wrong
+  // values when calling animateTo.
+  int t1Row = t1.getRow();
+  int t1Col = t1.getColumn();
+  
+  int t2Row = t2.getRow();
+  int t2Col = t2.getColumn();
+  
+  swapToken1 = t1;
+  swapToken2 = t2;
+  
+  // Animate will detach the tokens from the board
+  swapToken1.animateTo(t2Row, t2Col);
+  swapToken2.animateTo(t1Row, t1Col);
+  
+  deselectTokens();
 }
 
 /**
