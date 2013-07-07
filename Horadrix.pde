@@ -37,7 +37,8 @@ ArrayList<Token> dyingTokens;
 
 boolean waitingForTokensToFall = false;
 
-
+// User can only be in the process of swapping two tokens
+// at any given time.
 Token swapToken1 = null;
 Token swapToken2 = null;
 
