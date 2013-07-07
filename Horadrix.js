@@ -201,7 +201,7 @@ void drawBoard(){
     for(int c = 0; c < BOARD_COLS; c++){
       
       if(board[r][c].isMoving() == false){
-        board[r][c].draw();
+       // board[r][c].draw();
       }
     }
   }
@@ -926,7 +926,7 @@ public void swapTokens(Token token1, Token token2){
 
 void draw(){
   update();
-  background(0);
+  background(103);
   
   // This line is only here to workaround a bug in Processing.js
   // If removed, the board would translate diagonally the canvas.
@@ -946,6 +946,14 @@ void draw(){
   if(swapToken2 != null){
     swapToken2.draw();
   }
+  
+  // For demo purposes
+  pushStyle();
+  fill(103);
+  noStroke();
+  rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
+  popStyle();
+  
   
   drawBoard();
   
