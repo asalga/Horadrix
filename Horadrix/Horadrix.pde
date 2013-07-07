@@ -1,43 +1,7 @@
 /**
- - refactor Token
-
- - allow doing match after row falls after failure or
- success to swap.
-
- - Create loading screen
- - Add statistics screen (score, leveltime, tokens destroyed, etc)
- - Measure and make efficient the making of a random board
- - Comment matchesLeft, right, up, down
- - Display Floating score
- - Add mechanism to match tokens with unlike tokens.
- - Prevent swapping a token that has been marked for removal
- - Add easing to falling tokens
- 
-Req:
- - users should be able to add their own gems with their own behaviours
- - Special gems need to match with regular gems
- 
- - prevent popping gems on invisible part of board
- 
-Bugs:
- - Fix redundant row/col values in board and tokens.
- - Prevent two layered tokens
-*/
-
-
-/**
-
-- on click, get row and column
-- on mouve, see if the cursor is now in a row above, below or to left or to right of token
-- if yes, 
-   swap(a,b);
-   keep track of a
-   
-   once a no longer is moving,
-   check if swap was valid, 
-     if no, swap back
-     
-
+  Horadrix
+  Andor Salga
+  June 2013
 */
 
 PApplet globalApplet;
