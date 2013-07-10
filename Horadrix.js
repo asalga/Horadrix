@@ -398,24 +398,31 @@ void update(){
   }
 }
 
+public int Row(){
+  return (int)map(mouseY,  START_Y, START_Y + BOARD_ROWS * TOKEN_SIZE, 0, BOARD_ROWS);
+}
+
+public int Col(){
+  return (int)map(mouseX,  START_X, START_X + BOARD_COLS * TOKEN_SIZE, 0, BOARD_COLS);
+}
+
+
 /**
- * To swap tokens, players will clic/tap a token then drag to the token
- * they want to swap with.
+ * Tokens that are considrered too far to swap include ones that
+ * are across from each other diagonally or have 1 token between them.
  */
-public void mouseDragged(){
+public boolean tooFarToSwap(Token t1, Token t2){
   
-  // convert the mouse coords to grid coordinates
-  int r = (int)map(mouseY,  START_Y, START_Y + BOARD_ROWS * TOKEN_SIZE, 0, BOARD_ROWS);
-  int c = (int)map(mouseX,  START_X, START_X + BOARD_COLS * TOKEN_SIZE, 0, BOARD_COLS);
-  
-  if(currToken1 != null && currToken2 == null){
+  int token1Row = t1.getRow();
+  int token1Column = t1.getColumn();
     
-    //
-    if(c != currToken1.getColumn() || r != currToken1.getRow()){
-      currToken2 = board[r][c];
-      animateSwapTokens(currToken1, currToken2);
-    }
+  int token2Row = t2.getRow();
+  int token2Column = t2.getColumn();
+  
+  if( abs(token1Row - token2Row) + abs(token1Column - token2Column) != 1){
+    return true;  
   }
+  return false;
 }
 
 /*
@@ -438,8 +445,8 @@ public void mousePressed(){
   }
   
   // convert the mouse coords to grid coordinates
-  int r = (int)map(mouseY,  START_Y, START_Y + BOARD_ROWS * TOKEN_SIZE, 0, BOARD_ROWS);
-  int c = (int)map(mouseX,  START_X, START_X + BOARD_COLS * TOKEN_SIZE, 0, BOARD_COLS);
+  int r = Row();
+  int c = Col();
   
   if(currToken1 == null){
     currToken1 = board[r][c];
@@ -451,17 +458,7 @@ public void mousePressed(){
     currToken2 = board[r][c];
     // User clicked on a token that's too far to swap with the one already selected
     // In that case, what they are probably doing is starting the 'swap process' over.
-    
-    int token1Row = currToken1.getRow();
-    int token1Column = currToken1.getColumn();
-    
-    int token2Row = currToken2.getRow();
-    int token2Column = currToken2.getColumn();
-    
-    //
-    //if( Math.abs(currToken1.getRow() - currToken2.getRow()) > 1 || Math.abs(currToken1.getColumn() - currToken2.getColumn()) > 1 ||
-    if( abs(token1Row - token2Row) + abs(token1Column - token2Column) != 1){
-      //swapTokens(currToken1, currToken2);
+    if(tooFarToSwap(currToken1,currToken2)){
       currToken1.setSelect(false);
       currToken1 = currToken2;
       currToken1.setSelect(true);  
@@ -469,6 +466,33 @@ public void mousePressed(){
     }
     else{
       animateSwapTokens(currToken1, currToken2);
+    }
+  }
+}
+
+
+/**
+ * To swap tokens, players will clic/tap a token then drag to the token
+ * they want to swap with.
+ */
+public void mouseDragged(){
+  
+  // convert the mouse coords to grid coordinates
+  int r = Row();
+  int c = Col();
+  
+  if(currToken1 != null && currToken2 == null){
+
+    //    
+    if(c != currToken1.getColumn() || r != currToken1.getRow()){
+      currToken2 = board[r][c];
+      
+      if(tooFarToSwap(currToken1, currToken2)){
+         currToken2 = null;
+      }
+      else{
+        animateSwapTokens(currToken1, currToken2);
+      }
     }
   }
 }
