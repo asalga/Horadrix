@@ -355,17 +355,8 @@ public int Col(){
  * are across from each other diagonally or have 1 token between them.
  */
 public boolean tooFarToSwap(Token t1, Token t2){
-  
-  int token1Row = t1.getRow();
-  int token1Column = t1.getColumn();
-    
-  int token2Row = t2.getRow();
-  int token2Column = t2.getColumn();
-  
-  if( abs(token1Row - token2Row) + abs(token1Column - token2Column) != 1){
-    return true;  
-  }
-  return false;
+  //
+  return abs(t1.getRow() - t2.getRow()) + abs(t1.getColumn() - t2.getColumn()) != 1;
 }
 
 /*
