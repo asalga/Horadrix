@@ -105,7 +105,7 @@ int numTokenTypesOnBoard = 7;
 
 // Where on the canvas the tokens start to be rendered.
 final int START_X = 100;
-final int START_Y = 20;
+final int START_Y = -220; // 20 - -220
 final int TOKEN_SIZE = 28;
 
 //Tuple gems = new Tuple();
@@ -398,11 +398,11 @@ void update(){
   }
 }
 
-public int Row(){
+public int getRowIndex(){
   return (int)map(mouseY,  START_Y, START_Y + BOARD_ROWS * TOKEN_SIZE, 0, BOARD_ROWS);
 }
 
-public int Col(){
+public int getColumnIndex(){
   return (int)map(mouseX,  START_X, START_X + BOARD_COLS * TOKEN_SIZE, 0, BOARD_COLS);
 }
 
@@ -411,19 +411,15 @@ public int Col(){
  * Tokens that are considrered too far to swap include ones that
  * are across from each other diagonally or have 1 token between them.
  */
-public boolean tooFarToSwap(Token t1, Token t2){
-  
-  int token1Row = t1.getRow();
-  int token1Column = t1.getColumn();
-    
-  int token2Row = t2.getRow();
-  int token2Column = t2.getColumn();
-  
-  if( abs(token1Row - token2Row) + abs(token1Column - token2Column) != 1){
-    return true;  
-  }
-  return false;
+public boolean isCloseEnoughForSwap(Token t1, Token t2){
+  //
+  return abs(t1.getRow() - t2.getRow()) + abs(t1.getColumn() - t2.getColumn()) == 1;
 }
+
+//if((abs(t2.getRow() - t1.getRow()) == 1 && (t1.getColumn() == t2.getColumn()) ) ||
+  //   (abs(t2.getColumn() - t1.getColumn()) == 1 && (t1.getRow() == t2.getRow()))  ){
+  
+
 
 /*
  *
@@ -445,8 +441,8 @@ public void mousePressed(){
   }
   
   // convert the mouse coords to grid coordinates
-  int r = Row();
-  int c = Col();
+  int r = getRowIndex();
+  int c = getColumnIndex();
   
   if(currToken1 == null){
     currToken1 = board[r][c];
@@ -458,7 +454,8 @@ public void mousePressed(){
     currToken2 = board[r][c];
     // User clicked on a token that's too far to swap with the one already selected
     // In that case, what they are probably doing is starting the 'swap process' over.
-    if(tooFarToSwap(currToken1,currToken2)){
+    if( isCloseEnoughForSwap(currToken1, currToken2) == false){
+    //tooFarToSwap(currToken1,currToken2)){
       currToken1.setSelect(false);
       currToken1 = currToken2;
       currToken1.setSelect(true);  
@@ -478,8 +475,8 @@ public void mousePressed(){
 public void mouseDragged(){
   
   // convert the mouse coords to grid coordinates
-  int r = Row();
-  int c = Col();
+  int r = getRowIndex();
+  int c = getColumnIndex();
   
   if(currToken1 != null && currToken2 == null){
 
@@ -487,7 +484,7 @@ public void mouseDragged(){
     if(c != currToken1.getColumn() || r != currToken1.getRow()){
       currToken2 = board[r][c];
       
-      if(tooFarToSwap(currToken1, currToken2)){
+      if(isCloseEnoughForSwap(currToken1, currToken2) == false){
          currToken2 = null;
       }
       else{
@@ -821,40 +818,31 @@ boolean markTokensForRemoval(){
   This is also called when we are trying to determine if there are actually any valid swaps left on the board. If not, the board
   needs to get reset.
 */
-public boolean isValidSwap(Token gem1, Token gem2){
+public boolean isValidSwap(Token t1, Token t2){
   
- if((abs(gem2.getRow() - gem1.getRow()) == 1 && (gem1.getColumn() == gem2.getColumn()) ) ||
-    (abs(gem2.getColumn() - gem1.getColumn()) == 1 && (gem1.getRow() == gem2.getRow()))  ){
-  
-      //println("matches down gem1: " + matchesDown(gem1));
-     // println("matches down gem2: " + matchesDown(gem2));
-      //println("matches up gem1: " + matchesUp(gem1));
-     // println("matches up gem2: " + matchesUp(gem2));      
-      
-    if( matchesLeft(gem1) + matchesRight(gem1) >= 2){
-      //println("valid match 1");
+  if(isCloseEnoughForSwap(t1, t2)){
+          
+    if( matchesLeft(t1) + matchesRight(t1) >= 2){
       return true;
     }
 
-    if( matchesLeft(gem2) + matchesRight(gem2) >= 2){
-      //println("valid match 2");
+    if( matchesLeft(t2) + matchesRight(t2) >= 2){
       return true;
     }
     
-    if( matchesDown(gem1) + matchesUp(gem1) >= 2){
-     // println("valid match 3" + "(" + matchesDown(gem1) + "," + matchesUp(gem1) + ")" );
+    if( matchesDown(t1) + matchesUp(t1) >= 2){
       return true;
     }
 
-    if( matchesDown(gem2) + matchesUp(gem2) >= 2){
-      //println("valid match 4" + "(" + matchesDown(gem2) + "," + matchesUp(gem2) + ")" );
+    if( matchesDown(t2) + matchesUp(t2) >= 2){
       return true;
     }
   }
   return false;
 }
 
-
+/*
+*/
 public void deselectTokens(){
   if(currToken1 != null) currToken1.setSelect(false);
   if(currToken2 != null) currToken2.setSelect(false);
