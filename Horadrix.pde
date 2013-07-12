@@ -7,6 +7,7 @@
 PApplet globalApplet;
 
 Debugger debug;
+int R=0,C=0;
 
 Ticker debugTicker;
 Ticker delayTicker;
@@ -33,7 +34,7 @@ ArrayList<Token> dyingTokens;
 
 //ArrayList<Token> dyingTokensOnBoard
 
-
+int gemCounter = 0;
 
 boolean waitingForTokensToFall = false;
 
@@ -47,9 +48,10 @@ Token swapToken2 = null;
 int numTokenTypesOnBoard = 7;
 
 // Where on the canvas the tokens start to be rendered.
-final int START_X = 100;
-final int START_Y = -220; // 20 - -220
+final int START_X = 100;//200;
+final int START_Y = 0;//-20; // 20 - -220
 final int TOKEN_SIZE = 28;
+final int TOKEN_SPACING = 3;
 
 //Tuple gems = new Tuple();
 
@@ -65,7 +67,7 @@ Token[][] board = new Token[BOARD_ROWS][BOARD_COLS];
 int score = 0;
 
 void setup(){
-  size(START_X + TOKEN_SIZE * BOARD_COLS + 20, START_Y + TOKEN_SIZE * BOARD_ROWS + 20);
+  size(START_X + TOKEN_SIZE * BOARD_COLS, START_Y + TOKEN_SIZE * BOARD_ROWS);
   randomSeed(1);
   
   globalApplet = this;
@@ -294,6 +296,11 @@ void update(){
   for(int i = 0; i < dyingTokens.size(); i++){
     dyingTokens.get(i).update();
     if(dyingTokens.get(i).isAlive() == false){
+      
+      if(dyingTokens.get(i).hasGem()){
+        gemCounter++;
+      }
+      
       dyingTokens.remove(i);
     }
   }
@@ -335,6 +342,7 @@ void update(){
   debug.addString("debug time: " + debugTicker.getTotalTime());
   debug.addString("score: " + score);
   debug.addString("FPS: " + frameRate);
+  debug.addString("gems: " + gemCounter);
   
   for(int i = 0; i < numTokenTypesOnBoard; i++){
     debug.addString("color: " + numMatchedGems[i]);
@@ -342,7 +350,7 @@ void update(){
 }
 
 public int getRowIndex(){
-  return (int)map(mouseY,  START_Y, START_Y + BOARD_ROWS * TOKEN_SIZE, 0, BOARD_ROWS);
+  return (int)map(mouseY,  START_Y , START_Y + BOARD_ROWS * TOKEN_SIZE, 0, BOARD_ROWS);
 }
 
 public int getColumnIndex(){
@@ -363,6 +371,10 @@ public boolean isCloseEnoughForSwap(Token t1, Token t2){
   //   (abs(t2.getColumn() - t1.getColumn()) == 1 && (t1.getRow() == t2.getRow()))  ){
   
 
+public void mouseMoved(){
+  R = getRowIndex();
+  C = getColumnIndex();
+}
 
 /*
  *
@@ -373,19 +385,14 @@ public void mousePressed(){
     return;
   }
   
-  //
-  if( mouseX < START_X || mouseX > START_X + BOARD_COLS * TOKEN_SIZE){
-    return;
-  }
-  
-  //
-  if(mouseY < START_Y){
-    return;
-  }
-  
   // convert the mouse coords to grid coordinates
   int r = getRowIndex();
   int c = getColumnIndex();
+  
+  if( r >= BOARD_ROWS || c >= BOARD_COLS || r < 0 || c < 0){
+    return;
+  }
+  
   
   if(currToken1 == null){
     currToken1 = board[r][c];
@@ -420,6 +427,11 @@ public void mouseDragged(){
   // convert the mouse coords to grid coordinates
   int r = getRowIndex();
   int c = getColumnIndex();
+  
+  if( r >= BOARD_ROWS || c >= BOARD_COLS || r < 0 || c < 0){
+    return;
+  }
+  
   
   if(currToken1 != null && currToken2 == null){
 
@@ -917,6 +929,11 @@ void draw(){
   rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
   popStyle();
   
+  pushStyle();
+  noFill();
+  stroke(255, 0, 0);
+  rect(C * TOKEN_SIZE - TOKEN_SIZE/2, R * TOKEN_SIZE - TOKEN_SIZE/2, TOKEN_SIZE, TOKEN_SIZE);
+  popStyle();
   
   drawBoard();
   
