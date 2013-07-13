@@ -342,7 +342,7 @@ public class Token{
           
           if(hasGem()){
             pushStyle();
-            fill(33, 60, 90, 200);
+            fill(33, 60, 90, 100);
             noStroke();
             rect(0,0,TOKEN_SIZE, TOKEN_SIZE);
             popStyle();

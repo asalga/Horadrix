@@ -1,11 +1,12 @@
-import ddf.minim.*;
-
 /**
   Horadrix
   Andor Salga
   June 2013
 */
 
+import ddf.minim.*;
+
+// For the AssetStore
 PApplet globalApplet;
 
 Debugger debug;
@@ -14,6 +15,9 @@ int R=0,C=0;
 Ticker debugTicker;
 Ticker delayTicker;
 Ticker gemRemovalTicker;
+Ticker levelTimeLeft;
+
+int tokensDestroyed = 0;
 
 boolean isPaused = false;
 
@@ -36,7 +40,10 @@ ArrayList<Token> dyingTokens;
 
 //ArrayList<Token> dyingTokensOnBoard
 
+
 int gemCounter = 0;
+int gemsRequiredForLevel = 0;
+int currLevel = 1;
 
 boolean waitingForTokensToFall = false;
 
@@ -47,7 +54,7 @@ Token swapToken2 = null;
 
 // As the levels increase, more and more token types are added
 // This makes it a slightly harder to match tokens.
-int numTokenTypesOnBoard = 7;
+int numTokenTypesOnBoard = 5;
 
 // Where on the canvas the tokens start to be rendered.
 final int START_X = 100;//200;
@@ -72,6 +79,9 @@ void setup(){
   size(START_X + TOKEN_SIZE * BOARD_COLS, START_Y + TOKEN_SIZE * BOARD_ROWS);
   randomSeed(1);
   
+
+  gemsRequiredForLevel = currLevel * 5;
+  
   globalApplet = this;
 
   floatingTokens = new ArrayList<Token>();
@@ -82,6 +92,12 @@ void setup(){
  
   // lock P for pause
   Keyboard.lockKeys(new int[]{KEY_P});
+  
+  
+  levelTimeLeft = new Ticker();
+  levelTimeLeft.setMinutes(5);
+  levelTimeLeft.setDirection(-1);
+  
   
   resetBoard();
   deselectTokens();
@@ -203,6 +219,13 @@ void keyReleased(){
 
 void update(){
   
+  if(gemCounter >= gemsRequiredForLevel){
+    gemsRequiredForLevel += 5;
+    gemCounter = 0;
+    levelTimeLeft.setMinutes(5);
+  }
+  
+  
   if(waitingForTokensToFall && floatingTokens.size() == 0){
     waitingForTokensToFall = false;
     fillHoles();
@@ -217,6 +240,7 @@ void update(){
   debug.clear();
   
   debugTicker.tick();
+  levelTimeLeft.tick();
   
   // Update all the tokens that are falling down
   for(int i = 0; i < floatingTokens.size(); i++){
@@ -304,6 +328,7 @@ void update(){
       }
       
       dyingTokens.remove(i);
+      tokensDestroyed++;
     }
   }
   
@@ -341,13 +366,16 @@ void update(){
     delayTicker = null;
   }
   
-  debug.addString("debug time: " + debugTicker.getTotalTime());
+  //debug.addString("debug time: " + debugTicker.getTotalTime());
   debug.addString("score: " + score);
-  debug.addString("FPS: " + frameRate);
-  debug.addString("gems: " + gemCounter);
+  debug.addString("Level: " + currLevel);
+  debug.addString("destroyed: " + tokensDestroyed);
+  //debug.addString("FPS: " + frameRate);
+  debug.addString(gemCounter + "/" + gemsRequiredForLevel);
+  debug.addString( "" + (int)levelTimeLeft.getTotalTime()/60 + ":" +  (int)levelTimeLeft.getTotalTime() % 60 );
   
   for(int i = 0; i < numTokenTypesOnBoard; i++){
-    debug.addString("color: " + numMatchedGems[i]);
+    //debug.addString("color: " + numMatchedGems[i]);
   }
 }
 
