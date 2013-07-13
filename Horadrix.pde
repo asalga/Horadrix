@@ -366,17 +366,20 @@ void update(){
     delayTicker = null;
   }
   
+  pushMatrix();
+  resetMatrix();
   //debug.addString("debug time: " + debugTicker.getTotalTime());
   debug.addString("score: " + score);
   debug.addString("Level: " + currLevel);
   debug.addString("destroyed: " + tokensDestroyed);
   //debug.addString("FPS: " + frameRate);
   debug.addString(gemCounter + "/" + gemsRequiredForLevel);
-  debug.addString( "" + (int)levelTimeLeft.getTotalTime()/60 + ":" +  (int)levelTimeLeft.getTotalTime() % 60 );
+  debug.addString( "" + (int)(levelTimeLeft.getTotalTime()/60) + ":" +  (int)levelTimeLeft.getTotalTime() % 60 );
   
   for(int i = 0; i < numTokenTypesOnBoard; i++){
     //debug.addString("color: " + numMatchedGems[i]);
   }
+  popMatrix();
 }
 
 public int getRowIndex(){
