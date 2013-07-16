@@ -217,12 +217,20 @@ void keyReleased(){
   Keyboard.setKeyDown(keyCode, false);
 }
 
+
+void goToNextLevel(){
+  resetBoard();
+  
+  gemsRequiredForLevel += 5;
+  gemCounter = 0;
+  levelTimeLeft.setMinutes(5);
+}
+
 void update(){
   
+  // Once the player meets their quota...
   if(gemCounter >= gemsRequiredForLevel){
-    gemsRequiredForLevel += 5;
-    gemCounter = 0;
-    levelTimeLeft.setMinutes(5);
+    goToNextLevel();    
   }
   
   
@@ -366,7 +374,7 @@ void update(){
     delayTicker = null;
   }
   
-  pushMatrix();
+  //pushMatrix();
   resetMatrix();
   //debug.addString("debug time: " + debugTicker.getTotalTime());
   debug.addString("score: " + score);
@@ -379,7 +387,7 @@ void update(){
   for(int i = 0; i < numTokenTypesOnBoard; i++){
     //debug.addString("color: " + numMatchedGems[i]);
   }
-  popMatrix();
+  //popMatrix();
 }
 
 public int getRowIndex(){
