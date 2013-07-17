@@ -134,12 +134,12 @@ void resetBoard(){
   int safeCounter = 0;
   
   // Ugly way of making sure there are no immediate matches, but it works for now.
-  /*do{
+  do{
     markTokensForRemoval();
     removeMarkedTokens();
     fillHoles();
     safeCounter++;
-  }while(markTokensForRemoval() == true && safeCounter < 20 );*/
+  }while(markTokensForRemoval() == true && safeCounter < 20 );
   
   
   if(false == validSwapExists()){
@@ -219,11 +219,16 @@ void keyReleased(){
 
 
 void goToNextLevel(){
-  resetBoard();
-  
+  currLevel++;  
   gemsRequiredForLevel += 5;
   gemCounter = 0;
   levelTimeLeft.setMinutes(5);
+
+  if(currLevel == 4){
+    numTokenTypesOnBoard++; 
+  }
+  
+  resetBoard();
 }
 
 void update(){
