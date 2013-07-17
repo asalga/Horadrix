@@ -36,9 +36,14 @@ public class Ticker{
     }
   }
   
-  public void setMinutes(int min){
-    totalTime = min * 60;
+  public void setTime(int min, int sec){
+    
+    totalTime = min * 60 + sec;
   }
+  
+  //public void setMinutes(int min){
+  //  totalTime = min * 60;
+  //}
   
   public float getTotalTime(){
     return totalTime;

@@ -95,7 +95,8 @@ void setup(){
   
   
   levelTimeLeft = new Ticker();
-  levelTimeLeft.setMinutes(5);
+  //levelTimeLeft.setMinutes(5);
+  levelTimeLeft.setTime(5, 00);
   levelTimeLeft.setDirection(-1);
   
   
@@ -222,7 +223,7 @@ void goToNextLevel(){
   currLevel++;  
   gemsRequiredForLevel += 5;
   gemCounter = 0;
-  levelTimeLeft.setMinutes(5);
+  levelTimeLeft.setTime(5, 00);
 
   if(currLevel == 4){
     numTokenTypesOnBoard++; 
@@ -387,7 +388,19 @@ void update(){
   debug.addString("destroyed: " + tokensDestroyed);
   //debug.addString("FPS: " + frameRate);
   debug.addString(gemCounter + "/" + gemsRequiredForLevel);
-  debug.addString( "" + (int)(levelTimeLeft.getTotalTime()/60) + ":" +  (int)levelTimeLeft.getTotalTime() % 60 );
+  
+  // Add a leading zero if seconds is a single digit
+  String secStr = "";
+  int seconds = (int)levelTimeLeft.getTotalTime() % 60;
+  
+  if(seconds <= 9){
+    secStr  = Utils.prependStringWithString( "" + seconds, "0", 2);
+  }
+  else{
+    secStr = "" + seconds;
+  }
+  
+  debug.addString( "" + (int)(levelTimeLeft.getTotalTime()/60) + ":" + secStr  );
   
   for(int i = 0; i < numTokenTypesOnBoard; i++){
     //debug.addString("color: " + numMatchedGems[i]);
