@@ -46,6 +46,309 @@ class Debugger{
     }
   }
 }
+/*
+ * Classes poll keyboard state to get state of keys.
+ */
+public static class Keyboard{
+  
+  private static final int NUM_KEYS = 128;
+  
+  // Locking keys are good for toggling things.
+  // After locking a key, when a user presses and releases a key, it will register and
+  // being 'down' (even though it has been released). Once the user presses it again,
+  // it will register as 'up'.
+  private static boolean[] lockableKeys = new boolean[NUM_KEYS];
+  
+  // Use char since we only need to store 2 states (0, 1)
+  private static char[] lockedKeyPresses = new char[NUM_KEYS];
+  
+  // The key states, true if key is down, false if key is up.
+  private static boolean[] keys = new boolean[NUM_KEYS];
+  
+  /*
+   * The specified keys will stay down even after user releases the key.
+   * Once they press that key again, only then will the key state be changed to up(false).
+   */
+  public static void lockKeys(int[] keys){
+    for(int k : keys){
+      if(isValidKey(k)){
+        lockableKeys[k] = true;
+      }
+    }
+  }
+  
+  /*
+   * TODO: if the key was locked and is down, then we unlock it, it needs to 'pop' back up.
+   */
+  public static void unlockKeys(int[] keys){
+    for(int k : keys){
+      if(isValidKey(k)){
+        lockableKeys[k] = false;
+      }
+    }
+  }
+  
+  /* This is for the case when we want to start off the game
+   * assuming a key is already down.
+   */
+  public static void setVirtualKeyDown(int key, boolean state){
+    setKeyDown(key, true);
+    setKeyDown(key, false);
+  }
+  
+  /**
+   */
+  private static boolean isValidKey(int key){
+    return (key > -1 && key < NUM_KEYS);
+  }
+  
+  /*
+   * Set the state of a key to either down (true) or up (false)
+   */
+  public static void setKeyDown(int key, boolean state){
+    
+    if(isValidKey(key)){
+      
+      // If the key is lockable, as soon as we tell the class the key is down, we lock it.
+      if( lockableKeys[key] ){
+          // First time pressed
+          if(state == true && lockedKeyPresses[key] == 0){
+            lockedKeyPresses[key]++;
+            keys[key] = true;
+          }
+          // First time released
+          else if(state == false && lockedKeyPresses[key] == 1){
+            lockedKeyPresses[key]++;
+          }
+          // Second time pressed
+          else if(state == true && lockedKeyPresses[key] == 2){
+             lockedKeyPresses[key]++;
+          }
+          // Second time released
+          else if (state == false && lockedKeyPresses[key] == 3){
+            lockedKeyPresses[key] = 0;
+            keys[key] = false;
+          }
+      }
+      else{
+        keys[key] = state;
+      }
+    }
+  }
+  
+  /* 
+   * Returns true if the specified key is down.
+   */
+  public static boolean isKeyDown(int key){
+    return keys[key];
+  }
+}
+
+// These are outside of keyboard simply because I don't want to keep
+// typing Keyboard.KEY_* in the main Tetrissing.pde file
+final int KEY_BACKSPACE = 8;
+final int KEY_TAB       = 9;
+final int KEY_ENTER     = 10;
+
+final int KEY_SHIFT     = 16;
+final int KEY_CTRL      = 17;
+final int KEY_ALT       = 18;
+
+final int KEY_CAPS      = 20;
+final int KEY_ESC = 27;
+
+final int KEY_SPACE  = 32;
+final int KEY_PGUP   = 33;
+final int KEY_PGDN   = 34;
+final int KEY_END    = 35;
+final int KEY_HOME   = 36;
+
+final int KEY_LEFT   = 37;
+final int KEY_UP     = 38;
+final int KEY_RIGHT  = 39;
+final int KEY_DOWN   = 40;
+
+final int KEY_0 = 48;
+final int KEY_1 = 49;
+final int KEY_2 = 50;
+final int KEY_3 = 51;
+final int KEY_4 = 52;
+final int KEY_5 = 53;
+final int KEY_6 = 54;
+final int KEY_7 = 55;
+final int KEY_8 = 56;
+final int KEY_9 = 57;
+
+final int KEY_A = 65;
+final int KEY_B = 66;
+final int KEY_C = 67;
+final int KEY_D = 68;
+final int KEY_E = 69;
+final int KEY_F = 70;
+final int KEY_G = 71;
+final int KEY_H = 72;
+final int KEY_I = 73;
+final int KEY_J = 74;
+final int KEY_K = 75;
+final int KEY_L = 76;
+final int KEY_M = 77;
+final int KEY_N = 78;
+final int KEY_O = 79;
+final int KEY_P = 80;
+final int KEY_Q = 81;
+final int KEY_R = 82;
+final int KEY_S = 83;
+final int KEY_T = 84;
+final int KEY_U = 85;
+final int KEY_V = 86;
+final int KEY_W = 87;
+final int KEY_X = 88;
+final int KEY_Y = 89;
+final int KEY_Z = 90;
+
+// Function keys
+final int KEY_F1  = 112;
+final int KEY_F2  = 113;
+final int KEY_F3  = 114;
+final int KEY_F4  = 115;
+final int KEY_F5  = 116;
+final int KEY_F6  = 117;
+final int KEY_F7  = 118;
+final int KEY_F8  = 119;
+final int KEY_F9  = 120;
+final int KEY_F10 = 121;
+final int KEY_F12 = 122;
+
+//final int KEY_INSERT = 155;
+
+/**
+  * A ticker class to manage animation timing.
+  */
+public class Ticker{
+
+  private int lastTime;
+  private float deltaTime;
+  private boolean isPaused;
+  private float totalTime;
+  private boolean countingUp; 
+  
+  public Ticker(){
+    reset();
+  }
+  
+  public void setDirection(int d){
+    countingUp = false;
+  }
+  
+  public void reset(){
+    deltaTime = 0f;
+    lastTime = -1;
+    isPaused = false;
+    totalTime = 0f;
+    countingUp = true;
+  }
+  
+  //
+  public void pause(){
+    isPaused = true;
+  }
+  
+  public void resume(){
+    if(isPaused == true){
+      reset();
+    }
+  }
+  
+  public void setMinutes(int min){
+    totalTime = min * 60;
+  }
+  
+  public float getTotalTime(){
+    return totalTime;
+  }
+  
+  /*
+  */
+  public float getDeltaSec(){
+    if(isPaused){
+      return 0;
+    }
+    return deltaTime;
+  }
+  
+  /*
+  * Calculates how many seconds passed since the last call to this method.
+  *
+  */
+  public void tick(){
+    if(lastTime == -1){
+      lastTime = millis();
+    }
+    
+    int delta = millis() - lastTime;
+    lastTime = millis();
+    deltaTime = delta/1000f;
+    
+    if(countingUp){
+      totalTime += deltaTime;
+    }
+    else{
+      totalTime -= deltaTime;
+    }
+  }
+}
+
+public static class TokenType{
+  
+  //public static final int NULL = 0;
+  public static final int RED = 0;
+  public static final int GREEN = 1;
+  public static final int BLUE = 2;
+  public static final int WHITE = 3;
+  public static final int YELLOW = 4;
+  public static final int SKULL = 5;
+  public static final int PURPLE = 6;
+  
+  public static final int RED_GEM = 7;
+  public static final int GREEN_GEM = 8;
+  public static final int BLUE_GEM = 9;
+  public static final int WHITE_GEM = 10;
+  public static final int YELLOW_GEM = 11;
+  public static final int SKULL_GEM = 12;
+  public static final int PURPLE_GEM = 13;
+  
+  public static final int NULL = 14;
+  
+  /*public static final int ORANGE = 4;
+  public static final int BRONZE = 5;
+  public static final int SILVER = 6;
+  public static final int GOLD = 7;*/
+}
+public static class Utils{
+  
+  /*
+   * We use Math.random() instead of Processing's random() to prevent
+   * having to make this class a singleton and take a Papplet. That code
+   * would be unnecessarily complex.
+   */
+  public static int getRandomInt(int minVal, int maxVal) {
+    float scaleFloat = (float) Math.random();
+    return minVal + (int) (scaleFloat * (maxVal - minVal + 1));
+  }
+  
+  public static boolean circleCircleIntersection(PVector circle1Pos, float circle1Radius, PVector circle2Pos, float circle2Radius){
+    PVector result = circle1Pos;
+    result.sub(circle2Pos);
+    
+    float distanceBetween = result.mag();
+    return distanceBetween < (circle1Radius/2.0 + circle2Radius/2.0);
+    
+  }
+  
+  public static float Lerp(float a, float b, float p){
+    return a * (1 - p) + (b * p);
+  }
+}
 
 
 /**
@@ -61,13 +364,20 @@ public class GemToken extends Token{
   June 2013
 */
 
+import ddf.minim.*;
+
+// For the AssetStore
 PApplet globalApplet;
 
 Debugger debug;
+int R=0,C=0;
 
 Ticker debugTicker;
 Ticker delayTicker;
 Ticker gemRemovalTicker;
+Ticker levelTimeLeft;
+
+int tokensDestroyed = 0;
 
 boolean isPaused = false;
 
@@ -91,6 +401,9 @@ ArrayList<Token> dyingTokens;
 //ArrayList<Token> dyingTokensOnBoard
 
 
+int gemCounter = 0;
+int gemsRequiredForLevel = 0;
+int currLevel = 1;
 
 boolean waitingForTokensToFall = false;
 
@@ -101,12 +414,13 @@ Token swapToken2 = null;
 
 // As the levels increase, more and more token types are added
 // This makes it a slightly harder to match tokens.
-int numTokenTypesOnBoard = 7;
+int numTokenTypesOnBoard = 5;
 
 // Where on the canvas the tokens start to be rendered.
-final int START_X = 100;
-final int START_Y = -220; // 20 - -220
+final int START_X = 100;//200;
+final int START_Y = 0;//-20; // 20 - -220
 final int TOKEN_SIZE = 28;
+final int TOKEN_SPACING = 3;
 
 //Tuple gems = new Tuple();
 
@@ -122,8 +436,11 @@ Token[][] board = new Token[BOARD_ROWS][BOARD_COLS];
 int score = 0;
 
 void setup(){
-  size(START_X + TOKEN_SIZE * BOARD_COLS + 20, START_Y + TOKEN_SIZE * BOARD_ROWS + 20);
+  size(START_X + TOKEN_SIZE * BOARD_COLS, START_Y + TOKEN_SIZE * BOARD_ROWS);
   randomSeed(1);
+  
+
+  gemsRequiredForLevel = currLevel * 5;
   
   globalApplet = this;
 
@@ -135,6 +452,12 @@ void setup(){
  
   // lock P for pause
   Keyboard.lockKeys(new int[]{KEY_P});
+  
+  
+  levelTimeLeft = new Ticker();
+  levelTimeLeft.setMinutes(5);
+  levelTimeLeft.setDirection(-1);
+  
   
   resetBoard();
   deselectTokens();
@@ -171,12 +494,12 @@ void resetBoard(){
   int safeCounter = 0;
   
   // Ugly way of making sure there are no immediate matches, but it works for now.
-  /*do{
+  do{
     markTokensForRemoval();
     removeMarkedTokens();
     fillHoles();
     safeCounter++;
-  }while(markTokensForRemoval() == true && safeCounter < 20 );*/
+  }while(markTokensForRemoval() == true && safeCounter < 20 );
   
   
   if(false == validSwapExists()){
@@ -254,7 +577,27 @@ void keyReleased(){
   Keyboard.setKeyDown(keyCode, false);
 }
 
+
+void goToNextLevel(){
+  currLevel++;  
+  gemsRequiredForLevel += 5;
+  gemCounter = 0;
+  levelTimeLeft.setMinutes(5);
+
+  if(currLevel == 4){
+    numTokenTypesOnBoard++; 
+  }
+  
+  resetBoard();
+}
+
 void update(){
+  
+  // Once the player meets their quota...
+  if(gemCounter >= gemsRequiredForLevel){
+    goToNextLevel();    
+  }
+  
   
   if(waitingForTokensToFall && floatingTokens.size() == 0){
     waitingForTokensToFall = false;
@@ -270,6 +613,7 @@ void update(){
   debug.clear();
   
   debugTicker.tick();
+  levelTimeLeft.tick();
   
   // Update all the tokens that are falling down
   for(int i = 0; i < floatingTokens.size(); i++){
@@ -351,7 +695,13 @@ void update(){
   for(int i = 0; i < dyingTokens.size(); i++){
     dyingTokens.get(i).update();
     if(dyingTokens.get(i).isAlive() == false){
+      
+      if(dyingTokens.get(i).hasGem()){
+        gemCounter++;
+      }
+      
       dyingTokens.remove(i);
+      tokensDestroyed++;
     }
   }
   
@@ -389,17 +739,24 @@ void update(){
     delayTicker = null;
   }
   
-  debug.addString("debug time: " + debugTicker.getTotalTime());
+  //pushMatrix();
+  resetMatrix();
+  //debug.addString("debug time: " + debugTicker.getTotalTime());
   debug.addString("score: " + score);
-  debug.addString("FPS: " + frameRate);
+  debug.addString("Level: " + currLevel);
+  debug.addString("destroyed: " + tokensDestroyed);
+  //debug.addString("FPS: " + frameRate);
+  debug.addString(gemCounter + "/" + gemsRequiredForLevel);
+  debug.addString( "" + (int)(levelTimeLeft.getTotalTime()/60) + ":" +  (int)levelTimeLeft.getTotalTime() % 60 );
   
   for(int i = 0; i < numTokenTypesOnBoard; i++){
-    debug.addString("color: " + numMatchedGems[i]);
+    //debug.addString("color: " + numMatchedGems[i]);
   }
+  //popMatrix();
 }
 
 public int getRowIndex(){
-  return (int)map(mouseY,  START_Y, START_Y + BOARD_ROWS * TOKEN_SIZE, 0, BOARD_ROWS);
+  return (int)map(mouseY,  START_Y , START_Y + BOARD_ROWS * TOKEN_SIZE, 0, BOARD_ROWS);
 }
 
 public int getColumnIndex(){
@@ -420,6 +777,10 @@ public boolean isCloseEnoughForSwap(Token t1, Token t2){
   //   (abs(t2.getColumn() - t1.getColumn()) == 1 && (t1.getRow() == t2.getRow()))  ){
   
 
+public void mouseMoved(){
+  R = getRowIndex();
+  C = getColumnIndex();
+}
 
 /*
  *
@@ -430,19 +791,14 @@ public void mousePressed(){
     return;
   }
   
-  //
-  if( mouseX < START_X || mouseX > START_X + BOARD_COLS * TOKEN_SIZE){
-    return;
-  }
-  
-  //
-  if(mouseY < START_Y){
-    return;
-  }
-  
   // convert the mouse coords to grid coordinates
   int r = getRowIndex();
   int c = getColumnIndex();
+  
+  if( r >= BOARD_ROWS || c >= BOARD_COLS || r < 0 || c < 0){
+    return;
+  }
+  
   
   if(currToken1 == null){
     currToken1 = board[r][c];
@@ -477,6 +833,11 @@ public void mouseDragged(){
   // convert the mouse coords to grid coordinates
   int r = getRowIndex();
   int c = getColumnIndex();
+  
+  if( r >= BOARD_ROWS || c >= BOARD_COLS || r < 0 || c < 0){
+    return;
+  }
+  
   
   if(currToken1 != null && currToken2 == null){
 
@@ -974,6 +1335,11 @@ void draw(){
   rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
   popStyle();
   
+  pushStyle();
+  noFill();
+  stroke(255, 0, 0);
+  rect(C * TOKEN_SIZE - TOKEN_SIZE/2, R * TOKEN_SIZE - TOKEN_SIZE/2, TOKEN_SIZE, TOKEN_SIZE);
+  popStyle();
   
   drawBoard();
   
@@ -987,250 +1353,47 @@ void draw(){
   
   debug.draw();
 }
-/*
- * Classes poll keyboard state to get state of keys.
- */
-public static class Keyboard{
+
+public class SoundManager{
+  boolean muted = false;
+  Minim minim;
   
-  private static final int NUM_KEYS = 128;
   
-  // Locking keys are good for toggling things.
-  // After locking a key, when a user presses and releases a key, it will register and
-  // being 'down' (even though it has been released). Once the user presses it again,
-  // it will register as 'up'.
-  private static boolean[] lockableKeys = new boolean[NUM_KEYS];
+  AudioPlayer failSwap;
   
-  // Use char since we only need to store 2 states (0, 1)
-  private static char[] lockedKeyPresses = new char[NUM_KEYS];
+  public void init(){
+  }
   
-  // The key states, true if key is down, false if key is up.
-  private static boolean[] keys = new boolean[NUM_KEYS];
+  public SoundManager(PApplet applet){
+    minim = new Minim(applet);
   
-  /*
-   * The specified keys will stay down even after user releases the key.
-   * Once they press that key again, only then will the key state be changed to up(false).
-   */
-  public static void lockKeys(int[] keys){
-    for(int k : keys){
-      if(isValidKey(k)){
-        lockableKeys[k] = true;
-      }
+    failSwap = minim.loadFile("audio/failSwap.wav");
+  }
+  
+  public void setMute(boolean isMuted){
+    muted = isMuted;
+  }
+  
+  public void playFailSwapSound(){
+    if(muted){
+      return;
     }
+    failSwap.play();
+    failSwap.rewind();
   }
-  
-  /*
-   * TODO: if the key was locked and is down, then we unlock it, it needs to 'pop' back up.
-   */
-  public static void unlockKeys(int[] keys){
-    for(int k : keys){
-      if(isValidKey(k)){
-        lockableKeys[k] = false;
-      }
-    }
-  }
-  
-  /* This is for the case when we want to start off the game
-   * assuming a key is already down.
-   */
-  public static void setVirtualKeyDown(int key, boolean state){
-    setKeyDown(key, true);
-    setKeyDown(key, false);
-  }
-  
-  /**
-   */
-  private static boolean isValidKey(int key){
-    return (key > -1 && key < NUM_KEYS);
-  }
-  
-  /*
-   * Set the state of a key to either down (true) or up (false)
-   */
-  public static void setKeyDown(int key, boolean state){
     
-    if(isValidKey(key)){
-      
-      // If the key is lockable, as soon as we tell the class the key is down, we lock it.
-      if( lockableKeys[key] ){
-          // First time pressed
-          if(state == true && lockedKeyPresses[key] == 0){
-            lockedKeyPresses[key]++;
-            keys[key] = true;
-          }
-          // First time released
-          else if(state == false && lockedKeyPresses[key] == 1){
-            lockedKeyPresses[key]++;
-          }
-          // Second time pressed
-          else if(state == true && lockedKeyPresses[key] == 2){
-             lockedKeyPresses[key]++;
-          }
-          // Second time released
-          else if (state == false && lockedKeyPresses[key] == 3){
-            lockedKeyPresses[key] = 0;
-            keys[key] = false;
-          }
-      }
-      else{
-        keys[key] = state;
-      }
-    }
-  }
-  
-  /* 
-   * Returns true if the specified key is down.
-   */
-  public static boolean isKeyDown(int key){
-    return keys[key];
-  }
-}
-
-// These are outside of keyboard simply because I don't want to keep
-// typing Keyboard.KEY_* in the main Tetrissing.pde file
-final int KEY_BACKSPACE = 8;
-final int KEY_TAB       = 9;
-final int KEY_ENTER     = 10;
-
-final int KEY_SHIFT     = 16;
-final int KEY_CTRL      = 17;
-final int KEY_ALT       = 18;
-
-final int KEY_CAPS      = 20;
-final int KEY_ESC = 27;
-
-final int KEY_SPACE  = 32;
-final int KEY_PGUP   = 33;
-final int KEY_PGDN   = 34;
-final int KEY_END    = 35;
-final int KEY_HOME   = 36;
-
-final int KEY_LEFT   = 37;
-final int KEY_UP     = 38;
-final int KEY_RIGHT  = 39;
-final int KEY_DOWN   = 40;
-
-final int KEY_0 = 48;
-final int KEY_1 = 49;
-final int KEY_2 = 50;
-final int KEY_3 = 51;
-final int KEY_4 = 52;
-final int KEY_5 = 53;
-final int KEY_6 = 54;
-final int KEY_7 = 55;
-final int KEY_8 = 56;
-final int KEY_9 = 57;
-
-final int KEY_A = 65;
-final int KEY_B = 66;
-final int KEY_C = 67;
-final int KEY_D = 68;
-final int KEY_E = 69;
-final int KEY_F = 70;
-final int KEY_G = 71;
-final int KEY_H = 72;
-final int KEY_I = 73;
-final int KEY_J = 74;
-final int KEY_K = 75;
-final int KEY_L = 76;
-final int KEY_M = 77;
-final int KEY_N = 78;
-final int KEY_O = 79;
-final int KEY_P = 80;
-final int KEY_Q = 81;
-final int KEY_R = 82;
-final int KEY_S = 83;
-final int KEY_T = 84;
-final int KEY_U = 85;
-final int KEY_V = 86;
-final int KEY_W = 87;
-final int KEY_X = 88;
-final int KEY_Y = 89;
-final int KEY_Z = 90;
-
-// Function keys
-final int KEY_F1  = 112;
-final int KEY_F2  = 113;
-final int KEY_F3  = 114;
-final int KEY_F4  = 115;
-final int KEY_F5  = 116;
-final int KEY_F6  = 117;
-final int KEY_F7  = 118;
-final int KEY_F8  = 119;
-final int KEY_F9  = 120;
-final int KEY_F10 = 121;
-final int KEY_F12 = 122;
-
-//final int KEY_INSERT = 155;
-
-/**
-* A ticker class to manage animation timing.
-*/
-public class Ticker{
-
-  private int lastTime;
-  private float deltaTime;
-  private boolean isPaused;
-  private float totalTime;
-  
-  public Ticker(){
-    reset();
-  }
-  
-  public void reset(){
-    deltaTime = 0f;
-    lastTime = -1;
-    isPaused = false;
-    totalTime = 0f;
-  }
-  
-  //
-  public void pause(){
-    isPaused = true;
-  }
-  
-  public void resume(){
-    if(isPaused == true){
-      reset();
-    }
-  }
-  
-  public float getTotalTime(){
-    return totalTime;
-  }
-  
-  /*
-*/
-  public float getDeltaSec(){
-    if(isPaused){
-      return 0;
-    }
-    return deltaTime;
-  }
-  
-  /*
-* Calculates how many seconds passed since the last call to this method.
-*
-*/
-  public void tick(){
-    if(lastTime == -1){
-      lastTime = millis();
-    }
-    
-    int delta = millis() - lastTime;
-    lastTime = millis();
-    deltaTime = delta/1000f;
-    totalTime += deltaTime;
+  public void stop(){
+    // dropPiece.close();
+    // minim.stop();
+    // super.stop();
   }
 }
 /**
-
-
   alive,
   drying,
   dead
   
   token.getLivingState();
-
 */
 public class Token{
   
@@ -1517,8 +1680,8 @@ public class Token{
           y = (int)detachedPos.y;// * TOKEN_SIZE - (TOKEN_SIZE/2);
         }
         else{
-          x = column * TOKEN_SIZE - (TOKEN_SIZE/2);
-          y = (int) row * TOKEN_SIZE - (TOKEN_SIZE/2);
+          x = column * TOKEN_SIZE - (TOKEN_SIZE/2);// + (column * TOKEN_SPACING*2);
+          y = row * TOKEN_SIZE - (TOKEN_SIZE/2);
         }
         
         AssetStore store = AssetStore.Instance(globalApplet);
@@ -1557,9 +1720,26 @@ public class Token{
              resetMatrix();
                translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
                translate(START_X, START_Y);
-             translate(x,y);
+            // translate(x + TOKEN_SPACING, y);
+             translate(x, y);
           }
-              // Draw the Token
+          
+          // Debugging
+         /* pushStyle();
+          noFill();
+          stroke(255,50,50);
+          rect(0,0, TOKEN_SIZE, TOKEN_SIZE);*/
+          
+          if(hasGem()){
+            pushStyle();
+            fill(33, 60, 90, 100);
+            noStroke();
+            rect(0,0,TOKEN_SIZE, TOKEN_SIZE);
+            popStyle();
+          }
+          
+          
+            //
             switch(type){
               case TokenType.RED:    image(store.get(TokenType.RED),0,0);break;
               case TokenType.GREEN:  image(store.get(TokenType.GREEN),0,0);break;
@@ -1570,7 +1750,7 @@ public class Token{
               case TokenType.PURPLE: image(store.get(TokenType.PURPLE),0,0);break;
               default: ellipse(column * TOKEN_SIZE, row * TOKEN_SIZE, TOKEN_SIZE, TOKEN_SIZE);break;
             }
-      
+      popStyle();
         // Draw the gem if it has one
      //   if(hasGem()){
       // popMatrix();
@@ -1590,8 +1770,8 @@ public class Token{
             //  if(animTicker != null){
         popMatrix();
          //   }
+        
         //if(type == 1){
-        //  image(rrr, , );
         //}
         //else{
          // fill(col);
@@ -1605,7 +1785,7 @@ public class Token{
     }
     
     //ellipse(position.x, position.y, BALL_SIZE, BALL_SIZE);
-    popStyle();
+    //popStyle();
   }
   
   /**
@@ -1616,33 +1796,6 @@ public class Token{
     };
     return false;
   }
-}
-
-public static class TokenType{
-  
-  //public static final int NULL = 0;
-  public static final int RED = 0;
-  public static final int GREEN = 1;
-  public static final int BLUE = 2;
-  public static final int WHITE = 3;
-  public static final int YELLOW = 4;
-  public static final int SKULL = 5;
-  public static final int PURPLE = 6;
-  
-  public static final int RED_GEM = 7;
-  public static final int GREEN_GEM = 8;
-  public static final int BLUE_GEM = 9;
-  public static final int WHITE_GEM = 10;
-  public static final int YELLOW_GEM = 11;
-  public static final int SKULL_GEM = 12;
-  public static final int PURPLE_GEM = 13;
-  
-  public static final int NULL = 14;
-  
-  /*public static final int ORANGE = 4;
-  public static final int BRONZE = 5;
-  public static final int SILVER = 6;
-  public static final int GOLD = 7;*/
 }
 public class Tuple{
   private Object first, second;
@@ -1690,31 +1843,6 @@ public class Tuple{
   public boolean isEmpty(){
     return first == null && second == null;
   } 
-}
-public static class Utils{
-  
-  /*
-   * We use Math.random() instead of Processing's random() to prevent
-   * having to make this class a singleton and take a Papplet. That code
-   * would be unnecessarily complex.
-   */
-  public static int getRandomInt(int minVal, int maxVal) {
-    float scaleFloat = (float) Math.random();
-    return minVal + (int) (scaleFloat * (maxVal - minVal + 1));
-  }
-  
-  public static boolean circleCircleIntersection(PVector circle1Pos, float circle1Radius, PVector circle2Pos, float circle2Radius){
-    PVector result = circle1Pos;
-    result.sub(circle2Pos);
-    
-    float distanceBetween = result.mag();
-    return distanceBetween < (circle1Radius/2.0 + circle2Radius/2.0);
-    
-  }
-  
-  public static float Lerp(float a, float b, float p){
-    return a * (1 - p) + (b * p);
-  }
 }
 import processing.core.*;
 

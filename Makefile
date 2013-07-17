@@ -5,8 +5,8 @@
 
 build: minify
 
-minify:
-	cat *.pde *.java > Horadrix.js
+minify: 
+	cat Debugger.pde Keyboard.pde Ticker.pde TokenType.pde Utils.pde GemToken.pde Horadrix.pde SoundManager.pde Token.pde Tuple.pde AssetStore.java > Horadrix-min.pde
 	
 publish: minify
 	git add Horadrix-min.js

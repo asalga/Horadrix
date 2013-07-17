@@ -1,12 +1,9 @@
 /**
-
-
   alive,
   drying,
   dead
   
   token.getLivingState();
-
 */
 public class Token{
   
@@ -293,8 +290,8 @@ public class Token{
           y = (int)detachedPos.y;// * TOKEN_SIZE - (TOKEN_SIZE/2);
         }
         else{
-          x = column * TOKEN_SIZE - (TOKEN_SIZE/2);
-          y = (int) row * TOKEN_SIZE - (TOKEN_SIZE/2);
+          x = column * TOKEN_SIZE - (TOKEN_SIZE/2);// + (column * TOKEN_SPACING*2);
+          y = row * TOKEN_SIZE - (TOKEN_SIZE/2);
         }
         
         AssetStore store = AssetStore.Instance(globalApplet);
@@ -333,9 +330,26 @@ public class Token{
              resetMatrix();
                translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
                translate(START_X, START_Y);
-             translate(x,y);
+            // translate(x + TOKEN_SPACING, y);
+             translate(x, y);
           }
-              // Draw the Token
+          
+          // Debugging
+         /* pushStyle();
+          noFill();
+          stroke(255,50,50);
+          rect(0,0, TOKEN_SIZE, TOKEN_SIZE);*/
+          
+          if(hasGem()){
+            pushStyle();
+            fill(33, 60, 90, 100);
+            noStroke();
+            rect(0,0,TOKEN_SIZE, TOKEN_SIZE);
+            popStyle();
+          }
+          
+          
+            //
             switch(type){
               case TokenType.RED:    image(store.get(TokenType.RED),0,0);break;
               case TokenType.GREEN:  image(store.get(TokenType.GREEN),0,0);break;
@@ -346,7 +360,7 @@ public class Token{
               case TokenType.PURPLE: image(store.get(TokenType.PURPLE),0,0);break;
               default: ellipse(column * TOKEN_SIZE, row * TOKEN_SIZE, TOKEN_SIZE, TOKEN_SIZE);break;
             }
-      
+      popStyle();
         // Draw the gem if it has one
      //   if(hasGem()){
       // popMatrix();
@@ -366,8 +380,8 @@ public class Token{
             //  if(animTicker != null){
         popMatrix();
          //   }
+        
         //if(type == 1){
-        //  image(rrr, , );
         //}
         //else{
          // fill(col);
@@ -381,7 +395,7 @@ public class Token{
     }
     
     //ellipse(position.x, position.y, BALL_SIZE, BALL_SIZE);
-    popStyle();
+    //popStyle();
   }
   
   /**
