@@ -159,11 +159,6 @@ public class ScreenGameplay implements IScreen{
   
   boolean isPaused = false;
   
-  
-  
-  
-  
-  
   int gemCounter = 0;
   int gemsRequiredForLevel = 0;
   int currLevel = 1;
@@ -270,8 +265,6 @@ public class ScreenGameplay implements IScreen{
     }
     
     popMatrix();
-    
-  //  image(s.get("91480_170x100.gif"), 0, 0);
     
     debug.draw();
   }
@@ -1153,7 +1146,7 @@ public class ScreenSplash implements IScreen{
 
   Ticker ticker;
   boolean alive;
-  PImage introScreen;
+  
   RetroFont solarWindsFont;
   
   RetroPanel panel;  
@@ -1162,12 +1155,11 @@ public class ScreenSplash implements IScreen{
   public ScreenSplash(){
     ticker = new Ticker();
     alive = true;
-    introScreen = loadImage("data/images/screens/intro_screen.png");
     solarWindsFont = new RetroFont("data/fonts/solarwinds.png", 7, 8, 1);
     
     mainTitlePanel = new RetroPanel(0, 0, width, height);
     mainTitleLabel = new RetroLabel(solarWindsFont);
-    mainTitleLabel.setText(".");
+    mainTitleLabel.setText("H O R A D R I X");
     mainTitlePanel.addWidget(mainTitleLabel);
     
     mainTitleLabel.pixelsFromCenter(0,0);
@@ -1200,7 +1192,7 @@ public class ScreenSplash implements IScreen{
   /**
   */
   public void draw(){
-  //  background(0);
+    background(0);
     panel.draw();
     mainTitlePanel.draw();
   }
@@ -1314,11 +1306,7 @@ public class RetroFont{
       }
     }
     
-    //println( (int)ch + " start: " + startX + ", " + endX);
-    PImage test = inImage.get(startX, 0, endX-startX+1, inImage.height);
-    
-    //println(test.width);
-    return test;
+    return inImage.get(startX, 0, endX-startX+1, inImage.height);
   }
   
   
@@ -1341,7 +1329,6 @@ public class RetroFont{
       chars[currChar] = fontSheet.get(x, y, glyphWidth, glyphHeight);
       trimmedChars[currChar] = truncateImage(fontSheet.get(x, y, glyphWidth, glyphHeight), (char)currChar);
       
-     // image(chars[currChar], x, y);
       x += glyphWidth + borderSize;
       if(x >= fontSheet.width){
         x = 0;
@@ -1360,19 +1347,13 @@ public class RetroFont{
   //PImage fontSheet = loadImage(imageFilename);
   public PImage getGlyph(char ch){
     int asciiCode = Utils.charCodeAt(ch);
-    //int asciiCode = ch;
-    
-    //  println(" -->" + chars[asciiCode - 32]);
-    
-    //PImage test = createImage(
-    
-    // TODO: add check
+ 
     return chars[asciiCode-32];
   }
   
   public PImage getTrimmedGlyph(char ch){
-    //int asciiCode = Utils.charCodeAt(ch);
-    return trimmedChars[ch-32];
+    int asciiCode = Utils.charCodeAt(ch);
+    return trimmedChars[asciiCode-32];
   }
   
   public int getGlyphWidth(){
@@ -1444,7 +1425,7 @@ public class RetroLabel extends RetroPanel{
         newWidth += glyph.width + horizontalSpacing;
       }
     }
-    println("new width: " + newWidth);
+    
     w = newWidth;
   }
   
@@ -1485,18 +1466,13 @@ public class RetroLabel extends RetroPanel{
           currX = x;
           continue;
         }
-        PImage glyph = getGlyph(text.charAt(letter)); 
-      
-//println("letter:  " + (letter));
-       // println("char at: " + text.charAt(letter));
-      //  println();
-      
+        PImage glyph = getGlyph(text.charAt(letter));
+        
         if(glyph != null){
-          image(glyph, currX, 40);//y + 0 * (font.getGlyphHeight() + verticalSpacing));
-          //println("============" + currX);
+          image(glyph, currX, y + lineIndex * (font.getGlyphHeight() + verticalSpacing));
+
           currX += glyph.width + horizontalSpacing;
-        }else{
-          println(text.charAt(letter) + " is NULL");}
+        }
       }
       currX += font.getGlyphWidth();
     }
@@ -1553,13 +1529,8 @@ public class RetroLabel extends RetroPanel{
           
           PImage glyph = getGlyph(words[word].charAt(letter));
           
-          //PImage charToPrint = font.getGlyph(words[word].charAt(.charAt(letter)));
-          // println(text.charAt(letter));
-          
           if(glyph != null){
             image(glyph, currXPos, lineIndex * (font.getGlyphHeight() + verticalSpacing));
-            image(glyph, 0, 0);
-            println("t");
             currXPos += font.getGlyphWidth() + horizontalSpacing;
           }
         }
@@ -1569,7 +1540,7 @@ public class RetroLabel extends RetroPanel{
   }
    
   public PImage getGlyph(char ch){
-    if(false){
+    if(horizontalTrimming == true){
       return font.getTrimmedGlyph(ch );
     }
     return font.getGlyph( ch);
@@ -1991,7 +1962,7 @@ public class GemToken extends Token{
 }
 /*
  @pjs preload="data/fonts/solarwinds.png";
- */ 
+*/ 
  
 /**
   Horadrix
@@ -2044,7 +2015,6 @@ void update(){
   
   if(currScreen.getName() == "splash" && currScreen.isAlive() == false){
     currScreen = new ScreenGameplay();
-    //println("sdf");
   }
 }
 
@@ -2592,11 +2562,7 @@ public class AssetStore{
     
     images = new PImage[numImages];
     
-    
     for(int i = 0; i < numImages; i++){
-      //app.println(BASE_IMG_PATH + imageNames[i]);
-      
-      //app.println(images);
       images[i] = app.loadImage(BASE_IMG_PATH + imageNames[i]);
     }
   }
@@ -2636,7 +2602,7 @@ public class ScreenSplash implements IScreen{
 
   Ticker ticker;
   boolean alive;
-  PImage introScreen;
+  
   RetroFont solarWindsFont;
   
   RetroPanel panel;  
@@ -2645,12 +2611,11 @@ public class ScreenSplash implements IScreen{
   public ScreenSplash(){
     ticker = new Ticker();
     alive = true;
-    introScreen = loadImage("data/images/screens/intro_screen.png");
     solarWindsFont = new RetroFont("data/fonts/solarwinds.png", 7, 8, 1);
     
     mainTitlePanel = new RetroPanel(0, 0, width, height);
     mainTitleLabel = new RetroLabel(solarWindsFont);
-    mainTitleLabel.setText(".");
+    mainTitleLabel.setText("H O R A D R I X");
     mainTitlePanel.addWidget(mainTitleLabel);
     
     mainTitleLabel.pixelsFromCenter(0,0);
@@ -2683,7 +2648,7 @@ public class ScreenSplash implements IScreen{
   /**
   */
   public void draw(){
-  //  background(0);
+    background(0);
     panel.draw();
     mainTitlePanel.draw();
   }
@@ -2766,11 +2731,6 @@ public class ScreenGameplay implements IScreen{
   int tokensDestroyed = 0;
   
   boolean isPaused = false;
-  
-  
-  
-  
-  
   
   int gemCounter = 0;
   int gemsRequiredForLevel = 0;
@@ -2878,8 +2838,6 @@ public class ScreenGameplay implements IScreen{
     }
     
     popMatrix();
-    
-  //  image(s.get("91480_170x100.gif"), 0, 0);
     
     debug.draw();
   }

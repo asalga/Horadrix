@@ -59,7 +59,7 @@ public class RetroLabel extends RetroPanel{
         newWidth += glyph.width + horizontalSpacing;
       }
     }
-    println("new width: " + newWidth);
+    
     w = newWidth;
   }
   

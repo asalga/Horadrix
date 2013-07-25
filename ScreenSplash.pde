@@ -7,7 +7,7 @@ public class ScreenSplash implements IScreen{
 
   Ticker ticker;
   boolean alive;
-  PImage introScreen;
+  
   RetroFont solarWindsFont;
   
   RetroPanel panel;  
@@ -16,7 +16,6 @@ public class ScreenSplash implements IScreen{
   public ScreenSplash(){
     ticker = new Ticker();
     alive = true;
-    introScreen = loadImage("data/images/screens/intro_screen.png");
     solarWindsFont = new RetroFont("data/fonts/solarwinds.png", 7, 8, 1);
     
     mainTitlePanel = new RetroPanel(0, 0, width, height);
