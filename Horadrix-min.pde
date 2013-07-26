@@ -9,6 +9,9 @@ public interface IScreen{
   public void mouseDragged();
   public void mouseMoved();
   
+  public void keyPressed();
+  public void keyReleased();
+  
   public String getName();
   
   public boolean isAlive();
@@ -142,13 +145,14 @@ public class SpriteSheetLoader{
     return (PImage)map.get(sprite);
   }
 }
-
+/**
+ */
 public class ScreenGameplay implements IScreen{
   
   public boolean alive;
     
   Debugger debug;
-  int R=0,C=0;
+  int R=0, C=0;
   
   Ticker debugTicker;
   Ticker delayTicker;
@@ -174,7 +178,8 @@ public class ScreenGameplay implements IScreen{
   // This makes it a slightly harder to match tokens.
   int numTokenTypesOnBoard = 5;
   
-  
+  // 
+  int numGemsOnBoard = 2;
   
   //Tuple gems = new Tuple();
   
@@ -221,7 +226,9 @@ public class ScreenGameplay implements IScreen{
   }
   
   public void draw(){
-     update();
+    
+    update();
+    
     background(103);
     
     // This line is only here to workaround a bug in Processing.js
@@ -283,8 +290,9 @@ public class ScreenGameplay implements IScreen{
     }
     
     isPaused = Keyboard.isKeyDown(KEY_P);
-    
+
     if(isPaused){
+      println("paused");
       return;
     }
     
@@ -292,6 +300,8 @@ public class ScreenGameplay implements IScreen{
     
     debugTicker.tick();
     levelTimeLeft.tick();
+    
+    //println(debugTicker.getDeltaSec());
     
     // Update all the tokens that are falling down
     for(int i = 0; i < floatingTokens.size(); i++){
@@ -343,7 +353,7 @@ public class ScreenGameplay implements IScreen{
           
          // gemRemovalTicker = new Ticker();
           markTokensForRemoval();
-          removeMarkedTokens();
+          removeMarkedTokens(true);
           //deselectTokens();
         }
         
@@ -371,11 +381,14 @@ public class ScreenGameplay implements IScreen{
   
     // Update the tokens that may need to be GC'ed.
     for(int i = 0; i < dyingTokens.size(); i++){
+      
       dyingTokens.get(i).update();
+      
       if(dyingTokens.get(i).isAlive() == false){
         
         if(dyingTokens.get(i).hasGem()){
           gemCounter++;
+          addGemToQueuedToken();
         }
         
         dyingTokens.remove(i);
@@ -399,7 +412,7 @@ public class ScreenGameplay implements IScreen{
     
     if(gemRemovalTicker != null && gemRemovalTicker.getTotalTime() > 0.5f){
       gemRemovalTicker = null;
-      removeMarkedTokens();
+      removeMarkedTokens(true);
       delayTicker = new Ticker();
     }
     
@@ -644,13 +657,20 @@ int getRandomToken(){
   return Utils.getRandomInt(0, numTokenTypesOnBoard-1);
 }
 
+
+/*
+  Find any null tokens on the board and replace them with a random token.
+  
+  This is used at the start of the level when trying to generate a board
+  that initially has no matches.
+  
+  This is also used to populate the tokens above the board that aren't seen.
+*/
 void fillHoles(){
   for(int r = 0; r < BOARD_ROWS; r++){
     for(int c = 0; c < BOARD_COLS; c++){
       if(board[r][c].getType() == TokenType.NULL){
         board[r][c].setType(getRandomToken());
-        //println("fill hole");
-       // board[r][c].setSelect(true);
       }
     }
   }
@@ -758,6 +778,10 @@ void dropTokens(){
 /**
   Find any 3 matches either going vertically or horizontally and
   remove them from the board.
+  
+  @returns true if at least 3 gems were marked for removal. This means we found at least one match
+  In some cases, this needs to be corrected, for example, when the game starts, there shouldn't be any
+  matches.
 */
 boolean markTokensForRemoval(){
   
@@ -781,8 +805,6 @@ boolean markTokensForRemoval(){
     for(int c = 1; c < BOARD_COLS; c++){
       
       if(board[r][c].matchesWith(type)){
-      //if(board[r][c].getType() == type){
-      
         matches++;
       }
       // We bank on finding a different gem. Once that happens, we can see if
@@ -1026,10 +1048,10 @@ void resetBoard(){
       
       token.setType(getRandomToken());
       
-      int chance = Utils.getRandomInt(0,5);
+      /*int chance = Utils.getRandomInt(0,5);
       if(chance == 0){
         token.addGem();
-      }
+      }*/
       
       token.setRowColumn(r, c);
       board[r][c] = token;
@@ -1041,11 +1063,14 @@ void resetBoard(){
   // Ugly way of making sure there are no immediate matches, but it works for now.
   do{
     markTokensForRemoval();
-    removeMarkedTokens();
+    removeMarkedTokens(false);
     fillHoles();
     safeCounter++;
-  }while(markTokensForRemoval() == true && safeCounter < 20 );
+  }while(markTokensForRemoval() == true);// && safeCounter < 20 );
   
+  for(int i = 0; i < numGemsOnBoard; i++){
+    addGemToQueuedToken();
+  }  
   
   if(false == validSwapExists()){
     //println("**** no moves remaining ****");
@@ -1068,9 +1093,8 @@ void drawBoard(){
   // Draw the invisible part, for debugging
   for(int r = 0; r < START_ROW_INDEX; r++){
     for(int c = 0; c < BOARD_COLS; c++){
-      
       if(board[r][c].isMoving() == false){
-       // board[r][c].draw();
+        board[r][c].draw();
       }
     }
   }
@@ -1085,9 +1109,34 @@ void drawBoard(){
   }
 }
 
+  /**
+      Select a random token and add a gem to it if it doesn't already have one.
+      
+      Used when the user clears a gem from board, and we have to 'replace' it.
+  */
+  private void addGemToQueuedToken(){
+    
+    boolean added = false;
+    
+    while(added == false){
+      // We can only add the gem to the part of the board the user doesn't see.
+      // Don't forget getRandom int is inclusive.
+      int r = Utils.getRandomInt(0, START_ROW_INDEX - 1);
+      int c = Utils.getRandomInt(0, BOARD_COLS - 1);
+      Token token = board[r][c];
+      
+      if(token.hasGem() == false){
+        token.addGem();
+        added = true;
+      }
+    }
+  }
+
 /*
  */
-void removeMarkedTokens(){
+void removeMarkedTokens(boolean doDyingAnimation){
+  println("removeMarkedTokens");
+  
   // Now delete everything marked for deletion
   for(int r = 0; r < BOARD_ROWS; r++){
     for(int c = 0; c < BOARD_COLS; c++){
@@ -1098,15 +1147,19 @@ void removeMarkedTokens(){
         //println("marked for delection...");
         //
         tokenToDestroy.destroy();
-        dyingTokens.add(tokenToDestroy);
+        
+        if(doDyingAnimation){
+          dyingTokens.add(tokenToDestroy);
+        }
         
         // Replace the token we removed with a null Token
         Token nullToken = new Token();
         nullToken.setType(TokenType.NULL);
         nullToken.setRowColumn(r, c);
         board[r][c] = nullToken;
-        
+                
         delayTicker = new Ticker();
+        
         //removedAtLeastOneMatch = true;
       }
       board[r][c].setSelect(false);
@@ -1115,6 +1168,7 @@ void removeMarkedTokens(){
 }
 
 void keyPressed(){
+  println(keyCode);
   Keyboard.setKeyDown(keyCode, true);
 }
 
@@ -1130,8 +1184,10 @@ void goToNextLevel(){
   levelTimeLeft.setTime(5, 00);
 
   if(currLevel == 4){
-    numTokenTypesOnBoard++; 
+    numTokenTypesOnBoard++;
   }
+  
+  numGemsOnBoard = currLevel + 1;
   
   resetBoard();
 }
@@ -1159,7 +1215,7 @@ public class ScreenSplash implements IScreen{
     
     mainTitlePanel = new RetroPanel(0, 0, width, height);
     mainTitleLabel = new RetroLabel(solarWindsFont);
-    mainTitleLabel.setText("H O R A D R I X");
+    mainTitleLabel.setText("---- H O R A D R I X ----");
     mainTitlePanel.addWidget(mainTitleLabel);
     
     mainTitleLabel.pixelsFromCenter(0,0);
@@ -1199,7 +1255,7 @@ public class ScreenSplash implements IScreen{
   
   public void update(){
     ticker.tick();
-    if(ticker.getTotalTime() > 1.5f){
+    if(ticker.getTotalTime() > 0.25f){
       alive = false;
     }
   }
@@ -1211,6 +1267,9 @@ public class ScreenSplash implements IScreen{
   public boolean isAlive(){
     return alive;
   }
+  
+  public void keyReleased(){}
+  public void keyPressed(){}
   
   public void mousePressed(){}
   public void mouseReleased(){}
@@ -2039,6 +2098,15 @@ public void mouseMoved(){
   currScreen.mouseMoved();
 }
 
+public void keyPressed(){
+  currScreen.keyPressed();
+}
+
+public void keyReleased(){
+  currScreen.keyReleased();
+}
+
+
 public class SoundManager{
   boolean muted = false;
   Minim minim;
@@ -2333,10 +2401,18 @@ public class Token{
    */
   public void draw(){
     
-    if(animTicker != null && animTicker.getTotalTime() > 0.05f){
-      animTicker.reset();
-      //colored = !colored;
+    ///
+    ///  There's a huge problem with this. For some reason tick() needs to be
+    //  called on update and here as well. Otherwise the delta is 0.
+    ///
+    if(animTicker != null){
+      animTicker.tick();
     }
+    
+    //if(animTicker != null && animTicker.getTotalTime() > 0.05f){
+     // animTicker.reset();
+      //colored = !colored;
+    //}
     
     pushStyle();
     
@@ -2375,30 +2451,31 @@ public class Token{
           noFill();
           strokeWeight(2);
           stroke(255);
-          rect(x,y,TOKEN_SIZE, TOKEN_SIZE);
+          rect(x, y, TOKEN_SIZE, TOKEN_SIZE);
         }
         
 
         
-        if(!colored){return;}
+        //if(!colored){return;}
         
           if(animTicker != null){
             pushMatrix();
             resetMatrix();
             
-            scaleSize += animTicker.getDeltaSec() * 3.0f;
+            scaleSize += animTicker.getDeltaSec() * 15.0f;
+            
+            // TODO: Fix me
+            //println("animTicker ==> " + animTicker.getDeltaSec() * 10.0f);
             
             translate(START_X, START_Y);
-            translate(x,y);
+            translate(x, y);
             translate(TOKEN_SIZE, TOKEN_SIZE);
             
-            scale(scaleSize);
+            scale(scaleSize * 1.0f);
             translate(-TOKEN_SIZE/2,-TOKEN_SIZE/2);
             
             // TODO: fix me
             tint(255, 255 - ((scaleSize- 1.0f) * 255));
-            
-
           }
           else{
              pushMatrix();
@@ -2417,7 +2494,7 @@ public class Token{
           
           if(hasGem()){
             pushStyle();
-            fill(33, 60, 90, 100);
+            fill(33, 60, 90, 255);
             noStroke();
             rect(0,0,TOKEN_SIZE, TOKEN_SIZE);
             popStyle();
@@ -2589,6 +2666,9 @@ public interface IScreen{
   public void mouseDragged();
   public void mouseMoved();
   
+  public void keyPressed();
+  public void keyReleased();
+  
   public String getName();
   
   public boolean isAlive();
@@ -2615,7 +2695,7 @@ public class ScreenSplash implements IScreen{
     
     mainTitlePanel = new RetroPanel(0, 0, width, height);
     mainTitleLabel = new RetroLabel(solarWindsFont);
-    mainTitleLabel.setText("H O R A D R I X");
+    mainTitleLabel.setText("---- H O R A D R I X ----");
     mainTitlePanel.addWidget(mainTitleLabel);
     
     mainTitleLabel.pixelsFromCenter(0,0);
@@ -2655,7 +2735,7 @@ public class ScreenSplash implements IScreen{
   
   public void update(){
     ticker.tick();
-    if(ticker.getTotalTime() > 1.5f){
+    if(ticker.getTotalTime() > 0.25f){
       alive = false;
     }
   }
@@ -2667,6 +2747,9 @@ public class ScreenSplash implements IScreen{
   public boolean isAlive(){
     return alive;
   }
+  
+  public void keyReleased(){}
+  public void keyPressed(){}
   
   public void mousePressed(){}
   public void mouseReleased(){}
@@ -2715,13 +2798,14 @@ var Utils = {
   }
 
 }
-
+/**
+ */
 public class ScreenGameplay implements IScreen{
   
   public boolean alive;
     
   Debugger debug;
-  int R=0,C=0;
+  int R=0, C=0;
   
   Ticker debugTicker;
   Ticker delayTicker;
@@ -2747,7 +2831,8 @@ public class ScreenGameplay implements IScreen{
   // This makes it a slightly harder to match tokens.
   int numTokenTypesOnBoard = 5;
   
-  
+  // 
+  int numGemsOnBoard = 2;
   
   //Tuple gems = new Tuple();
   
@@ -2794,7 +2879,9 @@ public class ScreenGameplay implements IScreen{
   }
   
   public void draw(){
-     update();
+    
+    update();
+    
     background(103);
     
     // This line is only here to workaround a bug in Processing.js
@@ -2856,8 +2943,9 @@ public class ScreenGameplay implements IScreen{
     }
     
     isPaused = Keyboard.isKeyDown(KEY_P);
-    
+
     if(isPaused){
+      println("paused");
       return;
     }
     
@@ -2865,6 +2953,8 @@ public class ScreenGameplay implements IScreen{
     
     debugTicker.tick();
     levelTimeLeft.tick();
+    
+    //println(debugTicker.getDeltaSec());
     
     // Update all the tokens that are falling down
     for(int i = 0; i < floatingTokens.size(); i++){
@@ -2916,7 +3006,7 @@ public class ScreenGameplay implements IScreen{
           
          // gemRemovalTicker = new Ticker();
           markTokensForRemoval();
-          removeMarkedTokens();
+          removeMarkedTokens(true);
           //deselectTokens();
         }
         
@@ -2944,11 +3034,14 @@ public class ScreenGameplay implements IScreen{
   
     // Update the tokens that may need to be GC'ed.
     for(int i = 0; i < dyingTokens.size(); i++){
+      
       dyingTokens.get(i).update();
+      
       if(dyingTokens.get(i).isAlive() == false){
         
         if(dyingTokens.get(i).hasGem()){
           gemCounter++;
+          addGemToQueuedToken();
         }
         
         dyingTokens.remove(i);
@@ -2972,7 +3065,7 @@ public class ScreenGameplay implements IScreen{
     
     if(gemRemovalTicker != null && gemRemovalTicker.getTotalTime() > 0.5f){
       gemRemovalTicker = null;
-      removeMarkedTokens();
+      removeMarkedTokens(true);
       delayTicker = new Ticker();
     }
     
@@ -3217,13 +3310,20 @@ int getRandomToken(){
   return Utils.getRandomInt(0, numTokenTypesOnBoard-1);
 }
 
+
+/*
+  Find any null tokens on the board and replace them with a random token.
+  
+  This is used at the start of the level when trying to generate a board
+  that initially has no matches.
+  
+  This is also used to populate the tokens above the board that aren't seen.
+*/
 void fillHoles(){
   for(int r = 0; r < BOARD_ROWS; r++){
     for(int c = 0; c < BOARD_COLS; c++){
       if(board[r][c].getType() == TokenType.NULL){
         board[r][c].setType(getRandomToken());
-        //println("fill hole");
-       // board[r][c].setSelect(true);
       }
     }
   }
@@ -3331,6 +3431,10 @@ void dropTokens(){
 /**
   Find any 3 matches either going vertically or horizontally and
   remove them from the board.
+  
+  @returns true if at least 3 gems were marked for removal. This means we found at least one match
+  In some cases, this needs to be corrected, for example, when the game starts, there shouldn't be any
+  matches.
 */
 boolean markTokensForRemoval(){
   
@@ -3354,8 +3458,6 @@ boolean markTokensForRemoval(){
     for(int c = 1; c < BOARD_COLS; c++){
       
       if(board[r][c].matchesWith(type)){
-      //if(board[r][c].getType() == type){
-      
         matches++;
       }
       // We bank on finding a different gem. Once that happens, we can see if
@@ -3599,10 +3701,10 @@ void resetBoard(){
       
       token.setType(getRandomToken());
       
-      int chance = Utils.getRandomInt(0,5);
+      /*int chance = Utils.getRandomInt(0,5);
       if(chance == 0){
         token.addGem();
-      }
+      }*/
       
       token.setRowColumn(r, c);
       board[r][c] = token;
@@ -3614,11 +3716,14 @@ void resetBoard(){
   // Ugly way of making sure there are no immediate matches, but it works for now.
   do{
     markTokensForRemoval();
-    removeMarkedTokens();
+    removeMarkedTokens(false);
     fillHoles();
     safeCounter++;
-  }while(markTokensForRemoval() == true && safeCounter < 20 );
+  }while(markTokensForRemoval() == true);// && safeCounter < 20 );
   
+  for(int i = 0; i < numGemsOnBoard; i++){
+    addGemToQueuedToken();
+  }  
   
   if(false == validSwapExists()){
     //println("**** no moves remaining ****");
@@ -3641,9 +3746,8 @@ void drawBoard(){
   // Draw the invisible part, for debugging
   for(int r = 0; r < START_ROW_INDEX; r++){
     for(int c = 0; c < BOARD_COLS; c++){
-      
       if(board[r][c].isMoving() == false){
-       // board[r][c].draw();
+        board[r][c].draw();
       }
     }
   }
@@ -3658,9 +3762,34 @@ void drawBoard(){
   }
 }
 
+  /**
+      Select a random token and add a gem to it if it doesn't already have one.
+      
+      Used when the user clears a gem from board, and we have to 'replace' it.
+  */
+  private void addGemToQueuedToken(){
+    
+    boolean added = false;
+    
+    while(added == false){
+      // We can only add the gem to the part of the board the user doesn't see.
+      // Don't forget getRandom int is inclusive.
+      int r = Utils.getRandomInt(0, START_ROW_INDEX - 1);
+      int c = Utils.getRandomInt(0, BOARD_COLS - 1);
+      Token token = board[r][c];
+      
+      if(token.hasGem() == false){
+        token.addGem();
+        added = true;
+      }
+    }
+  }
+
 /*
  */
-void removeMarkedTokens(){
+void removeMarkedTokens(boolean doDyingAnimation){
+  println("removeMarkedTokens");
+  
   // Now delete everything marked for deletion
   for(int r = 0; r < BOARD_ROWS; r++){
     for(int c = 0; c < BOARD_COLS; c++){
@@ -3671,15 +3800,19 @@ void removeMarkedTokens(){
         //println("marked for delection...");
         //
         tokenToDestroy.destroy();
-        dyingTokens.add(tokenToDestroy);
+        
+        if(doDyingAnimation){
+          dyingTokens.add(tokenToDestroy);
+        }
         
         // Replace the token we removed with a null Token
         Token nullToken = new Token();
         nullToken.setType(TokenType.NULL);
         nullToken.setRowColumn(r, c);
         board[r][c] = nullToken;
-        
+                
         delayTicker = new Ticker();
+        
         //removedAtLeastOneMatch = true;
       }
       board[r][c].setSelect(false);
@@ -3688,6 +3821,7 @@ void removeMarkedTokens(){
 }
 
 void keyPressed(){
+  println(keyCode);
   Keyboard.setKeyDown(keyCode, true);
 }
 
@@ -3703,8 +3837,10 @@ void goToNextLevel(){
   levelTimeLeft.setTime(5, 00);
 
   if(currLevel == 4){
-    numTokenTypesOnBoard++; 
+    numTokenTypesOnBoard++;
   }
+  
+  numGemsOnBoard = currLevel + 1;
   
   resetBoard();
 }
