@@ -76,3 +76,12 @@ public void mouseDragged(){
 public void mouseMoved(){
   currScreen.mouseMoved();
 }
+
+public void keyPressed(){
+  currScreen.keyPressed();
+}
+
+public void keyReleased(){
+  currScreen.keyReleased();
+}
+

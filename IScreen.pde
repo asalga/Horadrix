@@ -9,6 +9,9 @@ public interface IScreen{
   public void mouseDragged();
   public void mouseMoved();
   
+  public void keyPressed();
+  public void keyReleased();
+  
   public String getName();
   
   public boolean isAlive();

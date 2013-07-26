@@ -20,7 +20,7 @@ public class ScreenSplash implements IScreen{
     
     mainTitlePanel = new RetroPanel(0, 0, width, height);
     mainTitleLabel = new RetroLabel(solarWindsFont);
-    mainTitleLabel.setText("H O R A D R I X");
+    mainTitleLabel.setText("---- H O R A D R I X ----");
     mainTitlePanel.addWidget(mainTitleLabel);
     
     mainTitleLabel.pixelsFromCenter(0,0);
@@ -60,7 +60,7 @@ public class ScreenSplash implements IScreen{
   
   public void update(){
     ticker.tick();
-    if(ticker.getTotalTime() > 1.5f){
+    if(ticker.getTotalTime() > 0.25f){
       alive = false;
     }
   }
@@ -72,6 +72,9 @@ public class ScreenSplash implements IScreen{
   public boolean isAlive(){
     return alive;
   }
+  
+  public void keyReleased(){}
+  public void keyPressed(){}
   
   public void mousePressed(){}
   public void mouseReleased(){}
