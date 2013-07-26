@@ -258,10 +258,18 @@ public class Token{
    */
   public void draw(){
     
-    if(animTicker != null && animTicker.getTotalTime() > 0.05f){
-      animTicker.reset();
-      //colored = !colored;
+    ///
+    ///  There's a huge problem with this. For some reason tick() needs to be
+    //  called on update and here as well. Otherwise the delta is 0.
+    ///
+    if(animTicker != null){
+      animTicker.tick();
     }
+    
+    //if(animTicker != null && animTicker.getTotalTime() > 0.05f){
+     // animTicker.reset();
+      //colored = !colored;
+    //}
     
     pushStyle();
     
@@ -300,30 +308,31 @@ public class Token{
           noFill();
           strokeWeight(2);
           stroke(255);
-          rect(x,y,TOKEN_SIZE, TOKEN_SIZE);
+          rect(x, y, TOKEN_SIZE, TOKEN_SIZE);
         }
         
 
         
-        if(!colored){return;}
+        //if(!colored){return;}
         
           if(animTicker != null){
             pushMatrix();
             resetMatrix();
             
-            scaleSize += animTicker.getDeltaSec() * 3.0f;
+            scaleSize += animTicker.getDeltaSec() * 15.0f;
+            
+            // TODO: Fix me
+            //println("animTicker ==> " + animTicker.getDeltaSec() * 10.0f);
             
             translate(START_X, START_Y);
-            translate(x,y);
+            translate(x, y);
             translate(TOKEN_SIZE, TOKEN_SIZE);
             
-            scale(scaleSize);
+            scale(scaleSize * 1.0f);
             translate(-TOKEN_SIZE/2,-TOKEN_SIZE/2);
             
             // TODO: fix me
             tint(255, 255 - ((scaleSize- 1.0f) * 255));
-            
-
           }
           else{
              pushMatrix();
@@ -342,7 +351,7 @@ public class Token{
           
           if(hasGem()){
             pushStyle();
-            fill(33, 60, 90, 100);
+            fill(33, 60, 90, 255);
             noStroke();
             rect(0,0,TOKEN_SIZE, TOKEN_SIZE);
             popStyle();
