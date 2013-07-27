@@ -412,7 +412,8 @@ public class Token{
   public boolean matchesWith(int other){
     if(type == other){
       return true;
-    };
+    }
     return false;
   }
+  
 }
