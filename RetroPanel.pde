@@ -1,4 +1,6 @@
-/**
+/*
+    A panel represents a generic container that can hold
+    other widgets
 */
 public class RetroPanel extends RetroWidget{
 
@@ -37,21 +39,26 @@ public class RetroPanel extends RetroWidget{
     this.y = y;
   }
   
+  /*
+      Render widget from the top center relative to parent.
+  */
   public void pixelsFromTop(int pixels){
-    x = width/2 - 60/2;
-    //startY = 0;
+    x = width/2 - w/2;
+    y = pixels;
   }
   
   public void pixelsFromBottomLeft(int bottomPixels, int leftPixels){
-    y = parent.y + parent.h - h + bottomPixels;
-    x = parent.x + leftPixels;
+    RetroWidget p = getParent();
+    y = p.y + p.h - h + bottomPixels;
+    x = p.x + leftPixels;
   }
   
   /**
    */
   public void pixelsFromCenter(int xPixels, int yPixels){
-    x = (parent.w/2) - (w/2) + xPixels;
-    y = (parent.h/2) - (h/2) + yPixels;
+    RetroWidget p = getParent();
+    x = (p.w/2) - (w/2) + xPixels;
+    y = (p.h/2) - (h/2) + yPixels;
   }
   
   
@@ -68,7 +75,7 @@ public class RetroPanel extends RetroWidget{
     }
     
     pushMatrix();
-    translate(x,y);
+    translate(x, y);
     for(int i = 0; i < children.size(); i++){
       children.get(i).draw();
     }

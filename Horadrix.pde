@@ -10,41 +10,34 @@
 
 import ddf.minim.*;
 
-// The amount of rows that are visible
+// This includes the entire board, including the 'queued' tokens not visible
+// to the user, that sit above the token the user interacts with.
 final int BOARD_COLS = 8;
 final int BOARD_ROWS = 16;
 
 // Only need y index
 final int START_ROW_INDEX = 8;
+
 // Where on the canvas the tokens start to be rendered.
 final int START_X = 100;//200;
 final int START_Y = 0;//-20; // 20 - -220
 final int TOKEN_SIZE = 28;
 final int TOKEN_SPACING = 3;
 
-// For the AssetStore
+// Used by the AssetStore
 PApplet globalApplet;
 
 Token[][] board = new Token[BOARD_ROWS][BOARD_COLS];
-// When a match is created, the matched tokens are removed from the board array
-// and 'float' above the board and drop down until they arrive where they need to go.
-// We do this because as they fall, we can't give them a integer position, but need to
-// use a float.
-ArrayList<Token> floatingTokens;
-
-// Tokens that have been remove from the board, but still need to be rendered for their
-// death animation.
-ArrayList<Token> dyingTokens;
-
-//ArrayList<Token> dyingTokensOnBoard
-
   
 IScreen currScreen;
   
 void setup(){
   size(START_X + TOKEN_SIZE * BOARD_COLS, START_Y + TOKEN_SIZE * BOARD_ROWS);
-  globalApplet = this;
   
+  // The style of the game is pixel art, so we don't want anti-aliasing
+  noSmooth();
+  
+  globalApplet = this;
   currScreen = new ScreenSplash();
 }
 

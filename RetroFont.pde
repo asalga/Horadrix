@@ -9,19 +9,20 @@ public class RetroFont{
   private int glyphHeight;
   
   /*
-    inImage
+      Removes the transparent pixels from the left and right sides of
+      the glyph.
   */
-  private PImage truncateImage(PImage inImage, char ch){
+  private PImage truncateImage(PImage glyph){
     
     int startX = 0;
-    int endX = inImage.width - 1;
+    int endX = glyph.width - 1;
     int x, y;
 
     // Find the starting X coord of the image.
-    for(x = inImage.width; x >= 0 ; x--){
-      for(y = 0; y < inImage.height; y++){
+    for(x = glyph.width; x >= 0 ; x--){
+      for(y = 0; y < glyph.height; y++){
         
-        color testColor = inImage.get(x,y);
+        color testColor = glyph.get(x, y);
         if( alpha(testColor) > 0.0){
           startX = x;
         }
@@ -29,17 +30,16 @@ public class RetroFont{
     }
 
    // Find the ending coord
-    for(x = 0; x < inImage.width; x++){
-      for(y = 0; y < inImage.height; y++){
+    for(x = 0; x < glyph.width; x++){
+      for(y = 0; y < glyph.height; y++){
         
-        color testColor = inImage.get(x,y);
+        color testColor = glyph.get(x,y);
         if( alpha(testColor) > 0.0){
           endX = x;
         }
       }
     }
-    
-    return inImage.get(startX, 0, endX-startX+1, inImage.height);
+    return glyph.get(startX, 0, endX - startX + 1, glyph.height);
   }
   
   
@@ -60,7 +60,7 @@ public class RetroFont{
     //
     for(int currChar = 0; currChar < 96; currChar++){  
       chars[currChar] = fontSheet.get(x, y, glyphWidth, glyphHeight);
-      trimmedChars[currChar] = truncateImage(fontSheet.get(x, y, glyphWidth, glyphHeight), (char)currChar);
+      trimmedChars[currChar] = truncateImage(fontSheet.get(x, y, glyphWidth, glyphHeight));
       
       x += glyphWidth + borderSize;
       if(x >= fontSheet.width){

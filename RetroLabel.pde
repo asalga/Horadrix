@@ -143,7 +143,7 @@ public class RetroLabel extends RetroPanel{
         int wordWidth = getWordWidth(words[word]);
         
         if(justification == JUSTIFY_LEFT){
-          if(word != 0 && currXPos + wordWidth + 0 >  parent.getWidth() ){
+          if(word != 0 && currXPos + wordWidth + 0 >  getParent().getWidth() ){
             lineIndex++;
             currXPos = x;
           }

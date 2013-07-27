@@ -1,67 +1,52 @@
-/**
- */
+/*
+    Displays game name and credits
+*/
 public class ScreenSplash implements IScreen{
 
-  RetroPanel mainTitlePanel;
-  RetroLabel mainTitleLabel;
-
   Ticker ticker;
-  boolean alive;
+  boolean screenAlive;
   
   RetroFont solarWindsFont;
-  
-  RetroPanel panel;  
-  RetroLabel versionLbl;
+
+  RetroLabel creditsLabel;
+  RetroLabel loadingLabel;
+  RetroLabel mainTitleLabel;
   
   public ScreenSplash(){
     ticker = new Ticker();
-    alive = true;
+    screenAlive = true;
     solarWindsFont = new RetroFont("data/fonts/solarwinds.png", 7, 8, 1);
     
-    mainTitlePanel = new RetroPanel(0, 0, width, height);
     mainTitleLabel = new RetroLabel(solarWindsFont);
-    mainTitleLabel.setText("---- H O R A D R I X ----");
-    mainTitlePanel.addWidget(mainTitleLabel);
+    mainTitleLabel.setText("H O R A D R I X");
+    mainTitleLabel.pixelsFromTop(150);
     
-    mainTitleLabel.pixelsFromCenter(0,0);
-    
-    
-    panel = new RetroPanel(0, 0, width, height);
-    versionLbl = new RetroLabel(solarWindsFont);
-    versionLbl.setText("Code & Art: Andor Salga");  
-  
-    panel.addWidget(versionLbl);
-    
-    //versionLbl.setJustification(RetroLabel.JUSTIFY_MANUAL);
-    versionLbl.setVerticalSpacing(3);
-  
-    versionLbl.setHorizontalTrimming(true);
-    
-    //versionLbl.pixelsFromBottomLeft(0, 0);
-    
-    
-    // textSprite = new TextSprite("SOLAR WINDS");
-    // textSprite.setKerning(TextSprite.MONOSPACED);
-    // textSprite.setKerning(TextSprite.????);
-    
-    versionLbl.pixelsFromBottomLeft(0, 0);
-    //versionLbl.setHorizontalSpacing(0);
-    // panel.add(textSprite);
-    noSmooth();
+    creditsLabel = new RetroLabel(solarWindsFont);
+    creditsLabel.setText("Code & Art: Andor Salga");
+    creditsLabel.setVerticalSpacing(0);
+    creditsLabel.setHorizontalTrimming(true);
+    creditsLabel.pixelsFromBottomLeft(0, 0);
+
+    loadingLabel = new RetroLabel(solarWindsFont);
+    loadingLabel.setText("Loading....");
+    loadingLabel.pixelsFromCenter(0, 50);
   }
   
   /**
   */
   public void draw(){
     background(0);
-    panel.draw();
-    mainTitlePanel.draw();
+    
+    mainTitleLabel.draw();
+    creditsLabel.draw();
+    loadingLabel.draw();
   }
   
   public void update(){
     ticker.tick();
     if(ticker.getTotalTime() > 0.01f){
-      alive = false;
+      screenAlive = false;
+      println("dead");
     }
   }
   
@@ -70,7 +55,7 @@ public class ScreenSplash implements IScreen{
   }
 
   public boolean isAlive(){
-    return alive;
+    return screenAlive;
   }
   
   public void keyReleased(){}

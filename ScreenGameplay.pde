@@ -5,6 +5,16 @@
 */
 public class ScreenGameplay implements IScreen{
   
+  // Tokens that have been remove from the board, but still need to be rendered for their
+  // death animation.
+  ArrayList<Token> dyingTokens;
+
+  // When a match is created, the matched tokens are removed from the board array
+  // and 'float' above the board and drop down until they arrive where they need to go.
+  // We do this because as they fall, we can't give them a integer position, but need to
+  // use a float.
+  ArrayList<Token> floatingTokens;
+
   // These are used to specify the direction of checking
   // matches in numMatchesSideways and numMatches
   private final int LEFT = -1;
@@ -175,6 +185,12 @@ public class ScreenGameplay implements IScreen{
         token.dropIntoCell();
         markTokensForRemoval();
         delayTicker = new Ticker();
+        
+        // the token could have been floating down, if it wasn't
+        // Don't need to explicitly check if it was in the list, the
+        // structure does that for us automatically.
+        floatingTokens.remove(token);
+        
         //removeMarkedTokens();
         gemRemovalTicker = new Ticker();
       }
@@ -901,8 +917,6 @@ public class ScreenGameplay implements IScreen{
         Token tokenToDestroy = board[r][c];
         
         if(tokenToDestroy.isDying()){//.isMarkedForDeletion()){
-          //println("marked for delection...");
-          //
           tokenToDestroy.destroy();
           
           if(doDyingAnimation){

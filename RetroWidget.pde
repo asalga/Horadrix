@@ -1,9 +1,11 @@
-
 /*
  */
 public abstract class RetroWidget{
 
-  protected RetroWidget parent;
+  // force access from getter so that the appropriate parent
+  // can be returned.
+  private RetroWidget parent;
+  //protected RetroWidget defaultParent;
   protected int x, y, w, h;
   
   protected boolean visible = true;
@@ -13,6 +15,16 @@ public abstract class RetroWidget{
     x = y = 0;
     w = h = 0;
     visible = true;
+    //defaultParent = new RetroPanel(0, 0, width, height);
+    parent = null;
+    debugDraw = false;
+  }
+  
+  public RetroWidget getParent(){
+    if(parent != null){
+      return parent;
+    }
+    return new RetroPanel(0, 0, width, height);
   }
   
   public void setVisible(boolean v){
@@ -25,9 +37,9 @@ public abstract class RetroWidget{
     
   public void setParent(RetroWidget widget){
     parent = widget;
+    //defaultParent = null;
   }
   
-
   public int getWidth(){
     return w;
   }

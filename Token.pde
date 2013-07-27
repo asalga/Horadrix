@@ -190,11 +190,7 @@ public class Token{
       if(distanceToMove <= 0){
         detached = false;
         hasArrivedAtDest = true;
-        
-        // the token could have been floating down, if it wasn't
-        // Don't need to explicitly check if it was in the list, the
-        // structure does that for us automatically.
-        floatingTokens.remove(this);
+        //floatingTokens.remove(this);
       }
     }
     
@@ -202,7 +198,6 @@ public class Token{
       deathTicker.tick();
       if(deathTicker.getTotalTime() >= 1.0f){
         isLiving = false;
-        //println("dead");
       }
     }
   }
