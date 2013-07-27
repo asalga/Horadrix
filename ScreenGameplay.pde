@@ -1030,6 +1030,6 @@ public class ScreenGameplay implements IScreen{
     
     numGemsOnBoard = currLevel + 1;
     
-    resetBoard();
+    fillBoardWithRandomTokens();
   }
 }
