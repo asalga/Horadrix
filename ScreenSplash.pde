@@ -60,7 +60,7 @@ public class ScreenSplash implements IScreen{
   
   public void update(){
     ticker.tick();
-    if(ticker.getTotalTime() > 0.25f){
+    if(ticker.getTotalTime() > 0.01f){
       alive = false;
     }
   }

@@ -1,9 +1,23 @@
-/**
- */
+/*
+    This screen is the main gameplay screen.
+    
+    
+*/
 public class ScreenGameplay implements IScreen{
   
-  public boolean alive;
-    
+  // These are used to specify the direction of checking
+  // matches in numMatchesSideways and numMatches
+  private final int LEFT = -1;
+  private final int RIGHT = 1;
+  private final int UP = -1;
+  private final int DOWN = 1;
+  
+  public boolean screenAlive;
+  
+  // Only for debugging to see which token would be selected
+  // by the player.
+  public boolean drawBoxUnderCursor;
+  
   Debugger debug;
   int mouseRowIndex = 0;
   int mouseColumnIndex = 0;
@@ -11,7 +25,7 @@ public class ScreenGameplay implements IScreen{
   Ticker debugTicker;
   Ticker delayTicker;
   Ticker gemRemovalTicker;
-  Ticker levelTimeLeft;
+  Ticker levelCountDownTimer;
   
   int tokensDestroyed = 0;
   
@@ -19,7 +33,10 @@ public class ScreenGameplay implements IScreen{
   
   int gemCounter = 0;
   int gemsRequiredForLevel = 0;
-  int currLevel = 1;
+  
+  // This is immediately incremented in the ctor by calling
+  // goToNextLevel().
+  int currLevel = 0;
   
   boolean waitingForTokensToFall = false;
   
@@ -35,23 +52,19 @@ public class ScreenGameplay implements IScreen{
   // 
   int numGemsOnBoard = 2;
   
-  //Tuple gems = new Tuple();
-  
   // TODO: fix
   // Keep track of the number of gems removed from the board.
-  int[] numMatchedGems = new int[100+numTokenTypesOnBoard + 1];
+  //int[] numMatchedGems;
   
   Token currToken1 = null;
   Token currToken2 = null;
-  
-  //SpriteSheetLoader s = new SpriteSheetLoader();
     
   int score = 0;
   
   /**
   */
   ScreenGameplay(){
-    alive = true;
+    screenAlive = true;
       
     gemsRequiredForLevel = currLevel * 5;
   
@@ -64,27 +77,26 @@ public class ScreenGameplay implements IScreen{
     // lock P for pause
     Keyboard.lockKeys(new int[]{KEY_P});
     
+    drawBoxUnderCursor = false;
     
-    levelTimeLeft = new Ticker();
-    //levelTimeLeft.setMinutes(5);
-    levelTimeLeft.setTime(0, 10);
-    levelTimeLeft.setDirection(-1);
+    levelCountDownTimer = new Ticker();
+    levelCountDownTimer.setTime(5, 0);
+    levelCountDownTimer.setDirection(-1);
     
     fillBoardWithRandomTokens();
-    deselectTokens();
-    resetGemMatchCount();
+    deselectCurrentTokens();
+    
+    goToNextLevel();
   }
   
   /*
   */
   public void draw(){
-    
-    update();
-    
     background(100);
     
-    // This line is only here to workaround a bug in Processing.js
-    // If removed, the board would translate diagonally the canvas.
+    // HACK: This line is here as a workaround a bug in Processing.js
+    // If removed, the board would translate diagonally on the canvas.
+    // when tokens are removed.
     resetMatrix();
     
     pushMatrix();
@@ -94,7 +106,7 @@ public class ScreenGameplay implements IScreen{
     for(int i = 0; i < floatingTokens.size(); i++){
       floatingTokens.get(i).draw();
     }
-  
+    
     if(swapToken1 != null){
       swapToken1.draw();
     }
@@ -102,18 +114,13 @@ public class ScreenGameplay implements IScreen{
       swapToken2.draw();
     }
     
-    // For demo purposes
-    pushStyle();
-    fill(103);
-    noStroke();
-    rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
-    popStyle();
-    
-    pushStyle();
-    noFill();
-    stroke(255, 0, 0);
-    rect(mouseColumnIndex * TOKEN_SIZE - TOKEN_SIZE/2, mouseRowIndex * TOKEN_SIZE - TOKEN_SIZE/2, TOKEN_SIZE, TOKEN_SIZE);
-    popStyle();
+    if(drawBoxUnderCursor == true){
+      pushStyle();
+      noFill();
+      stroke(255, 0, 0);
+      rect(mouseColumnIndex * TOKEN_SIZE - TOKEN_SIZE/2, mouseRowIndex * TOKEN_SIZE - TOKEN_SIZE/2, TOKEN_SIZE, TOKEN_SIZE);
+      popStyle();
+    }
     
     drawBoard();
     
@@ -123,6 +130,13 @@ public class ScreenGameplay implements IScreen{
       dyingTokens.get(i).draw();
     }
     
+    // In some cases it is necessary to see the non-visible tokens
+    // above the visible board. Other cases, I want that part covered.
+    // for example, when tokens are falling. These lines of code do just that.
+    pushStyle();
+    fill(100);
+    rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
+    popStyle();
     popMatrix();
     
     debug.draw();
@@ -136,7 +150,6 @@ public class ScreenGameplay implements IScreen{
     if(gemCounter >= gemsRequiredForLevel){
       goToNextLevel();    
     }
-    
     
     if(waitingForTokensToFall && floatingTokens.size() == 0){
       waitingForTokensToFall = false;
@@ -152,7 +165,7 @@ public class ScreenGameplay implements IScreen{
     debug.clear();
     
     debugTicker.tick();
-    levelTimeLeft.tick();
+    levelCountDownTimer.tick();
     
     // Update all the tokens that are falling down
     for(int i = 0; i < floatingTokens.size(); i++){
@@ -182,9 +195,7 @@ public class ScreenGameplay implements IScreen{
         swapToken2.dropIntoCell();
         
         // If it was not a valid swap, animate it back from where it came.
-        if(isValidSwap(swapToken1, swapToken2) == false){
-          //println("not a valid swap");
-          
+        if(wasValidSwap(swapToken1, swapToken2) == false){          
           int r1 = swapToken1.getRow();
           int c1 = swapToken1.getColumn();
           
@@ -291,7 +302,7 @@ public class ScreenGameplay implements IScreen{
     
     // Add a leading zero if seconds is a single digit
     String secStr = "";
-    int seconds = (int)levelTimeLeft.getTotalTime() % 60;
+    int seconds = (int)levelCountDownTimer.getTotalTime() % 60;
     
     if(seconds <= 9){
       secStr  = Utils.prependStringWithString( "" + seconds, "0", 2);
@@ -300,23 +311,21 @@ public class ScreenGameplay implements IScreen{
       secStr = "" + seconds;
     }
     
-    debug.addString( "" + (int)(levelTimeLeft.getTotalTime()/60) + ":" + secStr  );
+    debug.addString( "" + (int)(levelCountDownTimer.getTotalTime()/60) + ":" + secStr  );
     
-    for(int i = 0; i < numTokenTypesOnBoard; i++){
-      //debug.addString("color: " + numMatchedGems[i]);
-    }
+    //for(int i = 0; i < numTokenTypesOnBoard; i++){
+    //  debug.addString("color: " + numMatchedGems[i]);
+    //}
     //popMatrix();
   }
   
   public boolean isAlive(){
-    return alive;
+    return screenAlive;
   }
   
   public String getName(){
     return "gameplay";
   }
-
-
   
   public int getRowIndex(){
     return (int)map(mouseY,  START_Y , START_Y + BOARD_ROWS * TOKEN_SIZE, 0, BOARD_ROWS);
@@ -441,7 +450,7 @@ public class ScreenGameplay implements IScreen{
     swapToken1.animateTo(t2Row, t2Col);
     swapToken2.animateTo(t1Row, t1Col);
     
-    deselectTokens();
+    deselectCurrentTokens();
   }
   
   /**
@@ -450,7 +459,6 @@ public class ScreenGameplay implements IScreen{
   
     There may be a case in which there are no valid swap/moves left
     in that case the board needs to be reset.
-    
   */
   boolean validSwapExists(){
     
@@ -463,7 +471,7 @@ public class ScreenGameplay implements IScreen{
         
         swapTokens(gem1, gem2);
         
-        if(isValidSwap(gem1, gem2)){
+        if(wasValidSwap(gem1, gem2)){
           swapTokens(gem1, gem2);
           return true;
         }
@@ -482,7 +490,7 @@ public class ScreenGameplay implements IScreen{
         Token gem2 = board[r + 1][c];
         swapTokens(gem1, gem2);
         
-        if(isValidSwap(gem1, gem2)){
+        if(wasValidSwap(gem1, gem2)){
           swapTokens(gem1, gem2);
           return true;
         }
@@ -491,17 +499,10 @@ public class ScreenGameplay implements IScreen{
         }
       }
     }
-    
     return false;
   }
   
-  /*
-    In rare cases, there may not be any valid moves the user can make.
-    we need to detect these cases and reset the board.
-  */
-  boolean noMovesLeft(){
-    return false;
-  }
+  
   
   int getRandomToken(){
     return Utils.getRandomInt(0, numTokenTypesOnBoard-1);
@@ -594,35 +595,6 @@ public class ScreenGameplay implements IScreen{
         }      
       }
     }
-    
-    /*
-  
-    for(int c = BOARD_COLS-1; c >= 0; c--){
-      for(int r = BOARD_ROWS-1; r >= 0; r--){
-        
-        if(board[r][c].getType() == 0){
-          
-          // Keep moving up until we either find a ball we can copy downwards or
-          // we hit the top, in which case we need to generate a random number.
-          for(int rr = r - 0; rr >= 0; rr--){
-            
-            if(rr < 0){
-             // board[0][c].setType(Utils.getRandomInt(1, NUM_GEM_TYPES));
-              break;
-            }
-            
-            if(rr == 0 && board[rr][c].getType() == 0){
-              board[r][c].setType(Utils.getRandomInt(1, numTokenTypesOnBoard));
-            }
-            
-            else if(board[rr][c].getType() != 0){
-              swapTokens(board[rr][c], board[r][c]);
-              break;
-            }
-          }
-        }
-      }
-    }*/
   }
   
   /**
@@ -645,8 +617,8 @@ public class ScreenGameplay implements IScreen{
     // Add extra column buffer at end of board to fix matches counter?
     for(int r = START_ROW_INDEX; r < BOARD_ROWS; r++){
       
-      // use the first column as the thing we want to match against.
-      int type = board[r][0].getType();
+      // start with the first token in the first column as the thing we want to match against.
+      int tokenTypeToMatchAgainst = board[r][0].getType();
       
       // start of matched row
       int markerIndex = 0;
@@ -654,30 +626,27 @@ public class ScreenGameplay implements IScreen{
         
       for(int c = 1; c < BOARD_COLS; c++){
         
-        if(board[r][c].matchesWith(type)){
+        if(board[r][c].matchesWith(tokenTypeToMatchAgainst)){
           matches++;
         }
         // We bank on finding a different gem. Once that happens, we can see if
         // we found enough of the previous gems.
-        //
-        else if( (board[r][c].matchesWith(type) == false) && matches < 3){
-          //else if( (board[r][c].getType() != type) && matches < 3){
+        else if( (board[r][c].matchesWith(tokenTypeToMatchAgainst) == false) && matches < 3){
           matches = 1;
           markerIndex = c;
-          type = board[r][c].getType();
+          tokenTypeToMatchAgainst = board[r][c].getType();
         }
         // We need to also do it at the end of the board 
-        else if( (board[r][c].matchesWith(type) == false && matches >= 3) || (c == BOARD_ROWS - 1 && matches >= 3)){
-         // else if( (board[r][c].getType() != type && matches >= 3) || (c == BOARD_ROWS - 1 && matches >= 3)){
+        else if( (board[r][c].matchesWith(tokenTypeToMatchAgainst) == false && matches >= 3) || (c == BOARD_ROWS - 1 && matches >= 3)){
           markedAtLeast3Gems = true;
                     
           for(int gemC = markerIndex; gemC < markerIndex + matches; gemC++){
             board[r][gemC].kill();//.markForDeletion();
-            numMatchedGems[board[r][gemC].getType()]++;
+            //numMatchedGems[board[r][gemC].getType()]++;
           }
           matches = 1;
           markerIndex = c;
-          type = board[r][c].getType();
+          tokenTypeToMatchAgainst = board[r][c].getType();
         }
       }
       
@@ -687,48 +656,41 @@ public class ScreenGameplay implements IScreen{
         
         for(int gemC = markerIndex; gemC < markerIndex + matches; gemC++){
           board[r][gemC].kill();//markForDeletion();
-          numMatchedGems[board[r][gemC].getType()]++;
+          //numMatchedGems[board[r][gemC].getType()]++;
         }
       }
     }
     
-    
     // Add extra column buffer at end of board to fix matches counter?
     for(int c = 0; c < BOARD_COLS; c++){
-      int type = board[START_ROW_INDEX][c].getType();
+      int tokenTypeToMatchAgainst = board[START_ROW_INDEX][c].getType();
       int markerIndex = START_ROW_INDEX;
       int matches = 1;
         
       for(int r = START_ROW_INDEX + 1; r < BOARD_ROWS; r++){
         
-        if(board[r][c].matchesWith(type)){
-        //if(board[r][c].getType() == type){
+        if(board[r][c].matchesWith(tokenTypeToMatchAgainst)){
           matches++;
         }
         // We bank on finding a different gem. Once that happens, we can see if
         // we found enough of the previous gems.
-        else if(board[r][c].matchesWith(type) == false && matches < 3){
-        //else if(board[r][c].getType() != type && matches < 3){
+        else if(board[r][c].matchesWith(tokenTypeToMatchAgainst) == false && matches < 3){
           matches = 1;
           markerIndex = r;
-          type = board[r][c].getType();
+          tokenTypeToMatchAgainst = board[r][c].getType();
         }
         // We need to also do it at the end of the board 
-        else if( (board[r][c].matchesWith(type) == false && matches >= 3)){// || (c == BOARD_COLS - 1 && matches > 2)){
+        else if( (board[r][c].matchesWith(tokenTypeToMatchAgainst) == false && matches >= 3)){// || (c == BOARD_COLS - 1 && matches > 2)){
         //else if( (board[r][c].getType() != type && matches >= 3)){// || (c == BOARD_COLS - 1 && matches > 2)){
           markedAtLeast3Gems = true;
-           //sprintln("marker index: " +markerIndex );
           
           for(int gemR = markerIndex; gemR < markerIndex + matches; gemR++){
             board[gemR][c].kill();//markForDeletion();
-            
-            // TODO: fix AOOB
-            // Num format exception
-             numMatchedGems[board[gemR][c].getType()]++;
+            //numMatchedGems[board[gemR][c].getType()]++;
           }
           matches = 1;
           markerIndex = r;
-          type = board[r][c].getType();
+          tokenTypeToMatchAgainst = board[r][c].getType();
         }
       }
       
@@ -737,11 +699,11 @@ public class ScreenGameplay implements IScreen{
                 
         for(int gemR = markerIndex; gemR < markerIndex + matches; gemR++){
           board[gemR][c].kill();//markForDeletion();
-          numMatchedGems[board[gemR][c].getType()]++;
+          //numMatchedGems[board[gemR][c].getType()]++;
         }
       }
     }
-  
+    
     return markedAtLeast3Gems;
   }
   
@@ -749,117 +711,78 @@ public class ScreenGameplay implements IScreen{
     A swap of two gems is only valid if it results in a row or column of 3 or more 
     gems of the same type getting lined up.
   
-    We call this just after the player has swapped gems. We check to see if the swap was valid and if it isn't we swap the gems back.
+    We call this just after the player has swapped tokens.
+    We check to see if the swap was valid and if it isn't we swap the tokens back.
     
-    This is also called when we are trying to determine if there are actually any valid swaps left on the board. If not, the board
-    needs to get reset.
+    This is also called when we are trying to determine if there are actually any valid
+    swaps left on the board. If not, the boardneeds to get reset.
   */
-  public boolean isValidSwap(Token t1, Token t2){
+  public boolean wasValidSwap(Token t1, Token t2){
     
-    if(isCloseEnoughForSwap(t1, t2)){
-            
-      if( matchesLeft(t1) + matchesRight(t1) >= 2){
+    // When the player selects a token on the other side of the board,
+    // we still call wasValidSwap, which checks here if the tokens are too
+    // far apart to match.
+    if(isCloseEnoughForSwap(t1, t2) == false){
+      return false;
+    }
+    
+    if( (numMatchesSideways(t1, LEFT) + numMatchesSideways(t1, RIGHT)) >= 2 || 
+        (numMatchesSideways(t2, LEFT) + numMatchesSideways(t2, RIGHT)) >= 2 ||
+        (numMatchesUpDown(t1, UP)     + numMatchesUpDown(t1, DOWN)) >= 2    ||
+        (numMatchesUpDown(t2, UP)     + numMatchesUpDown(t2, DOWN)) >= 2){
         return true;
-      }
-  
-      if( matchesLeft(t2) + matchesRight(t2) >= 2){
-        return true;
-      }
-      
-      if( matchesDown(t1) + matchesUp(t1) >= 2){
-        return true;
-      }
-  
-      if( matchesDown(t2) + matchesUp(t2) >= 2){
-        return true;
-      }
     }
     return false;
   }
   
   /*
+    
   */
-  public void deselectTokens(){
+  public void deselectCurrentTokens(){
     if(currToken1 != null) currToken1.setSelect(false);
     if(currToken2 != null) currToken2.setSelect(false);
     currToken1 = null;
     currToken2 = null;
   }
   
-  /**
-    We can only match up until the visible part of the board
-    returns the number of matching types excluding this one.
-  */
-  public int matchesUp(Token token){
-    int r = token.getRow();
-    int matchesFound = 0;
-    int type = token.getType();
-    int tokenColumn = token.getColumn();
-   
-    while(r >= START_ROW_INDEX && board[r][tokenColumn].matchesWith(type)){
-    //  while(r >= START_ROW_INDEX && board[r][tokenColumn].getType() == type){
-      matchesFound++;
-      r--;
-    }
-    
-    return matchesFound == 0 ? 0 : matchesFound -1;  
-  }
-  
-  /**
-   */
-  public int matchesRight(Token token){
-    int col = token.getColumn();
-    int matchesFound = 0;
-    int type = token.getType();
-    int currRow = token.getRow();
-    
-    while(col < BOARD_COLS && board[currRow][col].matchesWith(type)){
-    //  while(col < BOARD_COLS && board[currRow][col].getType() == type){
-      matchesFound++;
-      col++;
-    }
-    
-    return matchesFound-1;
-  }
-  
   /*
-   * Return how many tokens match this one on its left side
+   * Return how many tokens match this one on its left or right side
    * Does not include the count of the token itself.
    */
-  public int matchesLeft(Token token){
-    int col = token.getColumn();
+  public int numMatchesSideways(Token token, int direction){
+    int currColumn = token.getColumn();
+    int tokenRow = token.getRow();
     int matchesFound = 0;
     int type = token.getType();
-    int tokenRow = token.getRow();
     
     // Watch for going out of bounds
-    while(col >= 0 && board[tokenRow][col].matchesWith(type)){
-    //  while(col >= 0 && board[tokenRow][col].getType() == type){
+    while(currColumn >= 0 && currColumn < BOARD_COLS && board[tokenRow][currColumn].matchesWith(type)){
       matchesFound++;
-      col--;
+      currColumn += direction;
     }
-    
+
     // matchesFound included the token we started with to
     // keep the code in this funciton short, but we have to
     // only return the number of matched tokens excluding it.
     return matchesFound - 1;
   }
   
-  /**
+  /*
+      We can only match up until the visible part of the board
+      returns the number of matching types excluding this one.
   */
-  public int matchesDown(Token token){
+  public int numMatchesUpDown(Token token, int direction){
     int row = token.getRow();
     int matchesFound = 0;
     int type = token.getType();
     int tokenColumn = token.getColumn();
-    
-    while(row < BOARD_ROWS && board[row][tokenColumn].matchesWith(type)){
-    //  while(row < BOARD_ROWS && board[row][tokenColumn].getType() == (type)){
+   
+    while(row >= START_ROW_INDEX && row < BOARD_ROWS && board[row][tokenColumn].matchesWith(type)){
       matchesFound++;
-      row++;
+      row += direction;
     }
     
-    return matchesFound - 1;
+    return matchesFound -1;
   }
   
   /**
@@ -879,18 +802,14 @@ public class ScreenGameplay implements IScreen{
     token2.swap(token1);
   }
   
-  
-  
-  /*
-   */
-  void resetGemMatchCount(){
-    for(int i = 0; i < numTokenTypesOnBoard + 1; i++){
-      numMatchedGems[i] = 0;
-    }
-  }
+  //void resetGemMatchCount(){
+  //  for(int i = 0; i < numTokenTypesOnBoard + 1; i++){
+  //    numMatchedGems[i] = 0;
+  //  }
+  //}
   
   /*
-   */
+  */
   void fillBoardWithRandomTokens(){
     for(int r = 0; r < BOARD_ROWS; r++){
       for(int c = 0; c < BOARD_COLS; c++){
@@ -900,17 +819,15 @@ public class ScreenGameplay implements IScreen{
         board[r][c] = token;
       }
     }
-  
-    int safeCounter = 0;
     
     // Ugly way of making sure there are no immediate matches, but it works for now.
     do{
       markTokensForRemoval();
       removeMarkedTokens(false);
       fillHoles();
-      safeCounter++;
-    }while(markTokensForRemoval() == true);// && safeCounter < 20 );
+    }while(markTokensForRemoval() == true);
     
+    // Add the appropriate number of gems the tokens
     for(int i = 0; i < numGemsOnBoard; i++){
       addGemToQueuedToken();
     }  
@@ -941,8 +858,6 @@ public class ScreenGameplay implements IScreen{
         }
       }
     }
-    
-    //image(boardImage, -30, 190);
     
     // Draw the visible part to the player
     for(int r = START_ROW_INDEX; r < BOARD_ROWS; r++){
@@ -978,7 +893,6 @@ public class ScreenGameplay implements IScreen{
   /*
    */
   void removeMarkedTokens(boolean doDyingAnimation){
-    println("removeMarkedTokens");
     
     // Now delete everything marked for deletion
     for(int r = 0; r < BOARD_ROWS; r++){
@@ -1018,11 +932,26 @@ public class ScreenGameplay implements IScreen{
     Keyboard.setKeyDown(keyCode, false);
   }
   
+  /*
+      The user can only go to the next level if they have
+      destroyed the number stored in gemsRequiredForLevel.
+      
+      When the player goes to the next level, the user is given:
+      - A bit more time than the previous level
+      - Greater number of gems on board at a given time
+      - Sometimes the number of gem types increase
+  */
   void goToNextLevel(){
-    currLevel++;  
-    gemsRequiredForLevel += 5;
+    score = 0;
     gemCounter = 0;
-    levelTimeLeft.setTime(5, 00);
+
+    //numMatchedGems = new int[numTokenTypesOnBoard];
+    
+    currLevel++;
+    gemsRequiredForLevel += 5;
+    
+    // Still playing around with this to make later levels challenging.
+    levelCountDownTimer.setTime(2 + (gemsRequiredForLevel/2) , 00);
   
     if(currLevel == 4){
       numTokenTypesOnBoard++;
@@ -1031,5 +960,6 @@ public class ScreenGameplay implements IScreen{
     numGemsOnBoard = currLevel + 1;
     
     fillBoardWithRandomTokens();
+    //resetGemMatchCount();
   }
 }
