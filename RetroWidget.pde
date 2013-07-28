@@ -15,7 +15,6 @@ public abstract class RetroWidget{
     x = y = 0;
     w = h = 0;
     visible = true;
-    //defaultParent = new RetroPanel(0, 0, width, height);
     parent = null;
     debugDraw = false;
   }

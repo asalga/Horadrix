@@ -210,7 +210,6 @@ public class Token{
   }
   
   public void destroy(){
-    //println("destroyed");
     deathTicker = new Ticker();
     //animTicker = new Ticker();
   }
@@ -258,7 +257,7 @@ public class Token{
     //  called on update and here as well. Otherwise the delta is 0.
     ///
     if(animTicker != null){
-      animTicker.tick();
+  //    animTicker.tick();
     }
     
     //if(animTicker != null && animTicker.getTotalTime() > 0.05f){

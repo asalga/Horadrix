@@ -313,7 +313,7 @@ public class ScreenGameplay implements IScreen{
     debug.addString("score: " + score);
     debug.addString("Level: " + currLevel);
     debug.addString("destroyed: " + tokensDestroyed);
-    //debug.addString("FPS: " + frameRate);
+    debug.addString("FPS: " + frameRate);
     debug.addString(gemCounter + "/" + gemsRequiredForLevel);
     
     // Add a leading zero if seconds is a single digit
@@ -870,7 +870,7 @@ public class ScreenGameplay implements IScreen{
     for(int r = 0; r < START_ROW_INDEX; r++){
       for(int c = 0; c < BOARD_COLS; c++){
         if(board[r][c].isMoving() == false){
-          board[r][c].draw();
+         // board[r][c].draw();
         }
       }
     }

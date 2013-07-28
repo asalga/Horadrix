@@ -28,6 +28,7 @@ public class ScreenSplash implements IScreen{
     creditsLabel.pixelsFromBottomLeft(0, 0);
 
     loadingLabel = new RetroLabel(solarWindsFont);
+    loadingLabel.setHorizontalTrimming(true);
     loadingLabel.setText("Loading....");
     loadingLabel.pixelsFromCenter(0, 50);
   }
