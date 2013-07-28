@@ -313,7 +313,7 @@ public class Token{
             pushMatrix();
             resetMatrix();
             
-            scaleSize += animTicker.getDeltaSec() * 15.0f;
+            scaleSize += animTicker.getDeltaSec() * 2.0f;
             
             // TODO: Fix me
             //println("animTicker ==> " + animTicker.getDeltaSec() * 10.0f);
@@ -346,7 +346,8 @@ public class Token{
           if(hasGem()){
             pushStyle();
             fill(33, 60, 90, 255);
-            noStroke();
+            noFill();
+            stroke(255);
             rect(0,0,TOKEN_SIZE, TOKEN_SIZE);
             popStyle();
           }
