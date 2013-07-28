@@ -42,9 +42,9 @@ public class RetroPanel extends RetroWidget{
   /*
       Render widget from the top center relative to parent.
   */
-  public void pixelsFromTop(int pixels){
+  public void pixelsFromTop(int ypixels){
     x = width/2 - w/2;
-    y = pixels;
+    y = ypixels;
   }
   
   public void pixelsFromBottomLeft(int bottomPixels, int leftPixels){
