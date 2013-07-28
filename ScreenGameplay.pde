@@ -8,6 +8,8 @@ public class ScreenGameplay implements IScreen{
   // Tokens that have been remove from the board, but still need to be rendered for their
   // death animation.
   ArrayList<Token> dyingTokens;
+  
+  ArrayList<Layer> layers;
 
   // When a match is created, the matched tokens are removed from the board array
   // and 'float' above the board and drop down until they arrive where they need to go.
@@ -80,6 +82,16 @@ public class ScreenGameplay implements IScreen{
   
     floatingTokens = new ArrayList<Token>();
     dyingTokens = new ArrayList<Token>();
+    
+    
+    //
+    layers = new ArrayList<Layer>();
+    /*Layer bkLayer = new BackgroundLayer();
+    layers.add(bkLayer);
+    
+    Layer hudLayer = new HUDLayer();
+    observers.add(hudLayer);*/
+    
   
     debugTicker = new Ticker();
     debug = new Debugger();
