@@ -309,7 +309,7 @@ public class ScreenGameplay implements IScreen{
       dropTokens();
       
       if(validSwapExists() == false){
-        //println("no more moves available!");
+        debugPrint("No more moves available");
       }
       
       //if(markTokensForRemoval()){

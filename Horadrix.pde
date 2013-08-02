@@ -10,6 +10,8 @@
 
 import ddf.minim.*;
 
+final boolean DEBUG_CONSOLE_ON = false;
+
 // This includes the entire board, including the 'queued' tokens not visible
 // to the user, that sit above the token the user interacts with.
 final int BOARD_COLS = 8;
@@ -30,7 +32,14 @@ PApplet globalApplet;
 Token[][] board = new Token[BOARD_ROWS][BOARD_COLS];
   
 IScreen currScreen;
-  
+
+// Wrap println so we can easily disable all console output on release
+void debugPrint(String str){
+  if(DEBUG_CONSOLE_ON){
+    println(str);
+  }
+}
+
 void setup(){
   size(START_X + TOKEN_SIZE * BOARD_COLS, START_Y + TOKEN_SIZE * BOARD_ROWS);
   
