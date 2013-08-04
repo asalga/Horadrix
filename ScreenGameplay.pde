@@ -86,6 +86,9 @@ public class ScreenGameplay implements IScreen{
     
     //
     layers = new ArrayList<Layer>();
+    
+    layers.add( new HUDLayer());
+    
     /*Layer bkLayer = new BackgroundLayer();
     layers.add(bkLayer);
     
@@ -161,13 +164,16 @@ public class ScreenGameplay implements IScreen{
     popStyle();
     popMatrix();
     
+    layers.get(0).draw();
+    
     debug.draw();
   }
   
   /**
    */
   public void update(){
-      
+     layers.get(0).update();
+       
     // Once the player meets their quota...
     if(gemCounter >= gemsRequiredForLevel){
       goToNextLevel();    

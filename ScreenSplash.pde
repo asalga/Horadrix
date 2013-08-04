@@ -15,6 +15,8 @@ public class ScreenSplash implements IScreen{
   public ScreenSplash(){
     ticker = new Ticker();
     screenAlive = true;
+    
+    // TODO: conver this to a singleton or factory.
     solarWindsFont = new RetroFont("data/fonts/solarwinds.png", 7, 8, 1);
     
     mainTitleLabel = new RetroLabel(solarWindsFont);

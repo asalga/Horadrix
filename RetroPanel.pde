@@ -47,6 +47,15 @@ public class RetroPanel extends RetroWidget{
     y = ypixels;
   }
   
+  /*
+    
+  */
+  public void pixelsFromTopLeft(int yPixels, int xPixels){
+    RetroWidget p = getParent();
+    x = xPixels;
+    y = yPixels;
+  }
+  
   public void pixelsFromBottomLeft(int bottomPixels, int leftPixels){
     RetroWidget p = getParent();
     y = p.y + p.h - h + bottomPixels;

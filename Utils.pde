@@ -21,7 +21,6 @@ public static class Utils{
     
     float distanceBetween = result.mag();
     return distanceBetween < (circle1Radius/2.0 + circle2Radius/2.0);
-    
   }
   
   public static float Lerp(float a, float b, float p){
