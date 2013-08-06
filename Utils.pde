@@ -35,7 +35,7 @@ public static class Utils{
   }
   
   /**
-  * Mostly used for adding zeros to number in string format, but general enough to be
+  * Mostly used for adding zeros to a number in string format, but general enough to be
   * used for other purposes.
   */
   public static String prependStringWithString(String baseString, String prefix, int newStrLength){

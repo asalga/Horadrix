@@ -3,13 +3,13 @@
     
     
 */
-public class ScreenGameplay implements IScreen{
+public class ScreenGameplay implements IScreen, Subject{
   
   // Tokens that have been remove from the board, but still need to be rendered for their
   // death animation.
   ArrayList<Token> dyingTokens;
   
-  ArrayList<Layer> layers;
+  ArrayList<LayerObserver> layerObserver;
 
   // When a match is created, the matched tokens are removed from the board array
   // and 'float' above the board and drop down until they arrive where they need to go.
@@ -73,6 +73,23 @@ public class ScreenGameplay implements IScreen{
     
   int score = 0;
   
+  public void addObserver(LayerObserver o){
+    layerObserver.add(o);
+  
+    // recalculate indices
+  }
+  
+  public void removeObserver(LayerObserver o){
+    // recalc
+  }
+  
+  public void notifyObservers(){
+    for(int i = 0; i < layerObserver.size(); i++){
+    layerObserver.get(i).notifyObserver();
+    }
+  }
+  
+  
   /**
   */
   ScreenGameplay(){
@@ -83,11 +100,8 @@ public class ScreenGameplay implements IScreen{
     floatingTokens = new ArrayList<Token>();
     dyingTokens = new ArrayList<Token>();
     
-    
     //
-    layers = new ArrayList<Layer>();
-    
-    layers.add( new HUDLayer());
+    layerObserver = new ArrayList<LayerObserver>();
     
     /*Layer bkLayer = new BackgroundLayer();
     layers.add(bkLayer);
@@ -164,7 +178,9 @@ public class ScreenGameplay implements IScreen{
     popStyle();
     popMatrix();
     
-    layers.get(0).draw();
+    if(layerObserver != null){
+      layerObserver.get(0).draw();
+    }
     
     debug.draw();
   }
@@ -172,7 +188,7 @@ public class ScreenGameplay implements IScreen{
   /**
    */
   public void update(){
-     layers.get(0).update();
+     //layers.get(0).update();
        
     // Once the player meets their quota...
     if(gemCounter >= gemsRequiredForLevel){
@@ -328,7 +344,7 @@ public class ScreenGameplay implements IScreen{
     //pushMatrix();
     resetMatrix();
     //debug.addString("debug time: " + debugTicker.getTotalTime());
-    debug.addString("score: " + score);
+    debug.addString("");// + score);
     debug.addString("Level: " + currLevel);
     debug.addString("destroyed: " + tokensDestroyed);
     debug.addString("FPS: " + frameRate);
@@ -464,10 +480,25 @@ public class ScreenGameplay implements IScreen{
     }
   }
   
+  
+  
+  public int getScore(){
+    return score;
+  }
+  
+  
+  
+  public void addToScore(int offset){
+    score += offset;
+    notifyObservers();
+  }
+  
   /*
    * 
    */
   void animateSwapTokens(Token t1, Token t2){
+    
+    addToScore(99);
     
     // We need to cache these so we get get the wrong
     // values when calling animateTo.

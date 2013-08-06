@@ -54,7 +54,14 @@ void update(){
   currScreen.update();
   
   if(currScreen.getName() == "splash" && currScreen.isAlive() == false){
-    currScreen = new ScreenGameplay();
+    ScreenGameplay gameplay = new ScreenGameplay();
+    
+    currScreen = gameplay;
+    
+    LayerObserver hudLayer = new HUDLayer(gameplay);
+    gameplay.addObserver(hudLayer);
+    
+    //BKLayer bkLayer = new BKLayer();
   }
 }
 

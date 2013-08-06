@@ -36,8 +36,7 @@ public class Ticker{
     }
   }
   
-  public void setTime(int min, int sec){
-    
+  public void setTime(int min, int sec){    
     totalTime = min * 60 + sec;
   }
   
