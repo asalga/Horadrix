@@ -46,8 +46,7 @@ public class ScreenGameplay implements IScreen, Subject{
   int gemCounter = 0;
   int gemsRequiredForLevel = 0;
   
-  // This is immediately incremented in the ctor by calling
-  // goToNextLevel().
+  // This is immediately incremented in the ctor by calling goToNextLevel().
   int currLevel = 0;
   
   boolean waitingForTokensToFall = false;
@@ -131,7 +130,7 @@ public class ScreenGameplay implements IScreen, Subject{
   /*
   */
   public void draw(){
-    background(100);
+    background(0);
     
     // HACK: This line is here as a workaround a bug in Processing.js
     // If removed, the board would translate diagonally on the canvas.
@@ -173,7 +172,7 @@ public class ScreenGameplay implements IScreen, Subject{
     // above the visible board. Other cases, I want that part covered.
     // for example, when tokens are falling. These lines of code do just that.
     pushStyle();
-    fill(100);
+    fill(0);
     rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
     popStyle();
     popMatrix();
@@ -344,15 +343,18 @@ public class ScreenGameplay implements IScreen, Subject{
     //pushMatrix();
     resetMatrix();
     //debug.addString("debug time: " + debugTicker.getTotalTime());
-    debug.addString("");// + score);
-    debug.addString("Level: " + currLevel);
-    debug.addString("destroyed: " + tokensDestroyed);
-    debug.addString("FPS: " + frameRate);
-    debug.addString(gemCounter + "/" + gemsRequiredForLevel);
+    //debug.addString("");// + score);
+    //debug.addString("Level: " + currLevel);
+    //debug.addString("destroyed: " + tokensDestroyed);
+    //debug.addString("FPS: " + frameRate);
+    //debug.addString(gemCounter + "/" + gemsRequiredForLevel);
     
     // Add a leading zero if seconds is a single digit
     String secStr = "";
+    
     int seconds = (int)levelCountDownTimer.getTotalTime() % 60;
+    
+    notifyObservers();
     
     if(seconds <= 9){
       secStr  = Utils.prependStringWithString( "" + seconds, "0", 2);
@@ -361,8 +363,7 @@ public class ScreenGameplay implements IScreen, Subject{
       secStr = "" + seconds;
     }
     
-    debug.addString( "" + (int)(levelCountDownTimer.getTotalTime()/60) + ":" + secStr  );
-    
+    //debug.addString( "" + (int)(levelCountDownTimer.getTotalTime()/60) + ":" + secStr  );
     //for(int i = 0; i < numTokenTypesOnBoard; i++){
     //  debug.addString("color: " + numMatchedGems[i]);
     //}
@@ -480,13 +481,17 @@ public class ScreenGameplay implements IScreen, Subject{
     }
   }
   
-  
-  
   public int getScore(){
     return score;
   }
   
+  public int getLevelTimeLeft(){
+    return (int)levelCountDownTimer.getTotalTime();
+  }
   
+  public int getLevel(){
+    return currLevel;
+  }
   
   public void addToScore(int offset){
     score += offset;

@@ -60,8 +60,6 @@ void update(){
     
     LayerObserver hudLayer = new HUDLayer(gameplay);
     gameplay.addObserver(hudLayer);
-    
-    //BKLayer bkLayer = new BKLayer();
   }
 }
 

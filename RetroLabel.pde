@@ -85,6 +85,8 @@ public class RetroLabel extends RetroPanel{
   */
   public void draw(){
     
+    super.draw();
+    
     // Return if there is nothing to draw
     if(text == null || visible == false){
       return;

@@ -52,8 +52,17 @@ public class RetroPanel extends RetroWidget{
   */
   public void pixelsFromTopLeft(int yPixels, int xPixels){
     RetroWidget p = getParent();
-    x = xPixels;
-    y = yPixels;
+    x = p.x + xPixels;
+    y = p.y + yPixels;
+  }
+  
+  /*
+  */
+  public void pixelsFromTopRight(int yPixels, int xPixels){
+    RetroWidget p = getParent();
+    println(w);
+    x = p.x + p.w - w + xPixels;
+    y = p.y + yPixels;
   }
   
   public void pixelsFromBottomLeft(int bottomPixels, int leftPixels){
@@ -75,7 +84,8 @@ public class RetroPanel extends RetroWidget{
     
     pushStyle();
     noFill();
-    stroke(255, 0, 0,32);
+    stroke(255, 0, 0, 255);
+    strokeWeight(1);
     rect(x, y, w, h);
     popStyle();
     
