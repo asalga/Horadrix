@@ -32,12 +32,12 @@ public class HUDLayer implements LayerObserver{
   }
   
   public void draw(){
-    pushMatrix();
-    scale(1);
+   // pushMatrix();
+    //scale(1);
     scoreLabel.draw();
     timeLabel.draw();
     levelLabel.draw();
-    popMatrix();
+   // popMatrix();
   }
   
   //

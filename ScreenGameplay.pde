@@ -132,11 +132,7 @@ public class ScreenGameplay implements IScreen, Subject{
   public void draw(){
     background(0);
     
-    // HACK: This line is here as a workaround a bug in Processing.js
-    // If removed, the board would translate diagonally on the canvas.
-    // when tokens are removed.
-    resetMatrix();
-    
+
     pushMatrix();
     translate(START_X, START_Y);
     translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
@@ -167,7 +163,7 @@ public class ScreenGameplay implements IScreen, Subject{
     for(int i = 0; i < dyingTokens.size(); i++){
       dyingTokens.get(i).draw();
     }
-    
+
     // In some cases it is necessary to see the non-visible tokens
     // above the visible board. Other cases, I want that part covered.
     // for example, when tokens are falling. These lines of code do just that.
@@ -175,8 +171,14 @@ public class ScreenGameplay implements IScreen, Subject{
     fill(0);
     rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
     popStyle();
+
     popMatrix();
     
+    // HACK: This line is here as a workaround a bug in Processing.js
+    // If removed, the board would translate diagonally on the canvas.
+    // when tokens are removed.
+    resetMatrix();
+      
     if(layerObserver != null){
       layerObserver.get(0).draw();
     }
