@@ -21,8 +21,10 @@ public abstract class RetroWidget{
   
   public RetroWidget getParent(){
     if(parent != null){
+      println("not default");
       return parent;
     }
+    println("default");
     return new RetroPanel(0, 0, width, height);
   }
   
@@ -35,6 +37,7 @@ public abstract class RetroWidget{
   }
     
   public void setParent(RetroWidget widget){
+    println("setting parent");
     parent = widget;
     //defaultParent = null;
   }

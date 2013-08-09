@@ -21,6 +21,10 @@ var Utils = {
   	return a * (1-p) + (b * p);
   },
   
+  floatToInt:function(f){
+    return Math.floor(f);
+  },
+  
   /*
   */
   prependStringWithString: function(baseString, prefix, newStrLength){

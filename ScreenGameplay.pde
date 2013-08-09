@@ -118,7 +118,7 @@ public class ScreenGameplay implements IScreen, Subject{
     drawBoxUnderCursor = false;
     
     levelCountDownTimer = new Ticker();
-    levelCountDownTimer.setTime(5, 0);
+    levelCountDownTimer.setTime(5, 12);
     levelCountDownTimer.setDirection(-1);
     
     fillBoardWithRandomTokens();
@@ -1021,7 +1021,7 @@ public class ScreenGameplay implements IScreen, Subject{
     gemsRequiredForLevel += 5;
     
     // Still playing around with this to make later levels challenging.
-    levelCountDownTimer.setTime(2 + (gemsRequiredForLevel/2) , 00);
+    levelCountDownTimer.setTime(2 + (gemsRequiredForLevel/2) , 11);
   
     if(currLevel == 4){
       numTokenTypesOnBoard++;

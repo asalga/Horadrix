@@ -34,6 +34,10 @@ public static class Utils{
     return ch;
   }
   
+  public static int floatToInt(float f){
+    return (int)f;
+  }
+  
   /**
   * Mostly used for adding zeros to a number in string format, but general enough to be
   * used for other purposes.

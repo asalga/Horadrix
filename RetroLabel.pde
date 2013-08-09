@@ -8,7 +8,7 @@ public class RetroLabel extends RetroPanel{
   //public static final int JUSTIFY_RIGHT = 1;
 
   private final int NEWLINE = 10;
-  private boolean dirty;
+
   private String text;
   private RetroFont font;
   
@@ -71,8 +71,8 @@ public class RetroLabel extends RetroPanel{
   
   /**
   */
-  private int getWordWidth(String word){
-    return word.length() * font.getGlyphWidth() + (word.length() * horizontalSpacing );
+  private int getStringWidth(String str){
+    return str.length() * font.getGlyphWidth() + (str.length() * horizontalSpacing );
   }
   
   //public void setJustification(int justify){
@@ -142,7 +142,7 @@ public class RetroLabel extends RetroPanel{
       
       // Iterate over all the words
       for(int word = 0; word < words.length; word++){
-        int wordWidth = getWordWidth(words[word]);
+        int wordWidth = getStringWidth(words[word]);
         
         if(justification == JUSTIFY_LEFT){
           if(word != 0 && currXPos + wordWidth + 0 >  getParent().getWidth() ){
