@@ -1744,7 +1744,7 @@ public class RetroPanel extends RetroWidget{
       Render widget from the top center relative to parent.
   */
   public void pixelsFromTop(int yPixels){
-    println("pixels from top()");
+    //println("pixels from top()");
     RetroWidget p = getParent();
     x = (p.w/2) - (w/2);
     y = yPixels;
@@ -1797,7 +1797,9 @@ public class RetroPanel extends RetroWidget{
     
     if(dirty == true){
       dirty = false;
-      println("No longer dirty");
+      if(DEBUG_CONSOLE_ON){
+        println("No longer dirty");
+      }
       if(anchor == 1)
       pixelsFromTop(10);
     }
@@ -1846,10 +1848,10 @@ public abstract class RetroWidget{
   
   public RetroWidget getParent(){
     if(parent != null){
-      println("not default");
+      //println("not default");
       return parent;
     }
-    println("default");
+    //println("default");
     return new RetroPanel(0, 0, width, height);
   }
   
@@ -1862,7 +1864,7 @@ public abstract class RetroWidget{
   }
     
   public void setParent(RetroWidget widget){
-    println("setting parent");
+    //println("setting parent");
     parent = widget;
     //defaultParent = null;
   }
@@ -2176,7 +2178,7 @@ public static class TokenType{
 
 import ddf.minim.*;
 
-final boolean DEBUG_CONSOLE_ON = true;
+final boolean DEBUG_CONSOLE_ON = false;
 
 // This includes the entire board, including the 'queued' tokens not visible
 // to the user, that sit above the token the user interacts with.
