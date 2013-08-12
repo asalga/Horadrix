@@ -10,7 +10,7 @@
 
 import ddf.minim.*;
 
-final boolean DEBUG_CONSOLE_ON = true;
+final boolean DEBUG_CONSOLE_ON = false;
 
 // This includes the entire board, including the 'queued' tokens not visible
 // to the user, that sit above the token the user interacts with.
