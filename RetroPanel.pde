@@ -54,7 +54,7 @@ public class RetroPanel extends RetroWidget{
       Render widget from the top center relative to parent.
   */
   public void pixelsFromTop(int yPixels){
-    println("pixels from top()");
+    //println("pixels from top()");
     RetroWidget p = getParent();
     x = (p.w/2) - (w/2);
     y = yPixels;
@@ -107,7 +107,9 @@ public class RetroPanel extends RetroWidget{
     
     if(dirty == true){
       dirty = false;
-      println("No longer dirty");
+      if(DEBUG_CONSOLE_ON){
+        println("No longer dirty");
+      }
       if(anchor == 1)
       pixelsFromTop(10);
     }
