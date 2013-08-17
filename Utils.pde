@@ -5,6 +5,13 @@
 */
 public static class Utils{
   
+  private static int id = -1;
+  
+  
+  public static int nextID(){
+    return id++;
+  }
+  
   /*
    * We use Math.random() instead of Processing's random() to prevent
    * having to make this class a singleton and take a Papplet. That code

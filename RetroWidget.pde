@@ -1,5 +1,6 @@
 /*
- */
+
+*/
 public abstract class RetroWidget{
 
   // force access from getter so that the appropriate parent
@@ -21,10 +22,8 @@ public abstract class RetroWidget{
   
   public RetroWidget getParent(){
     if(parent != null){
-      //println("not default");
       return parent;
     }
-    //println("default");
     return new RetroPanel(0, 0, width, height);
   }
   
@@ -53,6 +52,10 @@ public abstract class RetroWidget{
   public void setPosition(int x, int y){
     this.x = x;
     this.y = y;
+  }
+  
+  public void setDebug(boolean debugOn){
+    debugDraw = debugOn;
   }
   
   public abstract void draw();

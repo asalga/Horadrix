@@ -3,6 +3,20 @@
  */
 var Utils = {
 
+  /*
+    Used to identify tokens.
+  */
+  nextID: function(){
+    var inc = 
+      (function(){
+         var id = -1;
+         return function(){
+           id++;
+         }
+       })();
+    return inc();
+  },
+
   /*   
    */
   charCodeAt: function(ch){
@@ -42,5 +56,5 @@ var Utils = {
     
     return baseString;
   }
-
 }
+

@@ -21,8 +21,12 @@ final int BOARD_ROWS = 16;
 final int START_ROW_INDEX = 8;
 
 // Where on the canvas the tokens start to be rendered.
-final int START_X = 100;//200;
-final int START_Y = 0;//-20; // 20 - -220
+final int START_X = 140;//200;
+
+
+final int START_Y =  20 - 200;
+
+
 final int TOKEN_SIZE = 28;
 final int TOKEN_SPACING = 3;
 
@@ -41,7 +45,7 @@ void debugPrint(String str){
 }
 
 void setup(){
-  size(START_X + TOKEN_SIZE * BOARD_COLS, START_Y + TOKEN_SIZE * BOARD_ROWS);
+  size(START_X + TOKEN_SIZE * BOARD_COLS, START_Y + TOKEN_SIZE * BOARD_ROWS + 40);
   
   // The style of the game is pixel art, so we don't want anti-aliasing
   noSmooth();

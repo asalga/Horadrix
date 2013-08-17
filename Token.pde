@@ -11,6 +11,8 @@ public class Token{
   private Ticker ticker;
   private Ticker deathTicker;
   
+  // Used for debugging
+  private int id;
   
   // TODO: find better way of doing this?
   // When the token is falling, we need it to be a float
@@ -48,6 +50,8 @@ public class Token{
   
   public Token(){
     setType(TokenType.NULL);
+    
+    id = Utils.nextID();
     
     isSelected = false;
     isLiving = true;
@@ -103,6 +107,10 @@ public class Token{
   
   public void setType(int t){
     type = t;
+  }
+  
+  public int getID(){
+    return id;
   }
   
   /*public void unMark(){

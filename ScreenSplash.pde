@@ -16,10 +16,10 @@ public class ScreenSplash implements IScreen{
     ticker = new Ticker();
     screenAlive = true;
     
-    // TODO: conver this to a singleton or factory.
-    solarWindsFont = new RetroFont("data/fonts/solarwinds.png", 7, 8, 1);
+    // TODO: convert this to a singleton or factory.
+    solarWindsFont = new RetroFont("data/fonts/solarwinds.png", 14, 16, 2);
     
-   /* mainTitleLabel = new RetroLabel(solarWindsFont);
+    mainTitleLabel = new RetroLabel(solarWindsFont);
     mainTitleLabel.setText("H O R A D R I X");
     mainTitleLabel.pixelsFromTop(150);
     
@@ -32,7 +32,7 @@ public class ScreenSplash implements IScreen{
     loadingLabel = new RetroLabel(solarWindsFont);
     loadingLabel.setHorizontalTrimming(true);
     loadingLabel.setText("Loading....");
-    loadingLabel.pixelsFromCenter(0, 50);*/
+    loadingLabel.pixelsFromCenter(0, 50);
   }
   
   /**
@@ -40,9 +40,9 @@ public class ScreenSplash implements IScreen{
   public void draw(){
     background(0);
     
-   // mainTitleLabel.draw();
-   // creditsLabel.draw();
-   // loadingLabel.draw();
+    mainTitleLabel.draw();
+    creditsLabel.draw();
+    loadingLabel.draw();
   }
   
   public void update(){
