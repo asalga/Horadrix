@@ -3,13 +3,18 @@
  */
 var Utils = {
 
-  id = -1,
-
   /*
     Used to identify tokens.
   */
   nextID: function(){
-    return id++;
+    var inc = 
+      (function(){
+         var id = -1;
+         return function(){
+           id++;
+         }
+       })();
+    return inc();
   },
 
   /*   
@@ -51,5 +56,5 @@ var Utils = {
     
     return baseString;
   }
-
 }
+
