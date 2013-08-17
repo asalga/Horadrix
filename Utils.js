@@ -3,6 +3,15 @@
  */
 var Utils = {
 
+  id = -1,
+
+  /*
+    Used to identify tokens.
+  */
+  nextID: function(){
+    return id++;
+  },
+
   /*   
    */
   charCodeAt: function(ch){
