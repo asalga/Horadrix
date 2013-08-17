@@ -24,6 +24,8 @@ public class ScreenGameplay implements IScreen, Subject{
   private final int UP = -1;
   private final int DOWN = 1;
   
+  private final int TOKEN_SCORE = 100;
+  
   public boolean screenAlive;
   
   // Only for debugging to see which token would be selected
@@ -33,6 +35,8 @@ public class ScreenGameplay implements IScreen, Subject{
   Debugger debug;
   int mouseRowIndex = 0;
   int mouseColumnIndex = 0;
+  int Testing = 0;
+  
   
   Ticker debugTicker;
   Ticker delayTicker;
@@ -69,7 +73,7 @@ public class ScreenGameplay implements IScreen, Subject{
   
   Token currToken1 = null;
   Token currToken2 = null;
-    
+  
   int score = 0;
   
   public void addObserver(LayerObserver o){
@@ -216,8 +220,11 @@ public class ScreenGameplay implements IScreen, Subject{
     for(int i = 0; i < floatingTokens.size(); i++){
       Token token = floatingTokens.get(i);
       token.update();
+      
+      // 
       if(token.arrivedAtDest()){
         token.dropIntoCell();
+        
         markTokensForRemoval();
         delayTicker = new Ticker();
         
@@ -231,8 +238,8 @@ public class ScreenGameplay implements IScreen, Subject{
       }
       waitingForTokensToFall = true;
     }
-  
-  
+    
+    
     // Now, update the two tokens that the user has swapped
     if(swapToken1 != null){
       
@@ -245,8 +252,11 @@ public class ScreenGameplay implements IScreen, Subject{
         swapToken1.dropIntoCell();
         swapToken2.dropIntoCell();
         
+        int matches = getNumCosecutiveMatches(swapToken1, swapToken2);
+        
         // If it was not a valid swap, animate it back from where it came.
-        if(wasValidSwap(swapToken1, swapToken2) == false){          
+        if(matches < 3){
+        //wasValidSwap(swapToken1, swapToken2) == false){          
           int r1 = swapToken1.getRow();
           int c1 = swapToken1.getColumn();
           
@@ -260,14 +270,15 @@ public class ScreenGameplay implements IScreen, Subject{
           swapToken2.setReturning(true);
         }
         
-        // Swap was valid, so get rid of 
+        // Swap was valid
         else{
           swapToken1 = swapToken2 = null;
           
-         // gemRemovalTicker = new Ticker();
+          // gemRemovalTicker = new Ticker();
           markTokensForRemoval();
           removeMarkedTokens(true);
-          //deselectTokens();
+          
+          deselectCurrentTokens();
         }
         
         // Was it valid?
@@ -290,8 +301,9 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
-  
-    // Update the tokens that may need to be GC'ed.
+    
+    // Iterate over all the tokens that are dying and
+    // increase the score.
     for(int i = 0; i < dyingTokens.size(); i++){
       
       dyingTokens.get(i).update();
@@ -303,6 +315,7 @@ public class ScreenGameplay implements IScreen, Subject{
           addGemToQueuedToken();
         }
         
+        addToScore(TOKEN_SCORE);
         dyingTokens.remove(i);
         tokensDestroyed++;
       }
@@ -344,11 +357,9 @@ public class ScreenGameplay implements IScreen, Subject{
     
     //pushMatrix();
     resetMatrix();
+    
     //debug.addString("debug time: " + debugTicker.getTotalTime());
-    //debug.addString("");// + score);
-    //debug.addString("Level: " + currLevel);
     //debug.addString("destroyed: " + tokensDestroyed);
-    //debug.addString("FPS: " + frameRate);
     //debug.addString(gemCounter + "/" + gemsRequiredForLevel);
     
     // Add a leading zero if seconds is a single digit
@@ -495,6 +506,9 @@ public class ScreenGameplay implements IScreen, Subject{
     return currLevel;
   }
   
+  /*
+    As soon as a token is removed, we add to the score.
+  */
   public void addToScore(int offset){
     score += offset;
     notifyObservers();
@@ -503,10 +517,7 @@ public class ScreenGameplay implements IScreen, Subject{
   /*
    * 
    */
-  void animateSwapTokens(Token t1, Token t2){
-    
-    addToScore(99);
-    
+  void animateSwapTokens(Token t1, Token t2){    
     // We need to cache these so we get get the wrong
     // values when calling animateTo.
     int t1Row = t1.getRow();
@@ -532,24 +543,25 @@ public class ScreenGameplay implements IScreen, Subject{
     There may be a case in which there are no valid swap/moves left
     in that case the board needs to be reset.
   */
-  boolean validSwapExists(){
+  private boolean validSwapExists(){
     
     // First check any potential matches in the horizontal
     for(int r = START_ROW_INDEX; r < BOARD_ROWS; r++){
       for(int c = 0; c < BOARD_COLS - 1; c++){
         
-        Token gem1 = board[r][c];
-        Token gem2 = board[r][c + 1];
+        Token t1 = board[r][c];
+        Token t2 = board[r][c + 1];
         
-        swapTokens(gem1, gem2);
+        swapTokens(t1, t2);
         
-        if(wasValidSwap(gem1, gem2)){
-          swapTokens(gem1, gem2);
+        //if(wasValidSwap(gem1, gem2)){
+        if(getNumCosecutiveMatches(t1, t2) >= 3){
+          swapTokens(t1, t2);
           return true;
         }
         // Swap them back
         else{
-          swapTokens(gem1, gem2);
+          swapTokens(t1, t2);
         }
       }
     }
@@ -562,7 +574,7 @@ public class ScreenGameplay implements IScreen, Subject{
         Token gem2 = board[r + 1][c];
         swapTokens(gem1, gem2);
         
-        if(wasValidSwap(gem1, gem2)){
+        if(getNumCosecutiveMatches(gem1, gem2) >= 3){
           swapTokens(gem1, gem2);
           return true;
         }
@@ -575,7 +587,8 @@ public class ScreenGameplay implements IScreen, Subject{
   }
   
   
-  
+  /*
+  */
   int getRandomToken(){
     return Utils.getRandomInt(0, numTokenTypesOnBoard-1);
   }
@@ -677,10 +690,11 @@ public class ScreenGameplay implements IScreen, Subject{
     In some cases, this needs to be corrected, for example, when the game starts, there shouldn't be any
     matches.
   */
-  boolean markTokensForRemoval(){
+  int markTokensForRemoval(){
     
     //
     boolean markedAtLeast3Gems = false;
+    Testing = 0;
     
     // Iterate over the entire board, mark gems for removal
     // Once complete, remove all gems
@@ -714,6 +728,7 @@ public class ScreenGameplay implements IScreen, Subject{
                     
           for(int gemC = markerIndex; gemC < markerIndex + matches; gemC++){
             board[r][gemC].kill();//.markForDeletion();
+            Testing++;
             //numMatchedGems[board[r][gemC].getType()]++;
           }
           matches = 1;
@@ -758,6 +773,7 @@ public class ScreenGameplay implements IScreen, Subject{
           
           for(int gemR = markerIndex; gemR < markerIndex + matches; gemR++){
             board[gemR][c].kill();//markForDeletion();
+            Testing++;
             //numMatchedGems[board[gemR][c].getType()]++;
           }
           matches = 1;
@@ -768,7 +784,7 @@ public class ScreenGameplay implements IScreen, Subject{
       
       if(matches >= 3){
         markedAtLeast3Gems = true;
-                
+        
         for(int gemR = markerIndex; gemR < markerIndex + matches; gemR++){
           board[gemR][c].kill();//markForDeletion();
           //numMatchedGems[board[gemR][c].getType()]++;
@@ -776,7 +792,39 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
-    return markedAtLeast3Gems;
+    //println("matches: " + Testing);
+    return Testing;
+    //return markedAtLeast3Gems;
+  }
+  
+  /*
+    
+  */
+  private int getNumCosecutiveMatches(Token t1, Token t2){
+    // When the player selects a token on the other side of the board,
+    // we still call wasValidSwap, which checks here if the tokens are too
+    // far apart to match.
+    if(isCloseEnoughForSwap(t1, t2) == false){
+      return 0;
+    }
+   
+    int matches = numMatchesSideways(t1, LEFT) + numMatchesSideways(t1, RIGHT);
+    if(matches >= 2){
+      return matches + 1;
+    }
+    
+    matches = numMatchesSideways(t2, LEFT) + numMatchesSideways(t2, RIGHT);
+    if(matches >= 2){
+      return matches + 1;
+    }
+    
+    matches = numMatchesUpDown(t1, UP) + numMatchesUpDown(t1, DOWN);
+    if(matches >= 2){
+      return matches + 1;
+    }
+    
+    matches = numMatchesUpDown(t2, UP) + numMatchesUpDown(t2, DOWN);
+    return matches + 1;
   }
   
   /*
@@ -789,7 +837,7 @@ public class ScreenGameplay implements IScreen, Subject{
     This is also called when we are trying to determine if there are actually any valid
     swaps left on the board. If not, the boardneeds to get reset.
   */
-  public boolean wasValidSwap(Token t1, Token t2){
+  /*private boolean wasValidSwap(Token t1, Token t2){
     
     // When the player selects a token on the other side of the board,
     // we still call wasValidSwap, which checks here if the tokens are too
@@ -805,7 +853,7 @@ public class ScreenGameplay implements IScreen, Subject{
         return true;
     }
     return false;
-  }
+  }*/
   
   /*
     
@@ -897,7 +945,7 @@ public class ScreenGameplay implements IScreen, Subject{
       markTokensForRemoval();
       removeMarkedTokens(false);
       fillHoles();
-    }while(markTokensForRemoval() == true);
+    }while(markTokensForRemoval() > 0);
     
     // Add the appropriate number of gems the tokens
     for(int i = 0; i < numGemsOnBoard; i++){
