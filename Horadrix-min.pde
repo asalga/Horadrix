@@ -1,4 +1,25 @@
 /*
+*/
+public static class FPSTimer{
+
+  private static float resolution;
+  private static int fps;
+  
+  //private static Ticker ticker = new Horadrix.Ticker();
+  
+  public void setResolution(float res){
+    if(res >= 0){
+      resolution = res;
+    }
+  }
+  
+  /*
+  */
+  public int getFPS(){
+    return 4;
+  }
+}
+/*
     Shows the score, level on top of the gameplay screen.
 */
 public class HUDLayer implements LayerObserver{
@@ -8,41 +29,56 @@ public class HUDLayer implements LayerObserver{
   RetroLabel scoreLabel;
   RetroLabel timeLabel;
   RetroLabel levelLabel;
+  RetroLabel FPS;
   
   RetroFont solarWindsFont;
   ScreenGameplay screenGameplay;
   
   public HUDLayer(ScreenGameplay s){
     screenGameplay = s;
-    parent = new RetroPanel(10, 10, width - 20, 350);
+    
+    parent = new RetroPanel(10, 10, width - 20, height - 20);
+    parent.setDebug(false);
     
     solarWindsFont = new RetroFont("data/fonts/solarwinds.png", 7*2, 8*2, 1*2);
     
-    
     scoreLabel = new RetroLabel(solarWindsFont);
    
-    //scoreLabel.setText("-------------");
-    //scoreLabel.setHorizontalTrimming(true);
-    scoreLabel.setHorizontalSpacing(0);   
-    scoreLabel.pixelsFromTop(20);
-     parent.addWidget(scoreLabel);
     
+    scoreLabel.setHorizontalTrimming(true);
+    scoreLabel.setHorizontalSpacing(5);   
+    scoreLabel.pixelsFromTop(5);
+    parent.addWidget(scoreLabel);
+    
+    // Time
     timeLabel = new RetroLabel(solarWindsFont);
     timeLabel.setHorizontalTrimming(true);
     timeLabel.setHorizontalSpacing(2);
     //timeLabel.setText("");
-    timeLabel.pixelsFromTopLeft(30, 5);
+    timeLabel.pixelsFromTopLeft(75, 5);
     parent.addWidget(timeLabel);
     
+    // Level
     levelLabel = new RetroLabel(solarWindsFont);
     levelLabel.setHorizontalTrimming(true);
     levelLabel.pixelsFromTopLeft(60, 5);
     parent.addWidget(levelLabel);
+    
+    // FPS
+    FPS = new RetroLabel(solarWindsFont);
+    FPS.pixelsFromBottomLeft(0, 0);
+    FPS.setText("FPS: 0");
+    //FPS.setHorizontalTrimming(true);
+
+    parent.addWidget(FPS);
   }
   
   public void draw(){
     pushMatrix();
+    
     scale(1);
+    
+    FPS.setText("FPS: " + (int)frameRate);
     parent.draw();
     
     // parent.pixelsFromTopLeft(mouseY, mouseX);
@@ -70,7 +106,7 @@ public class HUDLayer implements LayerObserver{
     int min = Utils.floatToInt(screenGameplay.getLevelTimeLeft() / 60);
     int sec = screenGameplay.getLevelTimeLeft() % 60;
     
-    timeLabel.setText(min + ":" +  (sec < 10 ? "0" : "") + sec);
+    timeLabel.setText("TIME: " + min + ":" +  (sec < 10 ? "0" : "") + sec);
     
     levelLabel.setText("Level:" + screenGameplay.getLevel());
   }
@@ -277,6 +313,8 @@ public class ScreenGameplay implements IScreen, Subject{
   private final int UP = -1;
   private final int DOWN = 1;
   
+  private final int TOKEN_SCORE = 100;
+  
   public boolean screenAlive;
   
   // Only for debugging to see which token would be selected
@@ -286,6 +324,8 @@ public class ScreenGameplay implements IScreen, Subject{
   Debugger debug;
   int mouseRowIndex = 0;
   int mouseColumnIndex = 0;
+  int Testing = 0;
+  
   
   Ticker debugTicker;
   Ticker delayTicker;
@@ -322,7 +362,7 @@ public class ScreenGameplay implements IScreen, Subject{
   
   Token currToken1 = null;
   Token currToken2 = null;
-    
+  
   int score = 0;
   
   public void addObserver(LayerObserver o){
@@ -469,8 +509,11 @@ public class ScreenGameplay implements IScreen, Subject{
     for(int i = 0; i < floatingTokens.size(); i++){
       Token token = floatingTokens.get(i);
       token.update();
+      
+      // 
       if(token.arrivedAtDest()){
         token.dropIntoCell();
+        
         markTokensForRemoval();
         delayTicker = new Ticker();
         
@@ -484,8 +527,8 @@ public class ScreenGameplay implements IScreen, Subject{
       }
       waitingForTokensToFall = true;
     }
-  
-  
+    
+    
     // Now, update the two tokens that the user has swapped
     if(swapToken1 != null){
       
@@ -498,8 +541,11 @@ public class ScreenGameplay implements IScreen, Subject{
         swapToken1.dropIntoCell();
         swapToken2.dropIntoCell();
         
+        int matches = getNumCosecutiveMatches(swapToken1, swapToken2);
+        
         // If it was not a valid swap, animate it back from where it came.
-        if(wasValidSwap(swapToken1, swapToken2) == false){          
+        if(matches < 3){
+        //wasValidSwap(swapToken1, swapToken2) == false){          
           int r1 = swapToken1.getRow();
           int c1 = swapToken1.getColumn();
           
@@ -513,14 +559,15 @@ public class ScreenGameplay implements IScreen, Subject{
           swapToken2.setReturning(true);
         }
         
-        // Swap was valid, so get rid of 
+        // Swap was valid
         else{
           swapToken1 = swapToken2 = null;
           
-         // gemRemovalTicker = new Ticker();
+          // gemRemovalTicker = new Ticker();
           markTokensForRemoval();
           removeMarkedTokens(true);
-          //deselectTokens();
+          
+          deselectCurrentTokens();
         }
         
         // Was it valid?
@@ -543,8 +590,9 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
-  
-    // Update the tokens that may need to be GC'ed.
+    
+    // Iterate over all the tokens that are dying and
+    // increase the score.
     for(int i = 0; i < dyingTokens.size(); i++){
       
       dyingTokens.get(i).update();
@@ -556,6 +604,7 @@ public class ScreenGameplay implements IScreen, Subject{
           addGemToQueuedToken();
         }
         
+        addToScore(TOKEN_SCORE);
         dyingTokens.remove(i);
         tokensDestroyed++;
       }
@@ -597,11 +646,9 @@ public class ScreenGameplay implements IScreen, Subject{
     
     //pushMatrix();
     resetMatrix();
+    
     //debug.addString("debug time: " + debugTicker.getTotalTime());
-    //debug.addString("");// + score);
-    //debug.addString("Level: " + currLevel);
     //debug.addString("destroyed: " + tokensDestroyed);
-    //debug.addString("FPS: " + frameRate);
     //debug.addString(gemCounter + "/" + gemsRequiredForLevel);
     
     // Add a leading zero if seconds is a single digit
@@ -748,6 +795,9 @@ public class ScreenGameplay implements IScreen, Subject{
     return currLevel;
   }
   
+  /*
+    As soon as a token is removed, we add to the score.
+  */
   public void addToScore(int offset){
     score += offset;
     notifyObservers();
@@ -756,10 +806,7 @@ public class ScreenGameplay implements IScreen, Subject{
   /*
    * 
    */
-  void animateSwapTokens(Token t1, Token t2){
-    
-    addToScore(99);
-    
+  void animateSwapTokens(Token t1, Token t2){    
     // We need to cache these so we get get the wrong
     // values when calling animateTo.
     int t1Row = t1.getRow();
@@ -785,24 +832,25 @@ public class ScreenGameplay implements IScreen, Subject{
     There may be a case in which there are no valid swap/moves left
     in that case the board needs to be reset.
   */
-  boolean validSwapExists(){
+  private boolean validSwapExists(){
     
     // First check any potential matches in the horizontal
     for(int r = START_ROW_INDEX; r < BOARD_ROWS; r++){
       for(int c = 0; c < BOARD_COLS - 1; c++){
         
-        Token gem1 = board[r][c];
-        Token gem2 = board[r][c + 1];
+        Token t1 = board[r][c];
+        Token t2 = board[r][c + 1];
         
-        swapTokens(gem1, gem2);
+        swapTokens(t1, t2);
         
-        if(wasValidSwap(gem1, gem2)){
-          swapTokens(gem1, gem2);
+        //if(wasValidSwap(gem1, gem2)){
+        if(getNumCosecutiveMatches(t1, t2) >= 3){
+          swapTokens(t1, t2);
           return true;
         }
         // Swap them back
         else{
-          swapTokens(gem1, gem2);
+          swapTokens(t1, t2);
         }
       }
     }
@@ -815,7 +863,7 @@ public class ScreenGameplay implements IScreen, Subject{
         Token gem2 = board[r + 1][c];
         swapTokens(gem1, gem2);
         
-        if(wasValidSwap(gem1, gem2)){
+        if(getNumCosecutiveMatches(gem1, gem2) >= 3){
           swapTokens(gem1, gem2);
           return true;
         }
@@ -828,7 +876,8 @@ public class ScreenGameplay implements IScreen, Subject{
   }
   
   
-  
+  /*
+  */
   int getRandomToken(){
     return Utils.getRandomInt(0, numTokenTypesOnBoard-1);
   }
@@ -930,10 +979,11 @@ public class ScreenGameplay implements IScreen, Subject{
     In some cases, this needs to be corrected, for example, when the game starts, there shouldn't be any
     matches.
   */
-  boolean markTokensForRemoval(){
+  int markTokensForRemoval(){
     
     //
     boolean markedAtLeast3Gems = false;
+    Testing = 0;
     
     // Iterate over the entire board, mark gems for removal
     // Once complete, remove all gems
@@ -967,6 +1017,7 @@ public class ScreenGameplay implements IScreen, Subject{
                     
           for(int gemC = markerIndex; gemC < markerIndex + matches; gemC++){
             board[r][gemC].kill();//.markForDeletion();
+            Testing++;
             //numMatchedGems[board[r][gemC].getType()]++;
           }
           matches = 1;
@@ -1011,6 +1062,7 @@ public class ScreenGameplay implements IScreen, Subject{
           
           for(int gemR = markerIndex; gemR < markerIndex + matches; gemR++){
             board[gemR][c].kill();//markForDeletion();
+            Testing++;
             //numMatchedGems[board[gemR][c].getType()]++;
           }
           matches = 1;
@@ -1021,7 +1073,7 @@ public class ScreenGameplay implements IScreen, Subject{
       
       if(matches >= 3){
         markedAtLeast3Gems = true;
-                
+        
         for(int gemR = markerIndex; gemR < markerIndex + matches; gemR++){
           board[gemR][c].kill();//markForDeletion();
           //numMatchedGems[board[gemR][c].getType()]++;
@@ -1029,7 +1081,39 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
-    return markedAtLeast3Gems;
+    //println("matches: " + Testing);
+    return Testing;
+    //return markedAtLeast3Gems;
+  }
+  
+  /*
+    
+  */
+  private int getNumCosecutiveMatches(Token t1, Token t2){
+    // When the player selects a token on the other side of the board,
+    // we still call wasValidSwap, which checks here if the tokens are too
+    // far apart to match.
+    if(isCloseEnoughForSwap(t1, t2) == false){
+      return 0;
+    }
+   
+    int matches = numMatchesSideways(t1, LEFT) + numMatchesSideways(t1, RIGHT);
+    if(matches >= 2){
+      return matches + 1;
+    }
+    
+    matches = numMatchesSideways(t2, LEFT) + numMatchesSideways(t2, RIGHT);
+    if(matches >= 2){
+      return matches + 1;
+    }
+    
+    matches = numMatchesUpDown(t1, UP) + numMatchesUpDown(t1, DOWN);
+    if(matches >= 2){
+      return matches + 1;
+    }
+    
+    matches = numMatchesUpDown(t2, UP) + numMatchesUpDown(t2, DOWN);
+    return matches + 1;
   }
   
   /*
@@ -1042,7 +1126,7 @@ public class ScreenGameplay implements IScreen, Subject{
     This is also called when we are trying to determine if there are actually any valid
     swaps left on the board. If not, the boardneeds to get reset.
   */
-  public boolean wasValidSwap(Token t1, Token t2){
+  /*private boolean wasValidSwap(Token t1, Token t2){
     
     // When the player selects a token on the other side of the board,
     // we still call wasValidSwap, which checks here if the tokens are too
@@ -1058,7 +1142,7 @@ public class ScreenGameplay implements IScreen, Subject{
         return true;
     }
     return false;
-  }
+  }*/
   
   /*
     
@@ -1150,7 +1234,7 @@ public class ScreenGameplay implements IScreen, Subject{
       markTokensForRemoval();
       removeMarkedTokens(false);
       fillHoles();
-    }while(markTokensForRemoval() == true);
+    }while(markTokensForRemoval() > 0);
     
     // Add the appropriate number of gems the tokens
     for(int i = 0; i < numGemsOnBoard; i++){
@@ -1304,10 +1388,10 @@ public class ScreenSplash implements IScreen{
     ticker = new Ticker();
     screenAlive = true;
     
-    // TODO: conver this to a singleton or factory.
-    solarWindsFont = new RetroFont("data/fonts/solarwinds.png", 7, 8, 1);
+    // TODO: convert this to a singleton or factory.
+    solarWindsFont = new RetroFont("data/fonts/solarwinds.png", 14, 16, 2);
     
-   /* mainTitleLabel = new RetroLabel(solarWindsFont);
+    mainTitleLabel = new RetroLabel(solarWindsFont);
     mainTitleLabel.setText("H O R A D R I X");
     mainTitleLabel.pixelsFromTop(150);
     
@@ -1320,7 +1404,7 @@ public class ScreenSplash implements IScreen{
     loadingLabel = new RetroLabel(solarWindsFont);
     loadingLabel.setHorizontalTrimming(true);
     loadingLabel.setText("Loading....");
-    loadingLabel.pixelsFromCenter(0, 50);*/
+    loadingLabel.pixelsFromCenter(0, 50);
   }
   
   /**
@@ -1328,9 +1412,9 @@ public class ScreenSplash implements IScreen{
   public void draw(){
     background(0);
     
-   // mainTitleLabel.draw();
-   // creditsLabel.draw();
-   // loadingLabel.draw();
+    mainTitleLabel.draw();
+    creditsLabel.draw();
+    loadingLabel.draw();
   }
   
   public void update(){
@@ -1690,21 +1774,43 @@ public class RetroLabel extends RetroPanel{
 }
 /*
     A panel represents a generic container that can hold
-    other widgets
+    other widgets.
 */
 public class RetroPanel extends RetroWidget{
 
   ArrayList<RetroWidget> children;
   protected boolean dirty;
+  
+  // Keep track of where the panel is pinned to its parent
+  // If the panel becomes dirty, these values can be used to reposition
+  // the panel to its proper placement.
   private int anchor;
-    
+  private int yPixels;
+  private int xPixels;
+  
+  private static final int FROM_TOP = 0;
+  private static final int FROM_CENTER = 1;
+  private static final int FROM_BOTTOM = 2;
+  private static final int FROM_LEFT = 3;
+  private static final int FROM_RIGHT = 4;
+  
+  private static final int FROM_TOP_LEFT = 5;
+  private static final int FROM_TOP_RIGHT = 6;
+
+  private static final int FROM_BOTTOM_LEFT = 7;
+  private static final int FROM_BOTTOM_RIGHT = 8;
+  
+  /*
+  */
   public RetroPanel(){
     w = 0;
     h = 0;
     x = 0;
     y = 0;
     removeAllChildren();
-    anchor = 0;
+    
+    anchor = FROM_TOP;
+    xPixels = yPixels = 0;
   }
   
   public void removeAllChildren(){
@@ -1714,6 +1820,8 @@ public class RetroPanel extends RetroWidget{
   public void addWidget(RetroWidget widget){
     widget.setParent(this);
     children.add(widget);
+    
+    widget.setDebug(debugDraw);
   }
   
   /*
@@ -1726,6 +1834,10 @@ public class RetroPanel extends RetroWidget{
   
   public int getX(){
     return x;
+  }
+  
+  public int getY(){
+    return y;
   }
   
   public int getWidth(){
@@ -1744,73 +1856,133 @@ public class RetroPanel extends RetroWidget{
       Render widget from the top center relative to parent.
   */
   public void pixelsFromTop(int yPixels){
-    //println("pixels from top()");
     RetroWidget p = getParent();
+    
+    anchor = FROM_TOP;
+    this.yPixels = yPixels;
+
     x = (p.w/2) - (w/2);
     y = yPixels;
-    anchor = 1;
   }
   
   /*
-    
   */
   public void pixelsFromTopLeft(int yPixels, int xPixels){
     RetroWidget p = getParent();
-    x = p.x + xPixels;
-    y = p.y + yPixels;
-    anchor = 2;
+    
+    anchor = FROM_TOP_LEFT;
+    this.yPixels = yPixels;
+    this.xPixels = xPixels;
+    
+    x = xPixels;
+    y = yPixels;
   }
   
   /*
   */
   public void pixelsFromTopRight(int yPixels, int xPixels){
     RetroWidget p = getParent();
-    println(w);
-    x = p.x + p.w - w + xPixels;
-    y = p.y + yPixels;
-    anchor = 3;
+    
+    anchor = FROM_TOP_RIGHT;
+    this.yPixels = yPixels;
+    this.xPixels = xPixels;
+
+    x = p.w - w;
+    y = yPixels;
   }
   
-  public void pixelsFromBottomLeft(int bottomPixels, int leftPixels){
+  /*
+    TODO: needs debugging
+  */
+  public void pixelsFromBottomRight(int yPixels, int xPixels){
     RetroWidget p = getParent();
-    y = p.y + p.h - h + bottomPixels;
-    x = p.x + leftPixels;
-    anchor = 4;
+    
+    anchor = FROM_BOTTOM_RIGHT;
+    this.yPixels = yPixels;
+    this.xPixels = xPixels;
+    
+    x = p.w - w + xPixels;
+    y = p.h - yPixels - h;
+  }
+  
+  /*
+  */
+  public void pixelsFromBottomLeft(int yPixels, int xPixels){
+    RetroWidget p = getParent();
+    
+    anchor = FROM_BOTTOM_LEFT;
+    this.yPixels = yPixels;
+    this.xPixels = xPixels;
+    
+    x = xPixels;
+    y = p.h - yPixels - h;
+  }
+    
+  /**
+   */
+  public void pixelsFromCenter(int xPixels, int yPixels){
+    RetroWidget p = getParent();
+    
+    anchor = FROM_CENTER;
+    this.yPixels = yPixels;
+    this.xPixels = xPixels;
+    
+    x = (p.w/2) - (w/2) + xPixels;
+    y = (p.h/2) - (h/2) + yPixels;
   }
   
   public void updatePosition(){
     dirty = true;
   }
   
-  /**
-   */
-  public void pixelsFromCenter(int xPixels, int yPixels){
-    RetroWidget p = getParent();
-    x = (p.w/2) - (w/2) + xPixels;
-    y = (p.h/2) - (h/2) + yPixels;
-    anchor = 5;
+  /*
+    If debugging is on, this widget along with all children will
+    have a red outline around them.
+  */
+  public void setDebug(boolean debugOn){
+    super.setDebug(debugOn);
+    
+    for(int i = 0; i < children.size(); i++){
+      children.get(i).setDebug(debugOn);
+    }
   }
+
   
   /*
   */
   public void draw(){
     
+    // If the 
     if(dirty == true){
       dirty = false;
+      
       if(DEBUG_CONSOLE_ON){
         println("No longer dirty");
       }
-      if(anchor == 1)
-      pixelsFromTop(10);
+      
+      switch(anchor){
+        case FROM_TOP: pixelsFromTop(yPixels);break;
+        case FROM_CENTER:pixelsFromCenter(xPixels, yPixels);break;
+        case FROM_BOTTOM:break;
+        
+        //case FROM_LEFT:   pixelsFromLeft(xPixels);break;
+        //case FROM_RIGHT:  pixelsFromRight(xPixels);break;
+        
+        case FROM_TOP_LEFT:   pixelsFromTopLeft(yPixels, xPixels);break;
+        case FROM_TOP_RIGHT:  pixelsFromTopRight(yPixels, xPixels);break;
+        
+        case FROM_BOTTOM_LEFT:  pixelsFromBottomLeft(yPixels, xPixels);break;
+        case FROM_BOTTOM_RIGHT: pixelsFromBottomRight(yPixels, xPixels);break;
+      }
     }
     
     if(debugDraw){
-    pushStyle();
-    noFill();
-    stroke(255, 0, 0, 255);
-    strokeWeight(1);
-    rect(x, y, w, h);
-    popStyle();
+      pushStyle();
+      noFill();
+      stroke(255, 0, 0, 255);
+      strokeWeight(1);
+      rect(x, y, w, h);
+      popStyle();
     }
     
     if(visible == false || children.size() == 0){
@@ -1826,7 +1998,8 @@ public class RetroPanel extends RetroWidget{
   }
 }
 /*
- */
+
+*/
 public abstract class RetroWidget{
 
   // force access from getter so that the appropriate parent
@@ -1848,10 +2021,8 @@ public abstract class RetroWidget{
   
   public RetroWidget getParent(){
     if(parent != null){
-      //println("not default");
       return parent;
     }
-    //println("default");
     return new RetroPanel(0, 0, width, height);
   }
   
@@ -1880,6 +2051,10 @@ public abstract class RetroWidget{
   public void setPosition(int x, int y){
     this.x = x;
     this.y = y;
+  }
+  
+  public void setDebug(boolean debugOn){
+    debugDraw = debugOn;
   }
   
   public abstract void draw();
@@ -2189,8 +2364,12 @@ final int BOARD_ROWS = 16;
 final int START_ROW_INDEX = 8;
 
 // Where on the canvas the tokens start to be rendered.
-final int START_X = 100;//200;
-final int START_Y = 0;//-20; // 20 - -220
+final int START_X = 140;//200;
+
+
+final int START_Y =  20 - 200;
+
+
 final int TOKEN_SIZE = 28;
 final int TOKEN_SPACING = 3;
 
@@ -2209,7 +2388,7 @@ void debugPrint(String str){
 }
 
 void setup(){
-  size(START_X + TOKEN_SIZE * BOARD_COLS, START_Y + TOKEN_SIZE * BOARD_ROWS);
+  size(START_X + TOKEN_SIZE * BOARD_COLS, START_Y + TOKEN_SIZE * BOARD_ROWS + 40);
   
   // The style of the game is pixel art, so we don't want anti-aliasing
   noSmooth();
@@ -2308,6 +2487,8 @@ public class Token{
   private Ticker ticker;
   private Ticker deathTicker;
   
+  // Used for debugging
+  private int id;
   
   // TODO: find better way of doing this?
   // When the token is falling, we need it to be a float
@@ -2345,6 +2526,8 @@ public class Token{
   
   public Token(){
     setType(TokenType.NULL);
+    
+    id = Utils.nextID();
     
     isSelected = false;
     isLiving = true;
@@ -2400,6 +2583,10 @@ public class Token{
   
   public void setType(int t){
     type = t;
+  }
+  
+  public int getID(){
+    return id;
   }
   
   /*public void unMark(){
@@ -2844,10 +3031,10 @@ public class ScreenSplash implements IScreen{
     ticker = new Ticker();
     screenAlive = true;
     
-    // TODO: conver this to a singleton or factory.
-    solarWindsFont = new RetroFont("data/fonts/solarwinds.png", 7, 8, 1);
+    // TODO: convert this to a singleton or factory.
+    solarWindsFont = new RetroFont("data/fonts/solarwinds.png", 14, 16, 2);
     
-   /* mainTitleLabel = new RetroLabel(solarWindsFont);
+    mainTitleLabel = new RetroLabel(solarWindsFont);
     mainTitleLabel.setText("H O R A D R I X");
     mainTitleLabel.pixelsFromTop(150);
     
@@ -2860,7 +3047,7 @@ public class ScreenSplash implements IScreen{
     loadingLabel = new RetroLabel(solarWindsFont);
     loadingLabel.setHorizontalTrimming(true);
     loadingLabel.setText("Loading....");
-    loadingLabel.pixelsFromCenter(0, 50);*/
+    loadingLabel.pixelsFromCenter(0, 50);
   }
   
   /**
@@ -2868,9 +3055,9 @@ public class ScreenSplash implements IScreen{
   public void draw(){
     background(0);
     
-   // mainTitleLabel.draw();
-   // creditsLabel.draw();
-   // loadingLabel.draw();
+    mainTitleLabel.draw();
+    creditsLabel.draw();
+    loadingLabel.draw();
   }
   
   public void update(){
@@ -2901,6 +3088,20 @@ public class ScreenSplash implements IScreen{
  * JS Utilities interface
  */
 var Utils = {
+
+  /*
+    Used to identify tokens.
+  */
+  nextID: function(){
+    var inc = 
+      (function(){
+         var id = -1;
+         return function(){
+           id++;
+         }
+       })();
+    return inc();
+  },
 
   /*   
    */
@@ -2941,8 +3142,8 @@ var Utils = {
     
     return baseString;
   }
-
 }
+
 /*
     This screen is the main gameplay screen.
     
@@ -2969,6 +3170,8 @@ public class ScreenGameplay implements IScreen, Subject{
   private final int UP = -1;
   private final int DOWN = 1;
   
+  private final int TOKEN_SCORE = 100;
+  
   public boolean screenAlive;
   
   // Only for debugging to see which token would be selected
@@ -2978,6 +3181,8 @@ public class ScreenGameplay implements IScreen, Subject{
   Debugger debug;
   int mouseRowIndex = 0;
   int mouseColumnIndex = 0;
+  int Testing = 0;
+  
   
   Ticker debugTicker;
   Ticker delayTicker;
@@ -3014,7 +3219,7 @@ public class ScreenGameplay implements IScreen, Subject{
   
   Token currToken1 = null;
   Token currToken2 = null;
-    
+  
   int score = 0;
   
   public void addObserver(LayerObserver o){
@@ -3161,8 +3366,11 @@ public class ScreenGameplay implements IScreen, Subject{
     for(int i = 0; i < floatingTokens.size(); i++){
       Token token = floatingTokens.get(i);
       token.update();
+      
+      // 
       if(token.arrivedAtDest()){
         token.dropIntoCell();
+        
         markTokensForRemoval();
         delayTicker = new Ticker();
         
@@ -3176,8 +3384,8 @@ public class ScreenGameplay implements IScreen, Subject{
       }
       waitingForTokensToFall = true;
     }
-  
-  
+    
+    
     // Now, update the two tokens that the user has swapped
     if(swapToken1 != null){
       
@@ -3190,8 +3398,11 @@ public class ScreenGameplay implements IScreen, Subject{
         swapToken1.dropIntoCell();
         swapToken2.dropIntoCell();
         
+        int matches = getNumCosecutiveMatches(swapToken1, swapToken2);
+        
         // If it was not a valid swap, animate it back from where it came.
-        if(wasValidSwap(swapToken1, swapToken2) == false){          
+        if(matches < 3){
+        //wasValidSwap(swapToken1, swapToken2) == false){          
           int r1 = swapToken1.getRow();
           int c1 = swapToken1.getColumn();
           
@@ -3205,14 +3416,15 @@ public class ScreenGameplay implements IScreen, Subject{
           swapToken2.setReturning(true);
         }
         
-        // Swap was valid, so get rid of 
+        // Swap was valid
         else{
           swapToken1 = swapToken2 = null;
           
-         // gemRemovalTicker = new Ticker();
+          // gemRemovalTicker = new Ticker();
           markTokensForRemoval();
           removeMarkedTokens(true);
-          //deselectTokens();
+          
+          deselectCurrentTokens();
         }
         
         // Was it valid?
@@ -3235,8 +3447,9 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
-  
-    // Update the tokens that may need to be GC'ed.
+    
+    // Iterate over all the tokens that are dying and
+    // increase the score.
     for(int i = 0; i < dyingTokens.size(); i++){
       
       dyingTokens.get(i).update();
@@ -3248,6 +3461,7 @@ public class ScreenGameplay implements IScreen, Subject{
           addGemToQueuedToken();
         }
         
+        addToScore(TOKEN_SCORE);
         dyingTokens.remove(i);
         tokensDestroyed++;
       }
@@ -3289,11 +3503,9 @@ public class ScreenGameplay implements IScreen, Subject{
     
     //pushMatrix();
     resetMatrix();
+    
     //debug.addString("debug time: " + debugTicker.getTotalTime());
-    //debug.addString("");// + score);
-    //debug.addString("Level: " + currLevel);
     //debug.addString("destroyed: " + tokensDestroyed);
-    //debug.addString("FPS: " + frameRate);
     //debug.addString(gemCounter + "/" + gemsRequiredForLevel);
     
     // Add a leading zero if seconds is a single digit
@@ -3440,6 +3652,9 @@ public class ScreenGameplay implements IScreen, Subject{
     return currLevel;
   }
   
+  /*
+    As soon as a token is removed, we add to the score.
+  */
   public void addToScore(int offset){
     score += offset;
     notifyObservers();
@@ -3448,10 +3663,7 @@ public class ScreenGameplay implements IScreen, Subject{
   /*
    * 
    */
-  void animateSwapTokens(Token t1, Token t2){
-    
-    addToScore(99);
-    
+  void animateSwapTokens(Token t1, Token t2){    
     // We need to cache these so we get get the wrong
     // values when calling animateTo.
     int t1Row = t1.getRow();
@@ -3477,24 +3689,25 @@ public class ScreenGameplay implements IScreen, Subject{
     There may be a case in which there are no valid swap/moves left
     in that case the board needs to be reset.
   */
-  boolean validSwapExists(){
+  private boolean validSwapExists(){
     
     // First check any potential matches in the horizontal
     for(int r = START_ROW_INDEX; r < BOARD_ROWS; r++){
       for(int c = 0; c < BOARD_COLS - 1; c++){
         
-        Token gem1 = board[r][c];
-        Token gem2 = board[r][c + 1];
+        Token t1 = board[r][c];
+        Token t2 = board[r][c + 1];
         
-        swapTokens(gem1, gem2);
+        swapTokens(t1, t2);
         
-        if(wasValidSwap(gem1, gem2)){
-          swapTokens(gem1, gem2);
+        //if(wasValidSwap(gem1, gem2)){
+        if(getNumCosecutiveMatches(t1, t2) >= 3){
+          swapTokens(t1, t2);
           return true;
         }
         // Swap them back
         else{
-          swapTokens(gem1, gem2);
+          swapTokens(t1, t2);
         }
       }
     }
@@ -3507,7 +3720,7 @@ public class ScreenGameplay implements IScreen, Subject{
         Token gem2 = board[r + 1][c];
         swapTokens(gem1, gem2);
         
-        if(wasValidSwap(gem1, gem2)){
+        if(getNumCosecutiveMatches(gem1, gem2) >= 3){
           swapTokens(gem1, gem2);
           return true;
         }
@@ -3520,7 +3733,8 @@ public class ScreenGameplay implements IScreen, Subject{
   }
   
   
-  
+  /*
+  */
   int getRandomToken(){
     return Utils.getRandomInt(0, numTokenTypesOnBoard-1);
   }
@@ -3622,10 +3836,11 @@ public class ScreenGameplay implements IScreen, Subject{
     In some cases, this needs to be corrected, for example, when the game starts, there shouldn't be any
     matches.
   */
-  boolean markTokensForRemoval(){
+  int markTokensForRemoval(){
     
     //
     boolean markedAtLeast3Gems = false;
+    Testing = 0;
     
     // Iterate over the entire board, mark gems for removal
     // Once complete, remove all gems
@@ -3659,6 +3874,7 @@ public class ScreenGameplay implements IScreen, Subject{
                     
           for(int gemC = markerIndex; gemC < markerIndex + matches; gemC++){
             board[r][gemC].kill();//.markForDeletion();
+            Testing++;
             //numMatchedGems[board[r][gemC].getType()]++;
           }
           matches = 1;
@@ -3703,6 +3919,7 @@ public class ScreenGameplay implements IScreen, Subject{
           
           for(int gemR = markerIndex; gemR < markerIndex + matches; gemR++){
             board[gemR][c].kill();//markForDeletion();
+            Testing++;
             //numMatchedGems[board[gemR][c].getType()]++;
           }
           matches = 1;
@@ -3713,7 +3930,7 @@ public class ScreenGameplay implements IScreen, Subject{
       
       if(matches >= 3){
         markedAtLeast3Gems = true;
-                
+        
         for(int gemR = markerIndex; gemR < markerIndex + matches; gemR++){
           board[gemR][c].kill();//markForDeletion();
           //numMatchedGems[board[gemR][c].getType()]++;
@@ -3721,7 +3938,39 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
-    return markedAtLeast3Gems;
+    //println("matches: " + Testing);
+    return Testing;
+    //return markedAtLeast3Gems;
+  }
+  
+  /*
+    
+  */
+  private int getNumCosecutiveMatches(Token t1, Token t2){
+    // When the player selects a token on the other side of the board,
+    // we still call wasValidSwap, which checks here if the tokens are too
+    // far apart to match.
+    if(isCloseEnoughForSwap(t1, t2) == false){
+      return 0;
+    }
+   
+    int matches = numMatchesSideways(t1, LEFT) + numMatchesSideways(t1, RIGHT);
+    if(matches >= 2){
+      return matches + 1;
+    }
+    
+    matches = numMatchesSideways(t2, LEFT) + numMatchesSideways(t2, RIGHT);
+    if(matches >= 2){
+      return matches + 1;
+    }
+    
+    matches = numMatchesUpDown(t1, UP) + numMatchesUpDown(t1, DOWN);
+    if(matches >= 2){
+      return matches + 1;
+    }
+    
+    matches = numMatchesUpDown(t2, UP) + numMatchesUpDown(t2, DOWN);
+    return matches + 1;
   }
   
   /*
@@ -3734,7 +3983,7 @@ public class ScreenGameplay implements IScreen, Subject{
     This is also called when we are trying to determine if there are actually any valid
     swaps left on the board. If not, the boardneeds to get reset.
   */
-  public boolean wasValidSwap(Token t1, Token t2){
+  /*private boolean wasValidSwap(Token t1, Token t2){
     
     // When the player selects a token on the other side of the board,
     // we still call wasValidSwap, which checks here if the tokens are too
@@ -3750,7 +3999,7 @@ public class ScreenGameplay implements IScreen, Subject{
         return true;
     }
     return false;
-  }
+  }*/
   
   /*
     
@@ -3842,7 +4091,7 @@ public class ScreenGameplay implements IScreen, Subject{
       markTokensForRemoval();
       removeMarkedTokens(false);
       fillHoles();
-    }while(markTokensForRemoval() == true);
+    }while(markTokensForRemoval() > 0);
     
     // Add the appropriate number of gems the tokens
     for(int i = 0; i < numGemsOnBoard; i++){
