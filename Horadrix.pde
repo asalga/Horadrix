@@ -1,5 +1,5 @@
 /*
- @pjs preload="data/fonts/solarwinds.png";
+ @pjs preload="data/fonts/solarwinds.png,data/images/board.png";
 */ 
  
 /**
@@ -70,7 +70,6 @@ void update(){
   
   // Gameplay screen only dies if the player loses.
   if(currScreen.getName() == "gameplay" && currScreen.isAlive() == false){
-    println("sdf");
     screenStack.pop();
     
     screenStack.push(new GameOverScreen());

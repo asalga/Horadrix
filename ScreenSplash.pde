@@ -47,7 +47,7 @@ public class ScreenSplash implements IScreen{
   
   public void update(){
     ticker.tick();
-    if(ticker.getTotalTime() > 11.5f){
+    if(ticker.getTotalTime() > 0.5f){
       screenAlive = false;
       debugPrint("Splash screen closed.");
     }

@@ -106,7 +106,7 @@ public class ScreenGameplay implements IScreen, Subject{
     floatingTokens = new ArrayList<Token>();
     dyingTokens = new ArrayList<Token>();
     
-    bk = loadImage("images/board.png");
+    bk = loadImage("data/images/board.png");
     
     //
     layerObserver = new ArrayList<LayerObserver>();
