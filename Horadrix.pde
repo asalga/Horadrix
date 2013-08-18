@@ -22,20 +22,16 @@ final int START_ROW_INDEX = 8;
 
 // Where on the canvas the tokens start to be rendered.
 final int START_X = 140;//200;
-
-
 final int START_Y =  20 - 200;
 
-
 final int TOKEN_SIZE = 28;
-final int TOKEN_SPACING = 3;
 
 // Used by the AssetStore
 PApplet globalApplet;
 
 Token[][] board = new Token[BOARD_ROWS][BOARD_COLS];
-  
-IScreen currScreen;
+
+Stack<IScreen> screenStack = new Stack<IScreen>();
 
 // Wrap println so we can easily disable all console output on release
 void debugPrint(String str){
@@ -45,54 +41,75 @@ void debugPrint(String str){
 }
 
 void setup(){
-  size(START_X + TOKEN_SIZE * BOARD_COLS, START_Y + TOKEN_SIZE * BOARD_ROWS + 40);
-  
+  size(START_X + TOKEN_SIZE * BOARD_COLS + START_X - 4, START_Y + TOKEN_SIZE * BOARD_ROWS + 40 - 8);
+
   // The style of the game is pixel art, so we don't want anti-aliasing
   noSmooth();
   
   globalApplet = this;
-  currScreen = new ScreenSplash();
+  
+  screenStack.push(new ScreenSplash());
 }
 
 void update(){
+  IScreen currScreen = screenStack.top();
+  
   currScreen.update();
   
+  // Once the splash screen is dead, move on to the gameplay screen.
   if(currScreen.getName() == "splash" && currScreen.isAlive() == false){
-    ScreenGameplay gameplay = new ScreenGameplay();
+    screenStack.pop();
     
-    currScreen = gameplay;
+    ScreenGameplay gameplay = new ScreenGameplay();
     
     LayerObserver hudLayer = new HUDLayer(gameplay);
     gameplay.addObserver(hudLayer);
+    
+    screenStack.push(gameplay);
   }
+  
+  // Gameplay screen only dies if the player loses.
+  if(currScreen.getName() == "gameplay" && currScreen.isAlive() == false){
+    println("sdf");
+    screenStack.pop();
+    
+    screenStack.push(new GameOverScreen());
+  }
+  
+  
 }
 
 void draw(){
   update();
-  currScreen.draw();
+  screenStack.top().draw();
 }
 
 public void mousePressed(){
-  currScreen.mousePressed();
+  screenStack.top().mousePressed();
 }
 
 public void mouseReleased(){
-  currScreen.mouseReleased();
+  //currScreen.mouseReleased();
+  screenStack.top().mouseReleased();
 }
 
 public void mouseDragged(){
-  currScreen.mouseDragged();
+  //currScreen.mouseDragged();
+  screenStack.top().mouseDragged();
 }
 
 public void mouseMoved(){
-  currScreen.mouseMoved();
+  //currScreen.mouseMoved();
+  screenStack.top().mouseMoved();
 }
 
 public void keyPressed(){
-  currScreen.keyPressed();
+  //currScreen.keyPressed();
+  screenStack.top().keyPressed();
 }
 
 public void keyReleased(){
-  currScreen.keyReleased();
+  //currScreen.keyReleased();
+  screenStack.top().keyReleased();
 }
 

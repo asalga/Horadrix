@@ -5,12 +5,16 @@
 */
 public class ScreenGameplay implements IScreen, Subject{
   
+  final int TOKEN_SPACING = 3;
+  
   // Tokens that have been remove from the board, but still need to be rendered for their
   // death animation.
   ArrayList<Token> dyingTokens;
   
   ArrayList<LayerObserver> layerObserver;
 
+  PImage bk;
+  
   // When a match is created, the matched tokens are removed from the board array
   // and 'float' above the board and drop down until they arrive where they need to go.
   // We do this because as they fall, we can't give them a integer position, but need to
@@ -78,7 +82,6 @@ public class ScreenGameplay implements IScreen, Subject{
   
   public void addObserver(LayerObserver o){
     layerObserver.add(o);
-  
     // recalculate indices
   }
   
@@ -102,6 +105,8 @@ public class ScreenGameplay implements IScreen, Subject{
   
     floatingTokens = new ArrayList<Token>();
     dyingTokens = new ArrayList<Token>();
+    
+    bk = loadImage("images/board.png");
     
     //
     layerObserver = new ArrayList<LayerObserver>();
@@ -136,6 +141,7 @@ public class ScreenGameplay implements IScreen, Subject{
   public void draw(){
     background(0);
     
+    image(bk, 125, 30);
 
     pushMatrix();
     translate(START_X, START_Y);
@@ -170,10 +176,11 @@ public class ScreenGameplay implements IScreen, Subject{
 
     // In some cases it is necessary to see the non-visible tokens
     // above the visible board. Other cases, I want that part covered.
-    // for example, when tokens are falling. These lines of code do just that.
+    // for example, when tokens are falling.
     pushStyle();
     fill(0);
-    rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
+    noStroke();
+    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
     popStyle();
 
     popMatrix();
@@ -184,7 +191,10 @@ public class ScreenGameplay implements IScreen, Subject{
     resetMatrix();
       
     if(layerObserver != null){
-      layerObserver.get(0).draw();
+      
+      for(int i = 0; i < layerObserver.size(); i++){
+        layerObserver.get(i).draw();
+      }
     }
     
     debug.draw();
@@ -206,6 +216,11 @@ public class ScreenGameplay implements IScreen, Subject{
     }
     
     isPaused = Keyboard.isKeyDown(KEY_P);
+
+    // Goes right to the game over screen, just for testing
+    if(Keyboard.isKeyDown(KEY_Q)){
+      screenAlive = false;
+    }
 
     if(isPaused){
       return;
@@ -965,9 +980,10 @@ public class ScreenGameplay implements IScreen, Subject{
     noFill();
     stroke(255);
     strokeWeight(2);
-    rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE);
+    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE);
     
-    rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2 + START_ROW_INDEX * TOKEN_SIZE, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE);
+    // Draw lower part of the board
+    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2 + START_ROW_INDEX * TOKEN_SIZE, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE - 220);
     popStyle();
     
     // Draw the invisible part, for debugging
