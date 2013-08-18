@@ -23,7 +23,7 @@ public class HUDLayer implements LayerObserver{
     
     scoreLabel = new RetroLabel(solarWindsFont);
    
-    
+    // Score
     scoreLabel.setHorizontalTrimming(true);
     scoreLabel.setHorizontalSpacing(5);   
     scoreLabel.pixelsFromTop(5);
@@ -47,7 +47,7 @@ public class HUDLayer implements LayerObserver{
     FPS = new RetroLabel(solarWindsFont);
     FPS.pixelsFromBottomLeft(0, 0);
     FPS.setText("FPS: 0");
-    //FPS.setHorizontalTrimming(true);
+    FPS.setHorizontalTrimming(true);
 
     parent.addWidget(FPS);
   }

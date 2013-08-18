@@ -1,9 +1,9 @@
-/**
-  alive,
-  drying,
-  dead
-  
-  token.getLivingState();
+/*
+    A token is an object the player moves in order to make matches.
+    
+    A token may have a gem within it. If the player destroys a token that
+    has a gem inside it, we add that to the count in ScreenGameplay. After
+    getting enough gems, the player can progress to the next level.
 */
 public class Token{
   
@@ -300,8 +300,8 @@ public class Token{
           y = (int)detachedPos.y;// * TOKEN_SIZE - (TOKEN_SIZE/2);
         }
         else{
-          x = column * TOKEN_SIZE - (TOKEN_SIZE/2);// + (column * TOKEN_SPACING*2);
-          y = row * TOKEN_SIZE - (TOKEN_SIZE/2);
+          x = column * TOKEN_SIZE - (TOKEN_SIZE/2) + (column * 1 * 1 ); //TOKEN_SPACING
+          y = row * TOKEN_SIZE - (TOKEN_SIZE/2);// + (column * 1 * 2);
         }
         
         AssetStore store = AssetStore.Instance(globalApplet);
@@ -331,7 +331,7 @@ public class Token{
             translate(TOKEN_SIZE, TOKEN_SIZE);
             
             scale(scaleSize * 1.0f);
-            translate(-TOKEN_SIZE/2,-TOKEN_SIZE/2);
+            translate(-TOKEN_SIZE/2, -TOKEN_SIZE/2);
             
             // TODO: fix me
             tint(255, 255 - ((scaleSize- 1.0f) * 255));
@@ -342,6 +342,7 @@ public class Token{
                translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
                translate(START_X, START_Y);
             // translate(x + TOKEN_SPACING, y);
+             translate( 0, row * 0.5);
              translate(x, y);
           }
           
@@ -351,6 +352,7 @@ public class Token{
           stroke(255,50,50);
           rect(0,0, TOKEN_SIZE, TOKEN_SIZE);*/
           
+          // We need to somehow distinguish tokens that have gems.
           if(hasGem()){
             pushStyle();
             fill(33, 60, 90, 255);

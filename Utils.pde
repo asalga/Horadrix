@@ -7,7 +7,6 @@ public static class Utils{
   
   private static int id = -1;
   
-  
   public static int nextID(){
     return id++;
   }
@@ -22,6 +21,8 @@ public static class Utils{
     return minVal + (int) (scaleFloat * (maxVal - minVal + 1));
   }
   
+  /*
+  */
   public static boolean circleCircleIntersection(PVector circle1Pos, float circle1Radius, PVector circle2Pos, float circle2Radius){
     PVector result = circle1Pos;
     result.sub(circle2Pos);
@@ -41,6 +42,9 @@ public static class Utils{
     return ch;
   }
   
+  /*
+    A simple cast in Java is sufficient, but in JavaScript, we'll need to use floor.
+  */
   public static int floatToInt(float f){
     return (int)f;
   }

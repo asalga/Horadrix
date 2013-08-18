@@ -21,7 +21,7 @@ public class ScreenSplash implements IScreen{
     
     mainTitleLabel = new RetroLabel(solarWindsFont);
     mainTitleLabel.setText("H O R A D R I X");
-    mainTitleLabel.pixelsFromTop(150);
+    mainTitleLabel.pixelsFromCenter(0, 0);
     
     creditsLabel = new RetroLabel(solarWindsFont);
     creditsLabel.setText("Code & Art: Andor Salga");
@@ -47,7 +47,7 @@ public class ScreenSplash implements IScreen{
   
   public void update(){
     ticker.tick();
-    if(ticker.getTotalTime() > 0.5f){
+    if(ticker.getTotalTime() > 11.5f){
       screenAlive = false;
       debugPrint("Splash screen closed.");
     }
