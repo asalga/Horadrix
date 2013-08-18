@@ -126,13 +126,10 @@ public class ScreenGameplay implements IScreen, Subject{
     
     drawBoxUnderCursor = false;
     
-    levelCountDownTimer = new Ticker();
-    levelCountDownTimer.setTime(5, 12);
-    levelCountDownTimer.setDirection(-1);
-    
     fillBoardWithRandomTokens();
     deselectCurrentTokens();
     
+    // levelCountDownTimer is set in this method.
     goToNextLevel();
   }
   
@@ -187,12 +184,11 @@ public class ScreenGameplay implements IScreen, Subject{
     rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
     popStyle();
 
-
+    // Draw a box around the grid, just for debugging.
     noFill();
     stroke(255);
     strokeWeight(1);
-    rect(0,0, 320, 320);
-    
+    //rect(0, 350, TOKEN_SIZE, 320);
     
     popMatrix();
     
@@ -214,7 +210,6 @@ public class ScreenGameplay implements IScreen, Subject{
   /**
    */
   public void update(){
-     //layers.get(0).update();
        
     // Once the player meets their quota...
     if(gemCounter >= gemsRequiredForLevel){
@@ -281,8 +276,7 @@ public class ScreenGameplay implements IScreen, Subject{
         int matches = getNumCosecutiveMatches(swapToken1, swapToken2);
         
         // If it was not a valid swap, animate it back from where it came.
-        if(matches < 3){
-        //wasValidSwap(swapToken1, swapToken2) == false){          
+        if(matches < 3){          
           int r1 = swapToken1.getRow();
           int c1 = swapToken1.getColumn();
           
@@ -305,17 +299,7 @@ public class ScreenGameplay implements IScreen, Subject{
           removeMarkedTokens(true);
           
           deselectCurrentTokens();
-        }
-        
-        // Was it valid?
-        // if( false == isValidSwap(token1, token2)){
-          // token1.animateTo( .. );
-          // token2.animateTo( ...);
-          // token1.setReturning(true);
-          // token2.setRetruning(true);
-        
-        // if it was valid ....
-        
+        } 
       }
       else if(swapToken1.arrivedAtDest() && swapToken1.isReturning()){
         swapToken1.dropIntoCell();
@@ -326,7 +310,6 @@ public class ScreenGameplay implements IScreen, Subject{
         swapToken1 = swapToken2 = null;
       }
     }
-    
     
     // Iterate over all the tokens that are dying and
     // increase the score.
@@ -392,6 +375,11 @@ public class ScreenGameplay implements IScreen, Subject{
     String secStr = "";
     
     int seconds = (int)levelCountDownTimer.getTotalTime() % 60;
+    
+    // 
+    if( (int)levelCountDownTimer.getTotalTime() == 0){
+      screenAlive = false;
+    }
     
     notifyObservers();
     
@@ -1077,6 +1065,14 @@ public class ScreenGameplay implements IScreen, Subject{
     Keyboard.setKeyDown(keyCode, false);
   }
   
+  public int getNumGems(){
+    return gemCounter;
+  }
+  
+  public int getNumGemsForNextLevel(){
+    return gemsRequiredForLevel;
+  }
+  
   /*
       The user can only go to the next level if they have
       destroyed the number stored in gemsRequiredForLevel.
@@ -1096,7 +1092,9 @@ public class ScreenGameplay implements IScreen, Subject{
     gemsRequiredForLevel += 5;
     
     // Still playing around with this to make later levels challenging.
+    levelCountDownTimer = new Ticker();
     levelCountDownTimer.setTime(2 + (gemsRequiredForLevel/2) , 11);
+    levelCountDownTimer.setDirection(-1);
   
     if(currLevel == 4){
       numTokenTypesOnBoard++;
