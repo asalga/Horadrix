@@ -1,5 +1,128 @@
 /*
 */
+public class Stack<T>{
+  
+  private ArrayList<T> items;
+  
+  public Stack(){
+    items = new ArrayList<T>();
+  }
+  
+  public void pop(){
+    items.remove(items.size() - 1);
+  }
+  
+  public T top(){
+    return items.get(items.size() - 1);
+  }
+  
+  public void push(T item){
+    items.add(item);
+  }
+  
+  public boolean isEmpty(){
+    return items.isEmpty();
+  }
+  
+  public int size(){
+    return items.size();
+  }
+  
+  public void clear(){
+    items.clear();
+  }
+}
+/*
+  Not currently being used yet.
+*/
+public class Queue<T>{
+  private ArrayList<T> items;
+  
+  public Queue(){
+    items = new ArrayList<T>();
+  }
+
+  public void pushBack(T i){
+    items.add(i);
+  }
+ 
+  public T popFront(){
+    T item = items.get(0);
+    items.remove(0);
+    return item;
+  }
+  
+  public boolean isEmpty(){
+    return items.isEmpty();
+  }
+  
+  public int size(){
+    return items.size();
+  }
+  
+  public T peekFront(){
+    return items.get(0);
+  }
+  
+  public void clear(){
+    items.clear();
+  }
+}
+/*
+    Displays game name and credits
+*/
+public class GameOverScreen implements IScreen{
+
+  boolean screenAlive;
+  
+  RetroFont solarWindsFont;
+
+  RetroLabel gameOverLabel;
+  
+  public GameOverScreen(){
+    screenAlive = true;
+    
+    // TODO: convert this to a singleton or factory.
+    solarWindsFont = new RetroFont("data/fonts/solarwinds.png", 14, 16, 2);
+    
+    gameOverLabel = new RetroLabel(solarWindsFont);
+    gameOverLabel.setText("G A M E  O V E R");
+    gameOverLabel.pixelsFromCenter(0, 0);
+  }
+  
+  /**
+  */
+  public void draw(){
+    background(0);
+    gameOverLabel.draw();
+  }
+  
+  public void update(){
+/*    ticker.tick();
+    if(ticker.getTotalTime() > 0.5f){
+      screenAlive = false;
+      debugPrint("Splash screen closed.");
+    }*/
+  }
+  
+  public String getName(){
+    return "game over";
+  }
+
+  public boolean isAlive(){
+    return screenAlive;
+  }
+  
+  public void keyReleased(){}
+  public void keyPressed(){}
+  
+  public void mousePressed(){}
+  public void mouseReleased(){}
+  public void mouseDragged(){}
+  public void mouseMoved(){}
+}
+/*
+*/
 public static class FPSTimer{
 
   private static float resolution;
@@ -44,7 +167,7 @@ public class HUDLayer implements LayerObserver{
     
     scoreLabel = new RetroLabel(solarWindsFont);
    
-    
+    // Score
     scoreLabel.setHorizontalTrimming(true);
     scoreLabel.setHorizontalSpacing(5);   
     scoreLabel.pixelsFromTop(5);
@@ -68,7 +191,7 @@ public class HUDLayer implements LayerObserver{
     FPS = new RetroLabel(solarWindsFont);
     FPS.pixelsFromBottomLeft(0, 0);
     FPS.setText("FPS: 0");
-    //FPS.setHorizontalTrimming(true);
+    FPS.setHorizontalTrimming(true);
 
     parent.addWidget(FPS);
   }
@@ -294,12 +417,16 @@ public class SpriteSheetLoader{
 */
 public class ScreenGameplay implements IScreen, Subject{
   
+  final int TOKEN_SPACING = 3;
+  
   // Tokens that have been remove from the board, but still need to be rendered for their
   // death animation.
   ArrayList<Token> dyingTokens;
   
   ArrayList<LayerObserver> layerObserver;
 
+  PImage bk;
+  
   // When a match is created, the matched tokens are removed from the board array
   // and 'float' above the board and drop down until they arrive where they need to go.
   // We do this because as they fall, we can't give them a integer position, but need to
@@ -367,7 +494,6 @@ public class ScreenGameplay implements IScreen, Subject{
   
   public void addObserver(LayerObserver o){
     layerObserver.add(o);
-  
     // recalculate indices
   }
   
@@ -391,6 +517,8 @@ public class ScreenGameplay implements IScreen, Subject{
   
     floatingTokens = new ArrayList<Token>();
     dyingTokens = new ArrayList<Token>();
+    
+    bk = loadImage("images/board.png");
     
     //
     layerObserver = new ArrayList<LayerObserver>();
@@ -425,6 +553,7 @@ public class ScreenGameplay implements IScreen, Subject{
   public void draw(){
     background(0);
     
+    image(bk, 125, 30);
 
     pushMatrix();
     translate(START_X, START_Y);
@@ -459,10 +588,11 @@ public class ScreenGameplay implements IScreen, Subject{
 
     // In some cases it is necessary to see the non-visible tokens
     // above the visible board. Other cases, I want that part covered.
-    // for example, when tokens are falling. These lines of code do just that.
+    // for example, when tokens are falling.
     pushStyle();
     fill(0);
-    rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
+    noStroke();
+    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
     popStyle();
 
     popMatrix();
@@ -473,7 +603,10 @@ public class ScreenGameplay implements IScreen, Subject{
     resetMatrix();
       
     if(layerObserver != null){
-      layerObserver.get(0).draw();
+      
+      for(int i = 0; i < layerObserver.size(); i++){
+        layerObserver.get(i).draw();
+      }
     }
     
     debug.draw();
@@ -495,6 +628,11 @@ public class ScreenGameplay implements IScreen, Subject{
     }
     
     isPaused = Keyboard.isKeyDown(KEY_P);
+
+    // Goes right to the game over screen, just for testing
+    if(Keyboard.isKeyDown(KEY_Q)){
+      screenAlive = false;
+    }
 
     if(isPaused){
       return;
@@ -1254,9 +1392,10 @@ public class ScreenGameplay implements IScreen, Subject{
     noFill();
     stroke(255);
     strokeWeight(2);
-    rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE);
+    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE);
     
-    rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2 + START_ROW_INDEX * TOKEN_SIZE, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE);
+    // Draw lower part of the board
+    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2 + START_ROW_INDEX * TOKEN_SIZE, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE - 220);
     popStyle();
     
     // Draw the invisible part, for debugging
@@ -1393,7 +1532,7 @@ public class ScreenSplash implements IScreen{
     
     mainTitleLabel = new RetroLabel(solarWindsFont);
     mainTitleLabel.setText("H O R A D R I X");
-    mainTitleLabel.pixelsFromTop(150);
+    mainTitleLabel.pixelsFromCenter(0, 0);
     
     creditsLabel = new RetroLabel(solarWindsFont);
     creditsLabel.setText("Code & Art: Andor Salga");
@@ -1419,7 +1558,7 @@ public class ScreenSplash implements IScreen{
   
   public void update(){
     ticker.tick();
-    if(ticker.getTotalTime() > 0.5f){
+    if(ticker.getTotalTime() > 11.5f){
       screenAlive = false;
       debugPrint("Splash screen closed.");
     }
@@ -2365,20 +2504,16 @@ final int START_ROW_INDEX = 8;
 
 // Where on the canvas the tokens start to be rendered.
 final int START_X = 140;//200;
-
-
 final int START_Y =  20 - 200;
 
-
 final int TOKEN_SIZE = 28;
-final int TOKEN_SPACING = 3;
 
 // Used by the AssetStore
 PApplet globalApplet;
 
 Token[][] board = new Token[BOARD_ROWS][BOARD_COLS];
-  
-IScreen currScreen;
+
+Stack<IScreen> screenStack = new Stack<IScreen>();
 
 // Wrap println so we can easily disable all console output on release
 void debugPrint(String str){
@@ -2388,55 +2523,76 @@ void debugPrint(String str){
 }
 
 void setup(){
-  size(START_X + TOKEN_SIZE * BOARD_COLS, START_Y + TOKEN_SIZE * BOARD_ROWS + 40);
-  
+  size(START_X + TOKEN_SIZE * BOARD_COLS + START_X - 4, START_Y + TOKEN_SIZE * BOARD_ROWS + 40 - 8);
+
   // The style of the game is pixel art, so we don't want anti-aliasing
   noSmooth();
   
   globalApplet = this;
-  currScreen = new ScreenSplash();
+  
+  screenStack.push(new ScreenSplash());
 }
 
 void update(){
+  IScreen currScreen = screenStack.top();
+  
   currScreen.update();
   
+  // Once the splash screen is dead, move on to the gameplay screen.
   if(currScreen.getName() == "splash" && currScreen.isAlive() == false){
-    ScreenGameplay gameplay = new ScreenGameplay();
+    screenStack.pop();
     
-    currScreen = gameplay;
+    ScreenGameplay gameplay = new ScreenGameplay();
     
     LayerObserver hudLayer = new HUDLayer(gameplay);
     gameplay.addObserver(hudLayer);
+    
+    screenStack.push(gameplay);
   }
+  
+  // Gameplay screen only dies if the player loses.
+  if(currScreen.getName() == "gameplay" && currScreen.isAlive() == false){
+    println("sdf");
+    screenStack.pop();
+    
+    screenStack.push(new GameOverScreen());
+  }
+  
+  
 }
 
 void draw(){
   update();
-  currScreen.draw();
+  screenStack.top().draw();
 }
 
 public void mousePressed(){
-  currScreen.mousePressed();
+  screenStack.top().mousePressed();
 }
 
 public void mouseReleased(){
-  currScreen.mouseReleased();
+  //currScreen.mouseReleased();
+  screenStack.top().mouseReleased();
 }
 
 public void mouseDragged(){
-  currScreen.mouseDragged();
+  //currScreen.mouseDragged();
+  screenStack.top().mouseDragged();
 }
 
 public void mouseMoved(){
-  currScreen.mouseMoved();
+  //currScreen.mouseMoved();
+  screenStack.top().mouseMoved();
 }
 
 public void keyPressed(){
-  currScreen.keyPressed();
+  //currScreen.keyPressed();
+  screenStack.top().keyPressed();
 }
 
 public void keyReleased(){
-  currScreen.keyReleased();
+  //currScreen.keyReleased();
+  screenStack.top().keyReleased();
 }
 
 
@@ -2474,12 +2630,12 @@ public class SoundManager{
     // super.stop();
   }
 }
-/**
-  alive,
-  drying,
-  dead
-  
-  token.getLivingState();
+/*
+    A token is an object the player moves in order to make matches.
+    
+    A token may have a gem within it. If the player destroys a token that
+    has a gem inside it, we add that to the count in ScreenGameplay. After
+    getting enough gems, the player can progress to the next level.
 */
 public class Token{
   
@@ -2776,8 +2932,8 @@ public class Token{
           y = (int)detachedPos.y;// * TOKEN_SIZE - (TOKEN_SIZE/2);
         }
         else{
-          x = column * TOKEN_SIZE - (TOKEN_SIZE/2);// + (column * TOKEN_SPACING*2);
-          y = row * TOKEN_SIZE - (TOKEN_SIZE/2);
+          x = column * TOKEN_SIZE - (TOKEN_SIZE/2) + (column * 1 * 1 ); //TOKEN_SPACING
+          y = row * TOKEN_SIZE - (TOKEN_SIZE/2);// + (column * 1 * 2);
         }
         
         AssetStore store = AssetStore.Instance(globalApplet);
@@ -2807,7 +2963,7 @@ public class Token{
             translate(TOKEN_SIZE, TOKEN_SIZE);
             
             scale(scaleSize * 1.0f);
-            translate(-TOKEN_SIZE/2,-TOKEN_SIZE/2);
+            translate(-TOKEN_SIZE/2, -TOKEN_SIZE/2);
             
             // TODO: fix me
             tint(255, 255 - ((scaleSize- 1.0f) * 255));
@@ -2818,6 +2974,7 @@ public class Token{
                translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
                translate(START_X, START_Y);
             // translate(x + TOKEN_SPACING, y);
+             translate( 0, row * 0.5);
              translate(x, y);
           }
           
@@ -2827,6 +2984,7 @@ public class Token{
           stroke(255,50,50);
           rect(0,0, TOKEN_SIZE, TOKEN_SIZE);*/
           
+          // We need to somehow distinguish tokens that have gems.
           if(hasGem()){
             pushStyle();
             fill(33, 60, 90, 255);
@@ -3036,7 +3194,7 @@ public class ScreenSplash implements IScreen{
     
     mainTitleLabel = new RetroLabel(solarWindsFont);
     mainTitleLabel.setText("H O R A D R I X");
-    mainTitleLabel.pixelsFromTop(150);
+    mainTitleLabel.pixelsFromCenter(0, 0);
     
     creditsLabel = new RetroLabel(solarWindsFont);
     creditsLabel.setText("Code & Art: Andor Salga");
@@ -3062,7 +3220,7 @@ public class ScreenSplash implements IScreen{
   
   public void update(){
     ticker.tick();
-    if(ticker.getTotalTime() > 0.5f){
+    if(ticker.getTotalTime() > 11.5f){
       screenAlive = false;
       debugPrint("Splash screen closed.");
     }
@@ -3151,12 +3309,16 @@ var Utils = {
 */
 public class ScreenGameplay implements IScreen, Subject{
   
+  final int TOKEN_SPACING = 3;
+  
   // Tokens that have been remove from the board, but still need to be rendered for their
   // death animation.
   ArrayList<Token> dyingTokens;
   
   ArrayList<LayerObserver> layerObserver;
 
+  PImage bk;
+  
   // When a match is created, the matched tokens are removed from the board array
   // and 'float' above the board and drop down until they arrive where they need to go.
   // We do this because as they fall, we can't give them a integer position, but need to
@@ -3224,7 +3386,6 @@ public class ScreenGameplay implements IScreen, Subject{
   
   public void addObserver(LayerObserver o){
     layerObserver.add(o);
-  
     // recalculate indices
   }
   
@@ -3248,6 +3409,8 @@ public class ScreenGameplay implements IScreen, Subject{
   
     floatingTokens = new ArrayList<Token>();
     dyingTokens = new ArrayList<Token>();
+    
+    bk = loadImage("images/board.png");
     
     //
     layerObserver = new ArrayList<LayerObserver>();
@@ -3282,6 +3445,7 @@ public class ScreenGameplay implements IScreen, Subject{
   public void draw(){
     background(0);
     
+    image(bk, 125, 30);
 
     pushMatrix();
     translate(START_X, START_Y);
@@ -3316,10 +3480,11 @@ public class ScreenGameplay implements IScreen, Subject{
 
     // In some cases it is necessary to see the non-visible tokens
     // above the visible board. Other cases, I want that part covered.
-    // for example, when tokens are falling. These lines of code do just that.
+    // for example, when tokens are falling.
     pushStyle();
     fill(0);
-    rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
+    noStroke();
+    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
     popStyle();
 
     popMatrix();
@@ -3330,7 +3495,10 @@ public class ScreenGameplay implements IScreen, Subject{
     resetMatrix();
       
     if(layerObserver != null){
-      layerObserver.get(0).draw();
+      
+      for(int i = 0; i < layerObserver.size(); i++){
+        layerObserver.get(i).draw();
+      }
     }
     
     debug.draw();
@@ -3352,6 +3520,11 @@ public class ScreenGameplay implements IScreen, Subject{
     }
     
     isPaused = Keyboard.isKeyDown(KEY_P);
+
+    // Goes right to the game over screen, just for testing
+    if(Keyboard.isKeyDown(KEY_Q)){
+      screenAlive = false;
+    }
 
     if(isPaused){
       return;
@@ -4111,9 +4284,10 @@ public class ScreenGameplay implements IScreen, Subject{
     noFill();
     stroke(255);
     strokeWeight(2);
-    rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE);
+    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE);
     
-    rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2 + START_ROW_INDEX * TOKEN_SIZE, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE);
+    // Draw lower part of the board
+    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2 + START_ROW_INDEX * TOKEN_SIZE, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE - 220);
     popStyle();
     
     // Draw the invisible part, for debugging
