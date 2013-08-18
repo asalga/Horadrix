@@ -518,7 +518,7 @@ public class ScreenGameplay implements IScreen, Subject{
     floatingTokens = new ArrayList<Token>();
     dyingTokens = new ArrayList<Token>();
     
-    bk = loadImage("images/board.png");
+    bk = loadImage("data/images/board.png");
     
     //
     layerObserver = new ArrayList<LayerObserver>();
@@ -1558,7 +1558,7 @@ public class ScreenSplash implements IScreen{
   
   public void update(){
     ticker.tick();
-    if(ticker.getTotalTime() > 11.5f){
+    if(ticker.getTotalTime() > 0.5f){
       screenAlive = false;
       debugPrint("Splash screen closed.");
     }
@@ -2481,7 +2481,7 @@ public static class TokenType{
   public static final int GOLD = 7;*/
 }
 /*
- @pjs preload="data/fonts/solarwinds.png";
+ @pjs preload="data/fonts/solarwinds.png,data/images/board.png";
 */ 
  
 /**
@@ -2552,7 +2552,6 @@ void update(){
   
   // Gameplay screen only dies if the player loses.
   if(currScreen.getName() == "gameplay" && currScreen.isAlive() == false){
-    println("sdf");
     screenStack.pop();
     
     screenStack.push(new GameOverScreen());
@@ -3220,7 +3219,7 @@ public class ScreenSplash implements IScreen{
   
   public void update(){
     ticker.tick();
-    if(ticker.getTotalTime() > 11.5f){
+    if(ticker.getTotalTime() > 0.5f){
       screenAlive = false;
       debugPrint("Splash screen closed.");
     }
@@ -3410,7 +3409,7 @@ public class ScreenGameplay implements IScreen, Subject{
     floatingTokens = new ArrayList<Token>();
     dyingTokens = new ArrayList<Token>();
     
-    bk = loadImage("images/board.png");
+    bk = loadImage("data/images/board.png");
     
     //
     layerObserver = new ArrayList<LayerObserver>();
