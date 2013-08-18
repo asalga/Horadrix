@@ -74,8 +74,6 @@ void update(){
     
     screenStack.push(new GameOverScreen());
   }
-  
-  
 }
 
 void draw(){
@@ -88,27 +86,22 @@ public void mousePressed(){
 }
 
 public void mouseReleased(){
-  //currScreen.mouseReleased();
   screenStack.top().mouseReleased();
 }
 
 public void mouseDragged(){
-  //currScreen.mouseDragged();
   screenStack.top().mouseDragged();
 }
 
 public void mouseMoved(){
-  //currScreen.mouseMoved();
   screenStack.top().mouseMoved();
 }
 
 public void keyPressed(){
-  //currScreen.keyPressed();
   screenStack.top().keyPressed();
 }
 
 public void keyReleased(){
-  //currScreen.keyReleased();
   screenStack.top().keyReleased();
 }
 

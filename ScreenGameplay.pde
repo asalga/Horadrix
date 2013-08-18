@@ -141,7 +141,8 @@ public class ScreenGameplay implements IScreen, Subject{
   public void draw(){
     background(0);
     
-    image(bk, 125, 30);
+    //
+    // image(bk, 125, 30);
 
     pushMatrix();
     translate(START_X, START_Y);
@@ -158,15 +159,18 @@ public class ScreenGameplay implements IScreen, Subject{
       swapToken2.draw();
     }
     
-    if(drawBoxUnderCursor == true){
+  //  if(drawBoxUnderCursor == true){
       pushStyle();
       noFill();
       stroke(255, 0, 0);
       rect(mouseColumnIndex * TOKEN_SIZE - TOKEN_SIZE/2, mouseRowIndex * TOKEN_SIZE - TOKEN_SIZE/2, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
-    }
+   // }
     
     drawBoard();
+    
+    
+
     
     // Draw the Dying tokens above the board as if they are coming out of it.
     // So when the tokens above fall down, those falling tokens render BEHIND these ones.
@@ -180,9 +184,16 @@ public class ScreenGameplay implements IScreen, Subject{
     pushStyle();
     fill(0);
     noStroke();
-    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
+    rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
     popStyle();
 
+
+    noFill();
+    stroke(255);
+    strokeWeight(1);
+    rect(0,0, 320, 320);
+    
+    
     popMatrix();
     
     // HACK: This line is here as a workaround a bug in Processing.js
