@@ -42,10 +42,10 @@ public class Token{
   private float scaleSize;
   
   private int moveDirection;
-  private final float MOVE_SPEED = TOKEN_SIZE * 10.0f; // token size per second
+  private final float MOVE_SPEED = TOKEN_SIZE * 5.0f; // token size per second
   private final float DROP_SPEED = 10;
-
-  //   
+  
+  // Use can select up to 2 tokens before they get swapped.
   private boolean isSelected;
   
   public Token(){
@@ -226,6 +226,10 @@ public class Token{
     doesHaveGem = true;
   }
   
+  /*
+      Once the token is destroyed, the game screen will increment
+      the number of gems the player has if this token had a gem.
+  */
   public boolean hasGem(){
     return doesHaveGem;
   }
@@ -238,7 +242,11 @@ public class Token{
     
     // TODO: fix, why -1??
     // column row swapped here.
-    detachedPos = new PVector((column-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f), (row-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f));
+    //detachedPos = new PVector((column-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f), (row-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f));
+    
+    int xx = (int)(column  * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0 ));
+    int yy = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0 ));
+    detachedPos = new PVector(xx, yy);//new PVector((column-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f), (row-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f));
     
     rowToMoveTo = r;
     colToMoveTo = c;
@@ -260,165 +268,106 @@ public class Token{
    */
   public void draw(){
     
-    ///
-    ///  There's a huge problem with this. For some reason tick() needs to be
-    //  called on update and here as well. Otherwise the delta is 0.
-    ///
-    if(animTicker != null){
-  //    animTicker.tick();
-    }
-    
-    //if(animTicker != null && animTicker.getTotalTime() > 0.05f){
-     // animTicker.reset();
-      //colored = !colored;
-    //}
-    
     pushStyle();
     
-    //
-    if(type == TokenType.NULL){
-      fill(0);
-      stroke(255);
-      strokeWeight(2);
-   //   ellipse(column * BALL_SIZE, row * BALL_SIZE, BALL_SIZE, BALL_SIZE);
-    }
-    else{
-      //if(detached){
-       // fill(col);
-        
-       // ellipse(column * TOKEN_SIZE, row * TOKEN_SIZE, TOKEN_SIZE, TOKEN_SIZE);   
-      //}
+    if( type != TokenType.NULL){
+      int x = 0; 
+      int y = 0;
       
-      //else if(colored){
+      // 
+      if(detached){
+        x = (int)detachedPos.x;// * TOKEN_SIZE - (TOKEN_SIZE/2);
+        y = (int)detachedPos.y;// * TOKEN_SIZE - (TOKEN_SIZE/2);
+      }
+      else{
+        // x = column * TOKEN_SIZE;// - (TOKEN_SIZE/2);// + (column);
+        // y = row * TOKEN_SIZE;// - (TOKEN_SIZE/2);// + (row);
+        x = (int)(column * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0 ));
         
-        int x = 0, 
-        y = 0;
-        
-        if(detached){
-          //println(detachedPos.x);
-          x = (int)detachedPos.x;// * TOKEN_SIZE - (TOKEN_SIZE/2);
-          y = (int)detachedPos.y;// * TOKEN_SIZE - (TOKEN_SIZE/2);
-        }
-        else{
-          x = column * TOKEN_SIZE - (TOKEN_SIZE/2) + (column * 1 * 1 ); //TOKEN_SPACING
-          y = row * TOKEN_SIZE - (TOKEN_SIZE/2);// + (column * 1 * 2);
-        }
-        
-        AssetStore store = AssetStore.Instance(globalApplet);
-        
-        if(isSelected){
-          noFill();
-          strokeWeight(2);
-          stroke(255);
-          rect(x, y, TOKEN_SIZE, TOKEN_SIZE);
-        }
-        
+        // 8 here is the number of visible rows. We need to essentially move the visible tokens up
+        // where the invisible ones would be drawn.
+        y = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0 ));
+      }
+      
+      if(isSelected){
+        //noFill();
+        pushStyle();
+        rectMode(CENTER);
+        fill(255,0,0,128);
+        strokeWeight(2);
+        stroke(255);
+        rect(x, y, TOKEN_SIZE, TOKEN_SIZE);
+        popStyle();
+      }
+      
+      if(animTicker != null){
+        pushMatrix();
+        resetMatrix();
+        imageMode(CENTER);
 
+        scaleSize += animTicker.getDeltaSec() * 1.0f;
+               
+        translate(START_X, START_Y);
+        translate(x, y);
         
-        //if(!colored){return;}
+        scale(scaleSize * 1.0f);
         
-          if(animTicker != null){
-            pushMatrix();
-            resetMatrix();
-            
-            scaleSize += animTicker.getDeltaSec() * 2.0f;
-            
-            // TODO: Fix me
-            //println("animTicker ==> " + animTicker.getDeltaSec() * 10.0f);
-            
-            translate(START_X, START_Y);
-            translate(x, y);
-            translate(TOKEN_SIZE, TOKEN_SIZE);
-            
-            scale(scaleSize * 1.0f);
-            translate(-TOKEN_SIZE/2, -TOKEN_SIZE/2);
-            
-            // TODO: fix me
-            tint(255, 255 - ((scaleSize- 1.0f) * 255));
-          }
-          else{
-             pushMatrix();
-             resetMatrix();
-               translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
-               translate(START_X, START_Y);
-            // translate(x + TOKEN_SPACING, y);
-             translate( 0, row * 0.5);
-             translate(x, y);
-          }
-          
-          // Debugging
-         /* pushStyle();
-          noFill();
-          stroke(255,50,50);
-          rect(0,0, TOKEN_SIZE, TOKEN_SIZE);*/
-          
-          // We need to somehow distinguish tokens that have gems.
-          if(hasGem()){
-            pushStyle();
-            fill(33, 60, 90, 255);
-            noFill();
-            stroke(255);
-            rect(0,0,TOKEN_SIZE, TOKEN_SIZE);
-            popStyle();
-          }
-          
-          
-            //
-            switch(type){
-              case TokenType.RED:    image(store.get(TokenType.RED),0,0);break;
-              case TokenType.GREEN:  image(store.get(TokenType.GREEN),0,0);break;
-              case TokenType.BLUE:   image(store.get(TokenType.BLUE),0,0);break;
-              case TokenType.YELLOW: image(store.get(TokenType.YELLOW),0,0);break;
-              case TokenType.SKULL:  image(store.get(TokenType.SKULL),0,0);break;
-              case TokenType.WHITE:  image(store.get(TokenType.WHITE),0,0);break;
-              case TokenType.PURPLE: image(store.get(TokenType.PURPLE),0,0);break;
-              default: ellipse(column * TOKEN_SIZE, row * TOKEN_SIZE, TOKEN_SIZE, TOKEN_SIZE);break;
-            }
-      popStyle();
-        // Draw the gem if it has one
-     //   if(hasGem()){
-      // popMatrix();
-    /*
-          switch(type){
-            case TokenType.RED:    image(store.get(TokenType.RED_GEM),x,y);break;
-            case TokenType.GREEN:  image(store.get(TokenType.GREEN_GEM),x,y);break;
-            case TokenType.BLUE:   image(store.get(TokenType.BLUE_GEM),x,y);break;
-            case TokenType.YELLOW: image(store.get(TokenType.YELLOW_GEM),x,y);break;
-            case TokenType.SKULL:  image(store.get(TokenType.SKULL_GEM),x,y);break;
-            case TokenType.WHITE:  image(store.get(TokenType.WHITE_GEM),x,y);break;
-            case TokenType.PURPLE: image(store.get(TokenType.PURPLE_GEM),x,y);break;
-            default: ellipse(column * TOKEN_SIZE, row * TOKEN_SIZE, TOKEN_SIZE, TOKEN_SIZE);break;
-          }*/
-       // }
-        
-            //  if(animTicker != null){
-        popMatrix();
-         //   }
-        
-        //if(type == 1){
-        //}
-        //else{
-         // fill(col);
-         // ellipse(column * TOKEN_SIZE, row * TOKEN_SIZE, TOKEN_SIZE, TOKEN_SIZE);
-        //}
+        // TODO: fix me
+        tint(255, 255 - ((scaleSize - 1.0f) * 255));
+      }
+      else{
+        pushMatrix();
+        resetMatrix();
+          // translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
+           translate(START_X, START_Y);
+          // translate(x + TOKEN_SPACING, y);
+          // translate(0, row * 0.5);
+          translate(x, y);
+      }
       
-      //else{
-        //fill(255);
-        //ellipse(column * TOKEN_SIZE, row * TOKEN_SIZE, TOKEN_SIZE, TOKEN_SIZE);   
-     // }
+      // Debugging
+      pushStyle();
+      noFill();
+      stroke(0,100,50);
+      //rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
+      popStyle();
+      
+      // We need to somehow distinguish tokens that have gems.
+      if(hasGem()){
+        pushStyle();
+        rectMode(CENTER);
+        fill(33, 60, 90, 255);
+        noFill();
+        stroke(255);
+        rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
+        popStyle();
+      }
+      
+      imageMode(CENTER);
+      AssetStore store = AssetStore.Instance(globalApplet);
+      //
+      switch(type){
+        case TokenType.RED:    image(store.get(TokenType.RED),0,0);break;
+        case TokenType.GREEN:  image(store.get(TokenType.GREEN),0,0);break;
+        case TokenType.BLUE:   image(store.get(TokenType.BLUE),0,0);break;
+        case TokenType.YELLOW: image(store.get(TokenType.YELLOW),0,0);break;
+        case TokenType.SKULL:  image(store.get(TokenType.SKULL),0,0);break;
+        case TokenType.WHITE:  image(store.get(TokenType.WHITE),0,0);break;
+        case TokenType.PURPLE: image(store.get(TokenType.PURPLE),0,0);break;
+        default: ellipse(column * TOKEN_SIZE, row * TOKEN_SIZE, TOKEN_SIZE, TOKEN_SIZE);break;
+      }
+      popStyle();
+      
+      popMatrix();
     }
-    
-    //ellipse(position.x, position.y, BALL_SIZE, BALL_SIZE);
-    //popStyle();
   }
   
-  /**
-   */
+  /*
+      Instead of directly checking the type between tokens, we
+      have a method that just asks if it can match with whatever. This 
+      allows us to later on match tokens with wildcards.
+  */
   public boolean matchesWith(int other){
-    if(type == other){
-      return true;
-    }
-    return false;
-  }
-  
+    return type == other;
+  }  
 }

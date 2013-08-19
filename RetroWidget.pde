@@ -36,7 +36,6 @@ public abstract class RetroWidget{
   }
     
   public void setParent(RetroWidget widget){
-    //println("setting parent");
     parent = widget;
     //defaultParent = null;
   }

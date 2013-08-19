@@ -16,6 +16,6 @@ public static class FPSTimer{
   /*
   */
   public int getFPS(){
-    return 4;
+    return 42;//globalApplet.frameRate;
   }
 }

@@ -20,11 +20,21 @@ final int BOARD_ROWS = 16;
 // Only need y index
 final int START_ROW_INDEX = 8;
 
-// Where on the canvas the tokens start to be rendered.
-final int START_X = 140;//200;
-final int START_Y =  20 - 200;
-
 final int TOKEN_SIZE = 28;
+
+final int CANVAS_WIDTH = 520;
+final int CANVAS_HEIGHT = 400;
+
+// We define the board size in pixels and allow it to be any size
+// and have the tokens center themselves inside those dimensions.
+// This allows us to define a variable board size.
+final int BOARD_W_IN_PX = 234;
+final int BOARD_H_IN_PX = 234;
+
+// Where on the canvas the tokens start to be rendered.
+final int START_X = (int)(CANVAS_WIDTH/2.0f  - BOARD_W_IN_PX/2.0f);
+final int START_Y = (int)(CANVAS_HEIGHT/2.0f - BOARD_H_IN_PX/2.0f);
+
 
 // Used by the AssetStore
 PApplet globalApplet;
@@ -33,7 +43,9 @@ Token[][] board = new Token[BOARD_ROWS][BOARD_COLS];
 
 Stack<IScreen> screenStack = new Stack<IScreen>();
 
-// Wrap println so we can easily disable all console output on release
+/*
+  Wrap println so we can easily disable all console output on release
+*/
 void debugPrint(String str){
   if(DEBUG_CONSOLE_ON){
     println(str);
@@ -41,8 +53,9 @@ void debugPrint(String str){
 }
 
 void setup(){
-  size(START_X + TOKEN_SIZE * BOARD_COLS + START_X - 4, START_Y + TOKEN_SIZE * BOARD_ROWS + 40 - 8);
-
+  //START_X + TOKEN_SIZE * BOARD_COLS + START_X - 4 +200, START_Y + TOKEN_SIZE * BOARD_ROWS + 40 - 8 + 400);
+  size(CANVAS_WIDTH, CANVAS_HEIGHT);
+  
   // The style of the game is pixel art, so we don't want anti-aliasing
   noSmooth();
   
@@ -74,8 +87,6 @@ void update(){
     
     screenStack.push(new GameOverScreen());
   }
-  
-  
 }
 
 void draw(){
@@ -88,27 +99,22 @@ public void mousePressed(){
 }
 
 public void mouseReleased(){
-  //currScreen.mouseReleased();
   screenStack.top().mouseReleased();
 }
 
 public void mouseDragged(){
-  //currScreen.mouseDragged();
   screenStack.top().mouseDragged();
 }
 
 public void mouseMoved(){
-  //currScreen.mouseMoved();
   screenStack.top().mouseMoved();
 }
 
 public void keyPressed(){
-  //currScreen.keyPressed();
   screenStack.top().keyPressed();
 }
 
 public void keyReleased(){
-  //currScreen.keyReleased();
   screenStack.top().keyReleased();
 }
 
