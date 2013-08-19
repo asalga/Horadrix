@@ -58,7 +58,6 @@ public class HUDLayer implements LayerObserver{
     // FPS
     FPS = new RetroLabel(solarWindsFont);
     FPS.pixelsFromBottomLeft(0, 0);
-    FPS.setText("FPS: 0");
     FPS.setHorizontalTrimming(true);
 
     parent.addWidget(FPS);
@@ -68,7 +67,8 @@ public class HUDLayer implements LayerObserver{
     parent.draw();
   }
   
-  //
+  /*
+  */
   public void notifyObserver(){
     String scoreStr = Utils.prependStringWithString("" + screenGameplay.getScore(), "0", 8);
     

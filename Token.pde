@@ -42,7 +42,7 @@ public class Token{
   private float scaleSize;
   
   private int moveDirection;
-  private final float MOVE_SPEED = TOKEN_SIZE * 10.0f; // token size per second
+  private final float MOVE_SPEED = TOKEN_SIZE * 5.0f; // token size per second
   private final float DROP_SPEED = 10;
   
   // Use can select up to 2 tokens before they get swapped.
@@ -226,6 +226,10 @@ public class Token{
     doesHaveGem = true;
   }
   
+  /*
+      Once the token is destroyed, the game screen will increment
+      the number of gems the player has if this token had a gem.
+  */
   public boolean hasGem(){
     return doesHaveGem;
   }
@@ -238,7 +242,11 @@ public class Token{
     
     // TODO: fix, why -1??
     // column row swapped here.
-    detachedPos = new PVector((column-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f), (row-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f));
+    //detachedPos = new PVector((column-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f), (row-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f));
+    
+    int xx = (int)(column  * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0 ));
+    int yy = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0 ));
+    detachedPos = new PVector(xx, yy);//new PVector((column-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f), (row-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f));
     
     rowToMoveTo = r;
     colToMoveTo = c;
@@ -260,95 +268,82 @@ public class Token{
    */
   public void draw(){
     
-    ///
-    ///  There's a huge problem with this. For some reason tick() needs to be
-    //  called on update and here as well. Otherwise the delta is 0.
-    //
-    //if(animTicker != null){
-      //animTicker.tick();
-    //}
-    
-    //if(animTicker != null && animTicker.getTotalTime() > 0.05f){
-     // animTicker.reset();
-      //colored = !colored;
-    //}
-    
     pushStyle();
     
-    //
-    if(type == TokenType.NULL){
-      fill(0);
-      stroke(255);
-      strokeWeight(2);
-   //   ellipse(column * BALL_SIZE, row * BALL_SIZE, BALL_SIZE, BALL_SIZE);
-    }
-    else{
+    if( type != TokenType.NULL){
       int x = 0; 
       int y = 0;
-        
+      
+      // 
       if(detached){
         x = (int)detachedPos.x;// * TOKEN_SIZE - (TOKEN_SIZE/2);
         y = (int)detachedPos.y;// * TOKEN_SIZE - (TOKEN_SIZE/2);
       }
       else{
-        x = column * TOKEN_SIZE - (TOKEN_SIZE/2) + (column); //TOKEN_SPACING
-        y = row * TOKEN_SIZE - (TOKEN_SIZE/2);// + (column * 1 * 2);
+        // x = column * TOKEN_SIZE;// - (TOKEN_SIZE/2);// + (column);
+        // y = row * TOKEN_SIZE;// - (TOKEN_SIZE/2);// + (row);
+        x = (int)(column * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0 ));
+        
+        // 8 here is the number of visible rows. We need to essentially move the visible tokens up
+        // where the invisible ones would be drawn.
+        y = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0 ));
       }
       
-      
-      
       if(isSelected){
-        noFill();
+        //noFill();
+        pushStyle();
+        rectMode(CENTER);
+        fill(255,0,0,128);
         strokeWeight(2);
         stroke(255);
         rect(x, y, TOKEN_SIZE, TOKEN_SIZE);
+        popStyle();
       }
       
       if(animTicker != null){
         pushMatrix();
         resetMatrix();
-        
-        scaleSize += animTicker.getDeltaSec() * 2.0f;
-        
-        // TODO: Fix me
-        //println("animTicker ==> " + animTicker.getDeltaSec() * 10.0f);
-        
+        imageMode(CENTER);
+
+        scaleSize += animTicker.getDeltaSec() * 1.0f;
+               
         translate(START_X, START_Y);
         translate(x, y);
-        translate(TOKEN_SIZE, TOKEN_SIZE);
         
         scale(scaleSize * 1.0f);
-        translate(-TOKEN_SIZE/2, -TOKEN_SIZE/2);
         
         // TODO: fix me
-        tint(255, 255 - ((scaleSize- 1.0f) * 255));
+        tint(255, 255 - ((scaleSize - 1.0f) * 255));
       }
       else{
-         pushMatrix();
-         resetMatrix();
-           translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
+        pushMatrix();
+        resetMatrix();
+          // translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
            translate(START_X, START_Y);
-        // translate(x + TOKEN_SPACING, y);
-         translate( 0, row * 0.5);
-         translate(x, y);
+          // translate(x + TOKEN_SPACING, y);
+          // translate(0, row * 0.5);
+          translate(x, y);
       }
       
       // Debugging
-     /* pushStyle();
+      pushStyle();
       noFill();
-      stroke(255,50,50);
-      rect(0,0, TOKEN_SIZE, TOKEN_SIZE);*/
+      stroke(0,100,50);
+      //rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
+      popStyle();
       
       // We need to somehow distinguish tokens that have gems.
       if(hasGem()){
         pushStyle();
+        rectMode(CENTER);
         fill(33, 60, 90, 255);
         noFill();
         stroke(255);
-        rect(0,0,TOKEN_SIZE, TOKEN_SIZE);
+        rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
         popStyle();
       }
       
+      imageMode(CENTER);
       AssetStore store = AssetStore.Instance(globalApplet);
       //
       switch(type){

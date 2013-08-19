@@ -117,7 +117,7 @@ public class ScreenGameplay implements IScreen, Subject{
     Layer hudLayer = new HUDLayer();
     observers.add(hudLayer);*/
     
-  
+    
     debugTicker = new Ticker();
     debug = new Debugger();
    
@@ -138,12 +138,21 @@ public class ScreenGameplay implements IScreen, Subject{
   public void draw(){
     background(0);
     
-    //
-    // image(bk, 125, 30);
+    // Offset the image slighly so that it lines up with the grid of tokens.
+    image(bk, START_X - 13, START_Y - 16);
 
     pushMatrix();
     translate(START_X, START_Y);
-    translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
+    //translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
+    
+        // Draw the debug board with gridlines
+    //pushMatrix();
+    //translate(0, 300);
+    fill(33,66,99,100);
+    strokeWeight(1);
+    //rect(START_X, START_Y, BOARD_W_IN_PX, BOARD_H_IN_PX);
+    //rect(0, 0, BOARD_W_IN_PX, BOARD_H_IN_PX);
+   // popMatrix();
     
     for(int i = 0; i < floatingTokens.size(); i++){
       floatingTokens.get(i).draw();
@@ -156,13 +165,13 @@ public class ScreenGameplay implements IScreen, Subject{
       swapToken2.draw();
     }
     
-  //  if(drawBoxUnderCursor == true){
+    if(drawBoxUnderCursor == true){
       pushStyle();
       noFill();
       stroke(255, 0, 0);
       rect(mouseColumnIndex * TOKEN_SIZE - TOKEN_SIZE/2, mouseRowIndex * TOKEN_SIZE - TOKEN_SIZE/2, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
-   // }
+    }
     
     drawBoard();
     
@@ -181,7 +190,7 @@ public class ScreenGameplay implements IScreen, Subject{
     pushStyle();
     fill(0);
     noStroke();
-    rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
+    rect(START_X-150, -238, 250, 222);
     popStyle();
 
     // Draw a box around the grid, just for debugging.
@@ -364,12 +373,7 @@ public class ScreenGameplay implements IScreen, Subject{
       delayTicker = null;
     }
     
-    //pushMatrix();
     resetMatrix();
-    
-    //debug.addString("debug time: " + debugTicker.getTotalTime());
-    //debug.addString("destroyed: " + tokensDestroyed);
-    //debug.addString(gemCounter + "/" + gemsRequiredForLevel);
     
     // Add a leading zero if seconds is a single digit
     String secStr = "";
@@ -391,10 +395,7 @@ public class ScreenGameplay implements IScreen, Subject{
     }
     
     //debug.addString( "" + (int)(levelCountDownTimer.getTotalTime()/60) + ":" + secStr  );
-    //for(int i = 0; i < numTokenTypesOnBoard; i++){
     //  debug.addString("color: " + numMatchedGems[i]);
-    //}
-    //popMatrix();
   }
   
   public boolean isAlive(){
@@ -406,13 +407,12 @@ public class ScreenGameplay implements IScreen, Subject{
   }
   
   public int getRowIndex(){
-    return (int)map(mouseY,  START_Y , START_Y + BOARD_ROWS * TOKEN_SIZE, 0, BOARD_ROWS);
+    return (int)map(mouseY, START_Y, START_Y + BOARD_H_IN_PX, 8, 16);
   }
   
   public int getColumnIndex(){
-    return (int)map(mouseX,  START_X, START_X + BOARD_COLS * TOKEN_SIZE, 0, BOARD_COLS);
+    return (int)map(mouseX, START_X, START_X+ BOARD_W_IN_PX, 0, BOARD_COLS);
   }
-
   
   /**
    * Tokens that are considrered too far to swap include ones that
@@ -422,11 +422,7 @@ public class ScreenGameplay implements IScreen, Subject{
     //
     return abs(t1.getRow() - t2.getRow()) + abs(t1.getColumn() - t2.getColumn()) == 1;
   }
-  
-  //if((abs(t2.getRow() - t1.getRow()) == 1 && (t1.getColumn() == t2.getColumn()) ) ||
-    //   (abs(t2.getColumn() - t1.getColumn()) == 1 && (t1.getRow() == t2.getRow()))  ){
     
-  
   public void mouseMoved(){
     mouseRowIndex = getRowIndex();
     mouseColumnIndex = getColumnIndex();
@@ -448,23 +444,24 @@ public class ScreenGameplay implements IScreen, Subject{
     int r = getRowIndex();
     int c = getColumnIndex();
     
+    // We can get some wacky values when clicking outside of the
+    // board. If the player does that, just ignore the click.
     if( r >= BOARD_ROWS || c >= BOARD_COLS || r < 0 || c < 0){
       return;
     }
-    
     
     if(currToken1 == null){
       currToken1 = board[r][c];
       currToken1.setSelect(true);
     }
     
+    // The real work is done once we know what to swap with.
     else if(currToken2 == null){
       
       currToken2 = board[r][c];
       // User clicked on a token that's too far to swap with the one already selected
       // In that case, what they are probably doing is starting the 'swap process' over.
       if( isCloseEnoughForSwap(currToken1, currToken2) == false){
-      //tooFarToSwap(currToken1,currToken2)){
         currToken1.setSelect(false);
         currToken1 = currToken2;
         currToken1.setSelect(true);  
@@ -668,7 +665,7 @@ public class ScreenGameplay implements IScreen, Subject{
               // the board is rendered, all the tokens in it get rendered also.
               // And if the tokens are floating down, they shouldn't appear in the board.
               
-              //tokenToMove.setRowColumn(firstEmptyCellIndex, c);
+              // tokenToMove.setRowColumn(firstEmptyCellIndex, c);
               // tokenToMove.moveToRow(firstEmptyCellIndex);
               
               Token tokenToMove = board[row][c];
@@ -686,9 +683,6 @@ public class ScreenGameplay implements IScreen, Subject{
               
               //
               break;
-              
-              //Gem g = board[row][c];
-              //g.moveTo(board[rowMarker][c]);
             }
           }
         }      
@@ -806,9 +800,7 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
-    //println("matches: " + Testing);
     return Testing;
-    //return markedAtLeast3Gems;
   }
   
   /*
@@ -979,6 +971,9 @@ public class ScreenGameplay implements IScreen, Subject{
     noFill();
     stroke(255);
     strokeWeight(2);
+    
+
+    
     //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE);
     
     // Draw lower part of the board
@@ -1083,7 +1078,9 @@ public class ScreenGameplay implements IScreen, Subject{
       - Sometimes the number of gem types increase
   */
   void goToNextLevel(){
-    score = 0;
+    
+    // Should the score be reset?
+    // score = 0;
     gemCounter = 0;
 
     //numMatchedGems = new int[numTokenTypesOnBoard];
