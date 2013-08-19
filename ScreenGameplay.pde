@@ -138,20 +138,20 @@ public class ScreenGameplay implements IScreen, Subject{
   public void draw(){
     background(0);
     
-    // Offset the image slighly so that it lines up with the grid of tokens.
-    image(bk, START_X - 13, START_Y - 16);
-
     pushMatrix();
+
     translate(START_X, START_Y);
     //translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
+    // Offset the image slighly so that it lines up with the grid of tokens.
+    // image(bk, START_X - 13, START_Y - 16);
     
-        // Draw the debug board with gridlines
+    // Draw the debug board with gridlines
     //pushMatrix();
     //translate(0, 300);
     fill(33,66,99,100);
     strokeWeight(1);
     //rect(START_X, START_Y, BOARD_W_IN_PX, BOARD_H_IN_PX);
-    //rect(0, 0, BOARD_W_IN_PX, BOARD_H_IN_PX);
+    rect(0, 0, BOARD_W_IN_PX, BOARD_H_IN_PX);
    // popMatrix();
     
     for(int i = 0; i < floatingTokens.size(); i++){
