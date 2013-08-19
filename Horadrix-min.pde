@@ -139,7 +139,7 @@ public static class FPSTimer{
   /*
   */
   public int getFPS(){
-    return 4;
+    return 42;//globalApplet.frameRate;
   }
 }
 /*
@@ -150,8 +150,9 @@ public class HUDLayer implements LayerObserver{
   RetroPanel parent;
   
   RetroLabel scoreLabel;
-  RetroLabel timeLabel;
   RetroLabel levelLabel;
+  RetroLabel timeLabel;
+  RetroLabel gemsAcquired;
   RetroLabel FPS;
   
   RetroFont solarWindsFont;
@@ -160,24 +161,35 @@ public class HUDLayer implements LayerObserver{
   public HUDLayer(ScreenGameplay s){
     screenGameplay = s;
     
+    // Add a bit of a border between the edge of the canvas for aesthetics
     parent = new RetroPanel(10, 10, width - 20, height - 20);
     parent.setDebug(false);
     
     solarWindsFont = new RetroFont("data/fonts/solarwinds.png", 7*2, 8*2, 1*2);
     
-    scoreLabel = new RetroLabel(solarWindsFont);
-   
+    // Position of panel isn't being set correctly.
+    RetroPanel scorePanel = new RetroPanel(10, 10, 100, 20);
+    scorePanel.pixelsFromTop(10);
+    
     // Score
-    scoreLabel.setHorizontalTrimming(true);
-    scoreLabel.setHorizontalSpacing(5);   
-    scoreLabel.pixelsFromTop(5);
-    parent.addWidget(scoreLabel);
+    scoreLabel = new RetroLabel(solarWindsFont);
+    scoreLabel.setHorizontalTrimming(false);
+    scoreLabel.setHorizontalSpacing(1);   
+    scoreLabel.pixelsFromTopRight(0, 0);
+    scorePanel.addWidget(scoreLabel);
+    parent.addWidget(scorePanel);
+    
+    // Gems
+    gemsAcquired = new RetroLabel(solarWindsFont);
+    gemsAcquired.setHorizontalTrimming(true);
+    gemsAcquired.setHorizontalSpacing(2);
+    gemsAcquired.pixelsFromTopLeft(105, 5);
+    parent.addWidget(gemsAcquired);
     
     // Time
     timeLabel = new RetroLabel(solarWindsFont);
     timeLabel.setHorizontalTrimming(true);
     timeLabel.setHorizontalSpacing(2);
-    //timeLabel.setText("");
     timeLabel.pixelsFromTopLeft(75, 5);
     parent.addWidget(timeLabel);
     
@@ -190,48 +202,28 @@ public class HUDLayer implements LayerObserver{
     // FPS
     FPS = new RetroLabel(solarWindsFont);
     FPS.pixelsFromBottomLeft(0, 0);
-    FPS.setText("FPS: 0");
     FPS.setHorizontalTrimming(true);
 
     parent.addWidget(FPS);
   }
   
   public void draw(){
-    pushMatrix();
-    
-    scale(1);
-    
-    FPS.setText("FPS: " + (int)frameRate);
     parent.draw();
-    
-    // parent.pixelsFromTopLeft(mouseY, mouseX);
-    // parent.setWidth ( mouseX);
-    
-    /*scoreLabel.draw();
-    timeLabel.draw();
-    levelLabel.draw();*/
-    popMatrix();
   }
   
-  //
+  /*
+  */
   public void notifyObserver(){
     String scoreStr = Utils.prependStringWithString("" + screenGameplay.getScore(), "0", 8);
-    
-    /*String blah = "";
-    
-    for(int c = 0; c < (frameCount/40)%15; c++){
-      blah += "0";
-    }*/
-    
-    scoreLabel.setText("" + scoreStr);
-    scoreLabel.updatePosition();
     
     int min = Utils.floatToInt(screenGameplay.getLevelTimeLeft() / 60);
     int sec = screenGameplay.getLevelTimeLeft() % 60;
     
-    timeLabel.setText("TIME: " + min + ":" +  (sec < 10 ? "0" : "") + sec);
-    
+    FPS.setText("FPS: " + (int)frameRate);
+    scoreLabel.setText("" + scoreStr);
     levelLabel.setText("Level:" + screenGameplay.getLevel());
+    timeLabel.setText("TIME: " + min + ":" +  (sec < 10 ? "0" : "") + sec);
+    gemsAcquired.setText("Gems: " + screenGameplay.getNumGems() + "/" + screenGameplay.getNumGemsForNextLevel());
   }
   
   public void update(){
@@ -529,7 +521,7 @@ public class ScreenGameplay implements IScreen, Subject{
     Layer hudLayer = new HUDLayer();
     observers.add(hudLayer);*/
     
-  
+    
     debugTicker = new Ticker();
     debug = new Debugger();
    
@@ -538,13 +530,10 @@ public class ScreenGameplay implements IScreen, Subject{
     
     drawBoxUnderCursor = false;
     
-    levelCountDownTimer = new Ticker();
-    levelCountDownTimer.setTime(5, 12);
-    levelCountDownTimer.setDirection(-1);
-    
     fillBoardWithRandomTokens();
     deselectCurrentTokens();
     
+    // levelCountDownTimer is set in this method.
     goToNextLevel();
   }
   
@@ -553,11 +542,21 @@ public class ScreenGameplay implements IScreen, Subject{
   public void draw(){
     background(0);
     
-    image(bk, 125, 30);
-
     pushMatrix();
+
     translate(START_X, START_Y);
-    translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
+    //translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
+    // Offset the image slighly so that it lines up with the grid of tokens.
+    // image(bk, START_X - 13, START_Y - 16);
+    
+    // Draw the debug board with gridlines
+    //pushMatrix();
+    //translate(0, 300);
+    fill(33,66,99,100);
+    strokeWeight(1);
+    //rect(START_X, START_Y, BOARD_W_IN_PX, BOARD_H_IN_PX);
+    rect(0, 0, BOARD_W_IN_PX, BOARD_H_IN_PX);
+   // popMatrix();
     
     for(int i = 0; i < floatingTokens.size(); i++){
       floatingTokens.get(i).draw();
@@ -580,6 +579,9 @@ public class ScreenGameplay implements IScreen, Subject{
     
     drawBoard();
     
+    
+
+    
     // Draw the Dying tokens above the board as if they are coming out of it.
     // So when the tokens above fall down, those falling tokens render BEHIND these ones.
     for(int i = 0; i < dyingTokens.size(); i++){
@@ -592,9 +594,15 @@ public class ScreenGameplay implements IScreen, Subject{
     pushStyle();
     fill(0);
     noStroke();
-    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
+    rect(START_X-150, -238, 250, 222);
     popStyle();
 
+    // Draw a box around the grid, just for debugging.
+    noFill();
+    stroke(255);
+    strokeWeight(1);
+    //rect(0, 350, TOKEN_SIZE, 320);
+    
     popMatrix();
     
     // HACK: This line is here as a workaround a bug in Processing.js
@@ -615,7 +623,6 @@ public class ScreenGameplay implements IScreen, Subject{
   /**
    */
   public void update(){
-     //layers.get(0).update();
        
     // Once the player meets their quota...
     if(gemCounter >= gemsRequiredForLevel){
@@ -682,8 +689,7 @@ public class ScreenGameplay implements IScreen, Subject{
         int matches = getNumCosecutiveMatches(swapToken1, swapToken2);
         
         // If it was not a valid swap, animate it back from where it came.
-        if(matches < 3){
-        //wasValidSwap(swapToken1, swapToken2) == false){          
+        if(matches < 3){          
           int r1 = swapToken1.getRow();
           int c1 = swapToken1.getColumn();
           
@@ -706,17 +712,7 @@ public class ScreenGameplay implements IScreen, Subject{
           removeMarkedTokens(true);
           
           deselectCurrentTokens();
-        }
-        
-        // Was it valid?
-        // if( false == isValidSwap(token1, token2)){
-          // token1.animateTo( .. );
-          // token2.animateTo( ...);
-          // token1.setReturning(true);
-          // token2.setRetruning(true);
-        
-        // if it was valid ....
-        
+        } 
       }
       else if(swapToken1.arrivedAtDest() && swapToken1.isReturning()){
         swapToken1.dropIntoCell();
@@ -727,7 +723,6 @@ public class ScreenGameplay implements IScreen, Subject{
         swapToken1 = swapToken2 = null;
       }
     }
-    
     
     // Iterate over all the tokens that are dying and
     // increase the score.
@@ -782,17 +777,17 @@ public class ScreenGameplay implements IScreen, Subject{
       delayTicker = null;
     }
     
-    //pushMatrix();
     resetMatrix();
-    
-    //debug.addString("debug time: " + debugTicker.getTotalTime());
-    //debug.addString("destroyed: " + tokensDestroyed);
-    //debug.addString(gemCounter + "/" + gemsRequiredForLevel);
     
     // Add a leading zero if seconds is a single digit
     String secStr = "";
     
     int seconds = (int)levelCountDownTimer.getTotalTime() % 60;
+    
+    // 
+    if( (int)levelCountDownTimer.getTotalTime() == 0){
+      screenAlive = false;
+    }
     
     notifyObservers();
     
@@ -804,10 +799,7 @@ public class ScreenGameplay implements IScreen, Subject{
     }
     
     //debug.addString( "" + (int)(levelCountDownTimer.getTotalTime()/60) + ":" + secStr  );
-    //for(int i = 0; i < numTokenTypesOnBoard; i++){
     //  debug.addString("color: " + numMatchedGems[i]);
-    //}
-    //popMatrix();
   }
   
   public boolean isAlive(){
@@ -819,13 +811,12 @@ public class ScreenGameplay implements IScreen, Subject{
   }
   
   public int getRowIndex(){
-    return (int)map(mouseY,  START_Y , START_Y + BOARD_ROWS * TOKEN_SIZE, 0, BOARD_ROWS);
+    return (int)map(mouseY, START_Y, START_Y + BOARD_H_IN_PX, 8, 16);
   }
   
   public int getColumnIndex(){
-    return (int)map(mouseX,  START_X, START_X + BOARD_COLS * TOKEN_SIZE, 0, BOARD_COLS);
+    return (int)map(mouseX, START_X, START_X+ BOARD_W_IN_PX, 0, BOARD_COLS);
   }
-
   
   /**
    * Tokens that are considrered too far to swap include ones that
@@ -835,11 +826,7 @@ public class ScreenGameplay implements IScreen, Subject{
     //
     return abs(t1.getRow() - t2.getRow()) + abs(t1.getColumn() - t2.getColumn()) == 1;
   }
-  
-  //if((abs(t2.getRow() - t1.getRow()) == 1 && (t1.getColumn() == t2.getColumn()) ) ||
-    //   (abs(t2.getColumn() - t1.getColumn()) == 1 && (t1.getRow() == t2.getRow()))  ){
     
-  
   public void mouseMoved(){
     mouseRowIndex = getRowIndex();
     mouseColumnIndex = getColumnIndex();
@@ -861,23 +848,24 @@ public class ScreenGameplay implements IScreen, Subject{
     int r = getRowIndex();
     int c = getColumnIndex();
     
+    // We can get some wacky values when clicking outside of the
+    // board. If the player does that, just ignore the click.
     if( r >= BOARD_ROWS || c >= BOARD_COLS || r < 0 || c < 0){
       return;
     }
-    
     
     if(currToken1 == null){
       currToken1 = board[r][c];
       currToken1.setSelect(true);
     }
     
+    // The real work is done once we know what to swap with.
     else if(currToken2 == null){
       
       currToken2 = board[r][c];
       // User clicked on a token that's too far to swap with the one already selected
       // In that case, what they are probably doing is starting the 'swap process' over.
       if( isCloseEnoughForSwap(currToken1, currToken2) == false){
-      //tooFarToSwap(currToken1,currToken2)){
         currToken1.setSelect(false);
         currToken1 = currToken2;
         currToken1.setSelect(true);  
@@ -1081,7 +1069,7 @@ public class ScreenGameplay implements IScreen, Subject{
               // the board is rendered, all the tokens in it get rendered also.
               // And if the tokens are floating down, they shouldn't appear in the board.
               
-              //tokenToMove.setRowColumn(firstEmptyCellIndex, c);
+              // tokenToMove.setRowColumn(firstEmptyCellIndex, c);
               // tokenToMove.moveToRow(firstEmptyCellIndex);
               
               Token tokenToMove = board[row][c];
@@ -1099,9 +1087,6 @@ public class ScreenGameplay implements IScreen, Subject{
               
               //
               break;
-              
-              //Gem g = board[row][c];
-              //g.moveTo(board[rowMarker][c]);
             }
           }
         }      
@@ -1219,9 +1204,7 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
-    //println("matches: " + Testing);
     return Testing;
-    //return markedAtLeast3Gems;
   }
   
   /*
@@ -1392,6 +1375,9 @@ public class ScreenGameplay implements IScreen, Subject{
     noFill();
     stroke(255);
     strokeWeight(2);
+    
+
+    
     //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE);
     
     // Draw lower part of the board
@@ -1478,6 +1464,14 @@ public class ScreenGameplay implements IScreen, Subject{
     Keyboard.setKeyDown(keyCode, false);
   }
   
+  public int getNumGems(){
+    return gemCounter;
+  }
+  
+  public int getNumGemsForNextLevel(){
+    return gemsRequiredForLevel;
+  }
+  
   /*
       The user can only go to the next level if they have
       destroyed the number stored in gemsRequiredForLevel.
@@ -1488,7 +1482,9 @@ public class ScreenGameplay implements IScreen, Subject{
       - Sometimes the number of gem types increase
   */
   void goToNextLevel(){
-    score = 0;
+    
+    // Should the score be reset?
+    // score = 0;
     gemCounter = 0;
 
     //numMatchedGems = new int[numTokenTypesOnBoard];
@@ -1497,7 +1493,9 @@ public class ScreenGameplay implements IScreen, Subject{
     gemsRequiredForLevel += 5;
     
     // Still playing around with this to make later levels challenging.
+    levelCountDownTimer = new Ticker();
     levelCountDownTimer.setTime(2 + (gemsRequiredForLevel/2) , 11);
+    levelCountDownTimer.setDirection(-1);
   
     if(currLevel == 4){
       numTokenTypesOnBoard++;
@@ -2174,7 +2172,6 @@ public abstract class RetroWidget{
   }
     
   public void setParent(RetroWidget widget){
-    //println("setting parent");
     parent = widget;
     //defaultParent = null;
   }
@@ -2502,11 +2499,21 @@ final int BOARD_ROWS = 16;
 // Only need y index
 final int START_ROW_INDEX = 8;
 
-// Where on the canvas the tokens start to be rendered.
-final int START_X = 140;//200;
-final int START_Y =  20 - 200;
-
 final int TOKEN_SIZE = 28;
+
+final int CANVAS_WIDTH = 520;
+final int CANVAS_HEIGHT = 400;
+
+// We define the board size in pixels and allow it to be any size
+// and have the tokens center themselves inside those dimensions.
+// This allows us to define a variable board size.
+final int BOARD_W_IN_PX = 234;
+final int BOARD_H_IN_PX = 234;
+
+// Where on the canvas the tokens start to be rendered.
+final int START_X = (int)(CANVAS_WIDTH/2.0f  - BOARD_W_IN_PX/2.0f);
+final int START_Y = (int)(CANVAS_HEIGHT/2.0f - BOARD_H_IN_PX/2.0f);
+
 
 // Used by the AssetStore
 PApplet globalApplet;
@@ -2515,7 +2522,9 @@ Token[][] board = new Token[BOARD_ROWS][BOARD_COLS];
 
 Stack<IScreen> screenStack = new Stack<IScreen>();
 
-// Wrap println so we can easily disable all console output on release
+/*
+  Wrap println so we can easily disable all console output on release
+*/
 void debugPrint(String str){
   if(DEBUG_CONSOLE_ON){
     println(str);
@@ -2523,8 +2532,9 @@ void debugPrint(String str){
 }
 
 void setup(){
-  size(START_X + TOKEN_SIZE * BOARD_COLS + START_X - 4, START_Y + TOKEN_SIZE * BOARD_ROWS + 40 - 8);
-
+  //START_X + TOKEN_SIZE * BOARD_COLS + START_X - 4 +200, START_Y + TOKEN_SIZE * BOARD_ROWS + 40 - 8 + 400);
+  size(CANVAS_WIDTH, CANVAS_HEIGHT);
+  
   // The style of the game is pixel art, so we don't want anti-aliasing
   noSmooth();
   
@@ -2556,8 +2566,6 @@ void update(){
     
     screenStack.push(new GameOverScreen());
   }
-  
-  
 }
 
 void draw(){
@@ -2570,27 +2578,22 @@ public void mousePressed(){
 }
 
 public void mouseReleased(){
-  //currScreen.mouseReleased();
   screenStack.top().mouseReleased();
 }
 
 public void mouseDragged(){
-  //currScreen.mouseDragged();
   screenStack.top().mouseDragged();
 }
 
 public void mouseMoved(){
-  //currScreen.mouseMoved();
   screenStack.top().mouseMoved();
 }
 
 public void keyPressed(){
-  //currScreen.keyPressed();
   screenStack.top().keyPressed();
 }
 
 public void keyReleased(){
-  //currScreen.keyReleased();
   screenStack.top().keyReleased();
 }
 
@@ -2673,10 +2676,10 @@ public class Token{
   private float scaleSize;
   
   private int moveDirection;
-  private final float MOVE_SPEED = TOKEN_SIZE * 10.0f; // token size per second
+  private final float MOVE_SPEED = TOKEN_SIZE * 5.0f; // token size per second
   private final float DROP_SPEED = 10;
-
-  //   
+  
+  // Use can select up to 2 tokens before they get swapped.
   private boolean isSelected;
   
   public Token(){
@@ -2857,6 +2860,10 @@ public class Token{
     doesHaveGem = true;
   }
   
+  /*
+      Once the token is destroyed, the game screen will increment
+      the number of gems the player has if this token had a gem.
+  */
   public boolean hasGem(){
     return doesHaveGem;
   }
@@ -2869,7 +2876,11 @@ public class Token{
     
     // TODO: fix, why -1??
     // column row swapped here.
-    detachedPos = new PVector((column-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f), (row-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f));
+    //detachedPos = new PVector((column-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f), (row-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f));
+    
+    int xx = (int)(column  * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0 ));
+    int yy = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0 ));
+    detachedPos = new PVector(xx, yy);//new PVector((column-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f), (row-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f));
     
     rowToMoveTo = r;
     colToMoveTo = c;
@@ -2891,167 +2902,108 @@ public class Token{
    */
   public void draw(){
     
-    ///
-    ///  There's a huge problem with this. For some reason tick() needs to be
-    //  called on update and here as well. Otherwise the delta is 0.
-    ///
-    if(animTicker != null){
-  //    animTicker.tick();
-    }
-    
-    //if(animTicker != null && animTicker.getTotalTime() > 0.05f){
-     // animTicker.reset();
-      //colored = !colored;
-    //}
-    
     pushStyle();
     
-    //
-    if(type == TokenType.NULL){
-      fill(0);
-      stroke(255);
-      strokeWeight(2);
-   //   ellipse(column * BALL_SIZE, row * BALL_SIZE, BALL_SIZE, BALL_SIZE);
-    }
-    else{
-      //if(detached){
-       // fill(col);
-        
-       // ellipse(column * TOKEN_SIZE, row * TOKEN_SIZE, TOKEN_SIZE, TOKEN_SIZE);   
-      //}
+    if( type != TokenType.NULL){
+      int x = 0; 
+      int y = 0;
       
-      //else if(colored){
+      // 
+      if(detached){
+        x = (int)detachedPos.x;// * TOKEN_SIZE - (TOKEN_SIZE/2);
+        y = (int)detachedPos.y;// * TOKEN_SIZE - (TOKEN_SIZE/2);
+      }
+      else{
+        // x = column * TOKEN_SIZE;// - (TOKEN_SIZE/2);// + (column);
+        // y = row * TOKEN_SIZE;// - (TOKEN_SIZE/2);// + (row);
+        x = (int)(column * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0 ));
         
-        int x = 0, 
-        y = 0;
-        
-        if(detached){
-          //println(detachedPos.x);
-          x = (int)detachedPos.x;// * TOKEN_SIZE - (TOKEN_SIZE/2);
-          y = (int)detachedPos.y;// * TOKEN_SIZE - (TOKEN_SIZE/2);
-        }
-        else{
-          x = column * TOKEN_SIZE - (TOKEN_SIZE/2) + (column * 1 * 1 ); //TOKEN_SPACING
-          y = row * TOKEN_SIZE - (TOKEN_SIZE/2);// + (column * 1 * 2);
-        }
-        
-        AssetStore store = AssetStore.Instance(globalApplet);
-        
-        if(isSelected){
-          noFill();
-          strokeWeight(2);
-          stroke(255);
-          rect(x, y, TOKEN_SIZE, TOKEN_SIZE);
-        }
-        
+        // 8 here is the number of visible rows. We need to essentially move the visible tokens up
+        // where the invisible ones would be drawn.
+        y = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0 ));
+      }
+      
+      if(isSelected){
+        //noFill();
+        pushStyle();
+        rectMode(CENTER);
+        fill(255,0,0,128);
+        strokeWeight(2);
+        stroke(255);
+        rect(x, y, TOKEN_SIZE, TOKEN_SIZE);
+        popStyle();
+      }
+      
+      if(animTicker != null){
+        pushMatrix();
+        resetMatrix();
+        imageMode(CENTER);
 
+        scaleSize += animTicker.getDeltaSec() * 1.0f;
+               
+        translate(START_X, START_Y);
+        translate(x, y);
         
-        //if(!colored){return;}
+        scale(scaleSize * 1.0f);
         
-          if(animTicker != null){
-            pushMatrix();
-            resetMatrix();
-            
-            scaleSize += animTicker.getDeltaSec() * 2.0f;
-            
-            // TODO: Fix me
-            //println("animTicker ==> " + animTicker.getDeltaSec() * 10.0f);
-            
-            translate(START_X, START_Y);
-            translate(x, y);
-            translate(TOKEN_SIZE, TOKEN_SIZE);
-            
-            scale(scaleSize * 1.0f);
-            translate(-TOKEN_SIZE/2, -TOKEN_SIZE/2);
-            
-            // TODO: fix me
-            tint(255, 255 - ((scaleSize- 1.0f) * 255));
-          }
-          else{
-             pushMatrix();
-             resetMatrix();
-               translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
-               translate(START_X, START_Y);
-            // translate(x + TOKEN_SPACING, y);
-             translate( 0, row * 0.5);
-             translate(x, y);
-          }
-          
-          // Debugging
-         /* pushStyle();
-          noFill();
-          stroke(255,50,50);
-          rect(0,0, TOKEN_SIZE, TOKEN_SIZE);*/
-          
-          // We need to somehow distinguish tokens that have gems.
-          if(hasGem()){
-            pushStyle();
-            fill(33, 60, 90, 255);
-            noFill();
-            stroke(255);
-            rect(0,0,TOKEN_SIZE, TOKEN_SIZE);
-            popStyle();
-          }
-          
-          
-            //
-            switch(type){
-              case TokenType.RED:    image(store.get(TokenType.RED),0,0);break;
-              case TokenType.GREEN:  image(store.get(TokenType.GREEN),0,0);break;
-              case TokenType.BLUE:   image(store.get(TokenType.BLUE),0,0);break;
-              case TokenType.YELLOW: image(store.get(TokenType.YELLOW),0,0);break;
-              case TokenType.SKULL:  image(store.get(TokenType.SKULL),0,0);break;
-              case TokenType.WHITE:  image(store.get(TokenType.WHITE),0,0);break;
-              case TokenType.PURPLE: image(store.get(TokenType.PURPLE),0,0);break;
-              default: ellipse(column * TOKEN_SIZE, row * TOKEN_SIZE, TOKEN_SIZE, TOKEN_SIZE);break;
-            }
-      popStyle();
-        // Draw the gem if it has one
-     //   if(hasGem()){
-      // popMatrix();
-    /*
-          switch(type){
-            case TokenType.RED:    image(store.get(TokenType.RED_GEM),x,y);break;
-            case TokenType.GREEN:  image(store.get(TokenType.GREEN_GEM),x,y);break;
-            case TokenType.BLUE:   image(store.get(TokenType.BLUE_GEM),x,y);break;
-            case TokenType.YELLOW: image(store.get(TokenType.YELLOW_GEM),x,y);break;
-            case TokenType.SKULL:  image(store.get(TokenType.SKULL_GEM),x,y);break;
-            case TokenType.WHITE:  image(store.get(TokenType.WHITE_GEM),x,y);break;
-            case TokenType.PURPLE: image(store.get(TokenType.PURPLE_GEM),x,y);break;
-            default: ellipse(column * TOKEN_SIZE, row * TOKEN_SIZE, TOKEN_SIZE, TOKEN_SIZE);break;
-          }*/
-       // }
-        
-            //  if(animTicker != null){
-        popMatrix();
-         //   }
-        
-        //if(type == 1){
-        //}
-        //else{
-         // fill(col);
-         // ellipse(column * TOKEN_SIZE, row * TOKEN_SIZE, TOKEN_SIZE, TOKEN_SIZE);
-        //}
+        // TODO: fix me
+        tint(255, 255 - ((scaleSize - 1.0f) * 255));
+      }
+      else{
+        pushMatrix();
+        resetMatrix();
+          // translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
+           translate(START_X, START_Y);
+          // translate(x + TOKEN_SPACING, y);
+          // translate(0, row * 0.5);
+          translate(x, y);
+      }
       
-      //else{
-        //fill(255);
-        //ellipse(column * TOKEN_SIZE, row * TOKEN_SIZE, TOKEN_SIZE, TOKEN_SIZE);   
-     // }
+      // Debugging
+      pushStyle();
+      noFill();
+      stroke(0,100,50);
+      //rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
+      popStyle();
+      
+      // We need to somehow distinguish tokens that have gems.
+      if(hasGem()){
+        pushStyle();
+        rectMode(CENTER);
+        fill(33, 60, 90, 255);
+        noFill();
+        stroke(255);
+        rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
+        popStyle();
+      }
+      
+      imageMode(CENTER);
+      AssetStore store = AssetStore.Instance(globalApplet);
+      //
+      switch(type){
+        case TokenType.RED:    image(store.get(TokenType.RED),0,0);break;
+        case TokenType.GREEN:  image(store.get(TokenType.GREEN),0,0);break;
+        case TokenType.BLUE:   image(store.get(TokenType.BLUE),0,0);break;
+        case TokenType.YELLOW: image(store.get(TokenType.YELLOW),0,0);break;
+        case TokenType.SKULL:  image(store.get(TokenType.SKULL),0,0);break;
+        case TokenType.WHITE:  image(store.get(TokenType.WHITE),0,0);break;
+        case TokenType.PURPLE: image(store.get(TokenType.PURPLE),0,0);break;
+        default: ellipse(column * TOKEN_SIZE, row * TOKEN_SIZE, TOKEN_SIZE, TOKEN_SIZE);break;
+      }
+      popStyle();
+      
+      popMatrix();
     }
-    
-    //ellipse(position.x, position.y, BALL_SIZE, BALL_SIZE);
-    //popStyle();
   }
   
-  /**
-   */
+  /*
+      Instead of directly checking the type between tokens, we
+      have a method that just asks if it can match with whatever. This 
+      allows us to later on match tokens with wildcards.
+  */
   public boolean matchesWith(int other){
-    if(type == other){
-      return true;
-    }
-    return false;
-  }
-  
+    return type == other;
+  }  
 }
 public class Tuple{
   private Object first, second;
@@ -3420,7 +3372,7 @@ public class ScreenGameplay implements IScreen, Subject{
     Layer hudLayer = new HUDLayer();
     observers.add(hudLayer);*/
     
-  
+    
     debugTicker = new Ticker();
     debug = new Debugger();
    
@@ -3429,13 +3381,10 @@ public class ScreenGameplay implements IScreen, Subject{
     
     drawBoxUnderCursor = false;
     
-    levelCountDownTimer = new Ticker();
-    levelCountDownTimer.setTime(5, 12);
-    levelCountDownTimer.setDirection(-1);
-    
     fillBoardWithRandomTokens();
     deselectCurrentTokens();
     
+    // levelCountDownTimer is set in this method.
     goToNextLevel();
   }
   
@@ -3444,11 +3393,21 @@ public class ScreenGameplay implements IScreen, Subject{
   public void draw(){
     background(0);
     
-    image(bk, 125, 30);
-
     pushMatrix();
+
     translate(START_X, START_Y);
-    translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
+    //translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
+    // Offset the image slighly so that it lines up with the grid of tokens.
+    // image(bk, START_X - 13, START_Y - 16);
+    
+    // Draw the debug board with gridlines
+    //pushMatrix();
+    //translate(0, 300);
+    fill(33,66,99,100);
+    strokeWeight(1);
+    //rect(START_X, START_Y, BOARD_W_IN_PX, BOARD_H_IN_PX);
+    rect(0, 0, BOARD_W_IN_PX, BOARD_H_IN_PX);
+   // popMatrix();
     
     for(int i = 0; i < floatingTokens.size(); i++){
       floatingTokens.get(i).draw();
@@ -3471,6 +3430,9 @@ public class ScreenGameplay implements IScreen, Subject{
     
     drawBoard();
     
+    
+
+    
     // Draw the Dying tokens above the board as if they are coming out of it.
     // So when the tokens above fall down, those falling tokens render BEHIND these ones.
     for(int i = 0; i < dyingTokens.size(); i++){
@@ -3483,9 +3445,15 @@ public class ScreenGameplay implements IScreen, Subject{
     pushStyle();
     fill(0);
     noStroke();
-    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, 222, 222);
+    rect(START_X-150, -238, 250, 222);
     popStyle();
 
+    // Draw a box around the grid, just for debugging.
+    noFill();
+    stroke(255);
+    strokeWeight(1);
+    //rect(0, 350, TOKEN_SIZE, 320);
+    
     popMatrix();
     
     // HACK: This line is here as a workaround a bug in Processing.js
@@ -3506,7 +3474,6 @@ public class ScreenGameplay implements IScreen, Subject{
   /**
    */
   public void update(){
-     //layers.get(0).update();
        
     // Once the player meets their quota...
     if(gemCounter >= gemsRequiredForLevel){
@@ -3573,8 +3540,7 @@ public class ScreenGameplay implements IScreen, Subject{
         int matches = getNumCosecutiveMatches(swapToken1, swapToken2);
         
         // If it was not a valid swap, animate it back from where it came.
-        if(matches < 3){
-        //wasValidSwap(swapToken1, swapToken2) == false){          
+        if(matches < 3){          
           int r1 = swapToken1.getRow();
           int c1 = swapToken1.getColumn();
           
@@ -3597,17 +3563,7 @@ public class ScreenGameplay implements IScreen, Subject{
           removeMarkedTokens(true);
           
           deselectCurrentTokens();
-        }
-        
-        // Was it valid?
-        // if( false == isValidSwap(token1, token2)){
-          // token1.animateTo( .. );
-          // token2.animateTo( ...);
-          // token1.setReturning(true);
-          // token2.setRetruning(true);
-        
-        // if it was valid ....
-        
+        } 
       }
       else if(swapToken1.arrivedAtDest() && swapToken1.isReturning()){
         swapToken1.dropIntoCell();
@@ -3618,7 +3574,6 @@ public class ScreenGameplay implements IScreen, Subject{
         swapToken1 = swapToken2 = null;
       }
     }
-    
     
     // Iterate over all the tokens that are dying and
     // increase the score.
@@ -3673,17 +3628,17 @@ public class ScreenGameplay implements IScreen, Subject{
       delayTicker = null;
     }
     
-    //pushMatrix();
     resetMatrix();
-    
-    //debug.addString("debug time: " + debugTicker.getTotalTime());
-    //debug.addString("destroyed: " + tokensDestroyed);
-    //debug.addString(gemCounter + "/" + gemsRequiredForLevel);
     
     // Add a leading zero if seconds is a single digit
     String secStr = "";
     
     int seconds = (int)levelCountDownTimer.getTotalTime() % 60;
+    
+    // 
+    if( (int)levelCountDownTimer.getTotalTime() == 0){
+      screenAlive = false;
+    }
     
     notifyObservers();
     
@@ -3695,10 +3650,7 @@ public class ScreenGameplay implements IScreen, Subject{
     }
     
     //debug.addString( "" + (int)(levelCountDownTimer.getTotalTime()/60) + ":" + secStr  );
-    //for(int i = 0; i < numTokenTypesOnBoard; i++){
     //  debug.addString("color: " + numMatchedGems[i]);
-    //}
-    //popMatrix();
   }
   
   public boolean isAlive(){
@@ -3710,13 +3662,12 @@ public class ScreenGameplay implements IScreen, Subject{
   }
   
   public int getRowIndex(){
-    return (int)map(mouseY,  START_Y , START_Y + BOARD_ROWS * TOKEN_SIZE, 0, BOARD_ROWS);
+    return (int)map(mouseY, START_Y, START_Y + BOARD_H_IN_PX, 8, 16);
   }
   
   public int getColumnIndex(){
-    return (int)map(mouseX,  START_X, START_X + BOARD_COLS * TOKEN_SIZE, 0, BOARD_COLS);
+    return (int)map(mouseX, START_X, START_X+ BOARD_W_IN_PX, 0, BOARD_COLS);
   }
-
   
   /**
    * Tokens that are considrered too far to swap include ones that
@@ -3726,11 +3677,7 @@ public class ScreenGameplay implements IScreen, Subject{
     //
     return abs(t1.getRow() - t2.getRow()) + abs(t1.getColumn() - t2.getColumn()) == 1;
   }
-  
-  //if((abs(t2.getRow() - t1.getRow()) == 1 && (t1.getColumn() == t2.getColumn()) ) ||
-    //   (abs(t2.getColumn() - t1.getColumn()) == 1 && (t1.getRow() == t2.getRow()))  ){
     
-  
   public void mouseMoved(){
     mouseRowIndex = getRowIndex();
     mouseColumnIndex = getColumnIndex();
@@ -3752,23 +3699,24 @@ public class ScreenGameplay implements IScreen, Subject{
     int r = getRowIndex();
     int c = getColumnIndex();
     
+    // We can get some wacky values when clicking outside of the
+    // board. If the player does that, just ignore the click.
     if( r >= BOARD_ROWS || c >= BOARD_COLS || r < 0 || c < 0){
       return;
     }
-    
     
     if(currToken1 == null){
       currToken1 = board[r][c];
       currToken1.setSelect(true);
     }
     
+    // The real work is done once we know what to swap with.
     else if(currToken2 == null){
       
       currToken2 = board[r][c];
       // User clicked on a token that's too far to swap with the one already selected
       // In that case, what they are probably doing is starting the 'swap process' over.
       if( isCloseEnoughForSwap(currToken1, currToken2) == false){
-      //tooFarToSwap(currToken1,currToken2)){
         currToken1.setSelect(false);
         currToken1 = currToken2;
         currToken1.setSelect(true);  
@@ -3972,7 +3920,7 @@ public class ScreenGameplay implements IScreen, Subject{
               // the board is rendered, all the tokens in it get rendered also.
               // And if the tokens are floating down, they shouldn't appear in the board.
               
-              //tokenToMove.setRowColumn(firstEmptyCellIndex, c);
+              // tokenToMove.setRowColumn(firstEmptyCellIndex, c);
               // tokenToMove.moveToRow(firstEmptyCellIndex);
               
               Token tokenToMove = board[row][c];
@@ -3990,9 +3938,6 @@ public class ScreenGameplay implements IScreen, Subject{
               
               //
               break;
-              
-              //Gem g = board[row][c];
-              //g.moveTo(board[rowMarker][c]);
             }
           }
         }      
@@ -4110,9 +4055,7 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
-    //println("matches: " + Testing);
     return Testing;
-    //return markedAtLeast3Gems;
   }
   
   /*
@@ -4283,6 +4226,9 @@ public class ScreenGameplay implements IScreen, Subject{
     noFill();
     stroke(255);
     strokeWeight(2);
+    
+
+    
     //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE);
     
     // Draw lower part of the board
@@ -4369,6 +4315,14 @@ public class ScreenGameplay implements IScreen, Subject{
     Keyboard.setKeyDown(keyCode, false);
   }
   
+  public int getNumGems(){
+    return gemCounter;
+  }
+  
+  public int getNumGemsForNextLevel(){
+    return gemsRequiredForLevel;
+  }
+  
   /*
       The user can only go to the next level if they have
       destroyed the number stored in gemsRequiredForLevel.
@@ -4379,7 +4333,9 @@ public class ScreenGameplay implements IScreen, Subject{
       - Sometimes the number of gem types increase
   */
   void goToNextLevel(){
-    score = 0;
+    
+    // Should the score be reset?
+    // score = 0;
     gemCounter = 0;
 
     //numMatchedGems = new int[numTokenTypesOnBoard];
@@ -4388,7 +4344,9 @@ public class ScreenGameplay implements IScreen, Subject{
     gemsRequiredForLevel += 5;
     
     // Still playing around with this to make later levels challenging.
+    levelCountDownTimer = new Ticker();
     levelCountDownTimer.setTime(2 + (gemsRequiredForLevel/2) , 11);
+    levelCountDownTimer.setDirection(-1);
   
     if(currLevel == 4){
       numTokenTypesOnBoard++;
