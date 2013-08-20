@@ -143,7 +143,10 @@ public class ScreenGameplay implements IScreen, Subject{
     translate(START_X, START_Y);
     //translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
     // Offset the image slighly so that it lines up with the grid of tokens.
-    // image(bk, START_X - 13, START_Y - 16);
+    pushStyle();
+    imageMode(CORNER);
+    image(bk, -13, -16);
+    popStyle();
     
     // Draw the debug board with gridlines
     //pushMatrix();
@@ -190,7 +193,7 @@ public class ScreenGameplay implements IScreen, Subject{
     pushStyle();
     fill(0);
     noStroke();
-    rect(START_X-150, -238, 250, 222);
+    rect(START_X-150, -237, 250, 222);
     popStyle();
 
     // Draw a box around the grid, just for debugging.

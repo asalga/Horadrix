@@ -1,7 +1,7 @@
 /*
     Displays game name and credits
 */
-public class GameOverScreen implements IScreen{
+public class ScreenGameOver implements IScreen{
 
   boolean screenAlive;
   
@@ -9,7 +9,7 @@ public class GameOverScreen implements IScreen{
 
   RetroLabel gameOverLabel;
   
-  public GameOverScreen(){
+  public ScreenGameOver(){
     screenAlive = true;
     
     // TODO: convert this to a singleton or factory.

@@ -85,7 +85,7 @@ void update(){
   if(currScreen.getName() == "gameplay" && currScreen.isAlive() == false){
     screenStack.pop();
     
-    screenStack.push(new GameOverScreen());
+    screenStack.push(new ScreenGameOver());
   }
 }
 
