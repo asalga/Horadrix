@@ -71,7 +71,7 @@ public class Queue<T>{
 /*
     Displays game name and credits
 */
-public class GameOverScreen implements IScreen{
+public class ScreenGameOver implements IScreen{
 
   boolean screenAlive;
   
@@ -79,7 +79,7 @@ public class GameOverScreen implements IScreen{
 
   RetroLabel gameOverLabel;
   
-  public GameOverScreen(){
+  public ScreenGameOver(){
     screenAlive = true;
     
     // TODO: convert this to a singleton or factory.
@@ -183,7 +183,7 @@ public class HUDLayer implements LayerObserver{
     gemsAcquired = new RetroLabel(solarWindsFont);
     gemsAcquired.setHorizontalTrimming(true);
     gemsAcquired.setHorizontalSpacing(2);
-    gemsAcquired.pixelsFromTopLeft(105, 5);
+    gemsAcquired.pixelsFromRight(1);
     parent.addWidget(gemsAcquired);
     
     // Time
@@ -547,7 +547,10 @@ public class ScreenGameplay implements IScreen, Subject{
     translate(START_X, START_Y);
     //translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
     // Offset the image slighly so that it lines up with the grid of tokens.
-    // image(bk, START_X - 13, START_Y - 16);
+    pushStyle();
+    imageMode(CORNER);
+    image(bk, -13, -16);
+    popStyle();
     
     // Draw the debug board with gridlines
     //pushMatrix();
@@ -594,7 +597,7 @@ public class ScreenGameplay implements IScreen, Subject{
     pushStyle();
     fill(0);
     noStroke();
-    rect(START_X-150, -238, 250, 222);
+    rect(START_X-150, -237, 250, 222);
     popStyle();
 
     // Draw a box around the grid, just for debugging.
@@ -2028,6 +2031,8 @@ public class RetroPanel extends RetroWidget{
     y = yPixels;
   }
   
+  
+  
   /*
     TODO: needs debugging
   */
@@ -2068,6 +2073,31 @@ public class RetroPanel extends RetroWidget{
     y = (p.h/2) - (h/2) + yPixels;
   }
   
+  /*
+  */
+  public void pixelsFromLeft(int xPixels){
+    RetroWidget p = getParent();
+    
+    anchor = FROM_LEFT;
+    this.xPixels = xPixels;
+    
+    x = xPixels;
+    y = (p.h/2) - (h/2);
+  }
+  
+  /*
+  */
+  public void pixelsFromRight(int xPixels){
+    RetroWidget p = getParent();
+    
+    anchor = FROM_RIGHT;
+    this.xPixels = xPixels;
+
+    x = p.w - w - xPixels;
+    y = (p.h/2) - (h/2);
+  }
+  
+  
   public void updatePosition(){
     dirty = true;
   }
@@ -2102,8 +2132,9 @@ public class RetroPanel extends RetroWidget{
         case FROM_CENTER:pixelsFromCenter(xPixels, yPixels);break;
         case FROM_BOTTOM:break;
         
-        //case FROM_LEFT:   pixelsFromLeft(xPixels);break;
-        //case FROM_RIGHT:  pixelsFromRight(xPixels);break;
+        
+        case FROM_LEFT:   pixelsFromLeft(xPixels);break;
+        case FROM_RIGHT:  pixelsFromRight(xPixels);break;
         
         case FROM_TOP_LEFT:   pixelsFromTopLeft(yPixels, xPixels);break;
         case FROM_TOP_RIGHT:  pixelsFromTopRight(yPixels, xPixels);break;
@@ -2564,7 +2595,7 @@ void update(){
   if(currScreen.getName() == "gameplay" && currScreen.isAlive() == false){
     screenStack.pop();
     
-    screenStack.push(new GameOverScreen());
+    screenStack.push(new ScreenGameOver());
   }
 }
 
@@ -3398,7 +3429,10 @@ public class ScreenGameplay implements IScreen, Subject{
     translate(START_X, START_Y);
     //translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
     // Offset the image slighly so that it lines up with the grid of tokens.
-    // image(bk, START_X - 13, START_Y - 16);
+    pushStyle();
+    imageMode(CORNER);
+    image(bk, -13, -16);
+    popStyle();
     
     // Draw the debug board with gridlines
     //pushMatrix();
@@ -3445,7 +3479,7 @@ public class ScreenGameplay implements IScreen, Subject{
     pushStyle();
     fill(0);
     noStroke();
-    rect(START_X-150, -238, 250, 222);
+    rect(START_X-150, -237, 250, 222);
     popStyle();
 
     // Draw a box around the grid, just for debugging.
