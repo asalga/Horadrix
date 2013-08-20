@@ -39,7 +39,7 @@ public class HUDLayer implements LayerObserver{
     gemsAcquired = new RetroLabel(solarWindsFont);
     gemsAcquired.setHorizontalTrimming(true);
     gemsAcquired.setHorizontalSpacing(2);
-    gemsAcquired.pixelsFromTopLeft(105, 5);
+    gemsAcquired.pixelsFromRight(1);
     parent.addWidget(gemsAcquired);
     
     // Time

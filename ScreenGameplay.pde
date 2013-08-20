@@ -190,7 +190,7 @@ public class ScreenGameplay implements IScreen, Subject{
     pushStyle();
     fill(0);
     noStroke();
-    rect(START_X-150, -238, 250, 222);
+    rect(START_X-150, -222, 250, 222);
     popStyle();
 
     // Draw a box around the grid, just for debugging.

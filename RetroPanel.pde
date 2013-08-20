@@ -117,6 +117,8 @@ public class RetroPanel extends RetroWidget{
     y = yPixels;
   }
   
+  
+  
   /*
     TODO: needs debugging
   */
@@ -157,6 +159,31 @@ public class RetroPanel extends RetroWidget{
     y = (p.h/2) - (h/2) + yPixels;
   }
   
+  /*
+  */
+  public void pixelsFromLeft(int xPixels){
+    RetroWidget p = getParent();
+    
+    anchor = FROM_LEFT;
+    this.xPixels = xPixels;
+    
+    x = xPixels;
+    y = (p.h/2) - (h/2);
+  }
+  
+  /*
+  */
+  public void pixelsFromRight(int xPixels){
+    RetroWidget p = getParent();
+    
+    anchor = FROM_RIGHT;
+    this.xPixels = xPixels;
+
+    x = p.w - w - xPixels;
+    y = (p.h/2) - (h/2);
+  }
+  
+  
   public void updatePosition(){
     dirty = true;
   }
@@ -191,8 +218,9 @@ public class RetroPanel extends RetroWidget{
         case FROM_CENTER:pixelsFromCenter(xPixels, yPixels);break;
         case FROM_BOTTOM:break;
         
-        //case FROM_LEFT:   pixelsFromLeft(xPixels);break;
-        //case FROM_RIGHT:  pixelsFromRight(xPixels);break;
+        
+        case FROM_LEFT:   pixelsFromLeft(xPixels);break;
+        case FROM_RIGHT:  pixelsFromRight(xPixels);break;
         
         case FROM_TOP_LEFT:   pixelsFromTopLeft(yPixels, xPixels);break;
         case FROM_TOP_RIGHT:  pixelsFromTopRight(yPixels, xPixels);break;
