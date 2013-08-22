@@ -712,6 +712,8 @@ public class ScreenGameplay implements IScreen, Subject{
           
           swapToken1.setReturning(true);
           swapToken2.setReturning(true);
+          
+          soundManager.playFailSwapSound();
         }
         
         // Swap was valid
@@ -723,6 +725,8 @@ public class ScreenGameplay implements IScreen, Subject{
           removeMarkedTokens(true);
           
           deselectCurrentTokens();
+          
+          //soundManager.playSuccessSwapSound();
         } 
       }
       else if(swapToken1.arrivedAtDest() && swapToken1.isReturning()){
@@ -1214,6 +1218,8 @@ public class ScreenGameplay implements IScreen, Subject{
         }
       }
     }
+    
+    if(Testing >= 3){  soundManager.playSuccessSwapSound();}
     
     return Testing;
   }
@@ -2561,6 +2567,8 @@ Token[][] board = new Token[BOARD_ROWS][BOARD_COLS];
 
 Stack<IScreen> screenStack = new Stack<IScreen>();
 
+SoundManager soundManager;
+
 /*
   Wrap println so we can easily disable all console output on release
 */
@@ -2579,6 +2587,9 @@ void setup(){
   
   globalApplet = this;
   
+  soundManager = new SoundManager(globalApplet);
+  soundManager.init();
+
   screenStack.push(new ScreenSplash());
 }
 
@@ -2636,40 +2647,75 @@ public void keyReleased(){
   screenStack.top().keyReleased();
 }
 
+/*
+*
+*/
+function SoundManager(){
 
-public class SoundManager{
-  boolean muted = false;
-  Minim minim;
-  
-  
-  AudioPlayer failSwap;
-  
-  public void init(){
+  var muted;
+
+  var BASE_PATH = "data/audio/";
+
+  var paths = [BASE_PATH + "fail_swap.ogg", BASE_PATH + "success_swap.ogg"];
+  var sounds = [];
+
+  var FAIL = 0;
+  var SWAP = 1;
+
+  /*
+  */
+  this.init = function(){
+    var i;
+
+    for(i = 0; i < paths.length; i++){
+      sounds[i] = document.createElement('audio');
+      sounds[i].setAttribute('src', paths[i]);
+      sounds[i].preload = 'auto';
+      sounds[i].load();
+      sounds[i].volume = 0;
+      sounds[i].setAttribute('autoplay', 'autoplay');
+    }
+  };
+
+  /*
+  *
+  */
+  this.setMute = function(mute){
+    muted = mute;
+  };
+
+  /*
+  */
+  this.stop = function(){
+    
   }
-  
-  public SoundManager(PApplet applet){
-    minim = new Minim(applet);
-  
-    failSwap = minim.loadFile("audio/failSwap.wav");
-  }
-  
-  public void setMute(boolean isMuted){
-    muted = isMuted;
-  }
-  
-  public void playFailSwapSound(){
+
+  /*
+  */
+  this.playSound = function(soundID){
     if(muted){
       return;
     }
-    failSwap.play();
-    failSwap.rewind();
-  }
-    
-  public void stop(){
-    // dropPiece.close();
-    // minim.stop();
-    // super.stop();
-  }
+
+    sounds[soundID].volume = 1.0;
+
+    // Safari does not want to play sounds...??
+    try{
+      sounds[soundID].volume = 1.0;
+      sounds[soundID].play();
+      sounds[soundID].currentTime = 0;
+    }catch(e){
+      console.log("Could not play audio file.");
+    }
+  };
+
+  this.playSuccessSwapSound = function(){
+    this.playSound(SWAP);
+  };
+
+  this.playFailSwapSound = function(){
+    this.playSound(FAIL);
+  };
 }
 /*
     A token is an object the player moves in order to make matches.
@@ -3605,6 +3651,8 @@ public class ScreenGameplay implements IScreen, Subject{
           
           swapToken1.setReturning(true);
           swapToken2.setReturning(true);
+          
+          soundManager.playFailSwapSound();
         }
         
         // Swap was valid
@@ -3616,6 +3664,8 @@ public class ScreenGameplay implements IScreen, Subject{
           removeMarkedTokens(true);
           
           deselectCurrentTokens();
+          
+          //soundManager.playSuccessSwapSound();
         } 
       }
       else if(swapToken1.arrivedAtDest() && swapToken1.isReturning()){
@@ -4107,6 +4157,8 @@ public class ScreenGameplay implements IScreen, Subject{
         }
       }
     }
+    
+    if(Testing >= 3){  soundManager.playSuccessSwapSound();}
     
     return Testing;
   }
