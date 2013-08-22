@@ -308,6 +308,8 @@ public class ScreenGameplay implements IScreen, Subject{
           
           swapToken1.setReturning(true);
           swapToken2.setReturning(true);
+          
+          soundManager.playFailSwapSound();
         }
         
         // Swap was valid
@@ -319,6 +321,8 @@ public class ScreenGameplay implements IScreen, Subject{
           removeMarkedTokens(true);
           
           deselectCurrentTokens();
+          
+          //soundManager.playSuccessSwapSound();
         } 
       }
       else if(swapToken1.arrivedAtDest() && swapToken1.isReturning()){
@@ -810,6 +814,8 @@ public class ScreenGameplay implements IScreen, Subject{
         }
       }
     }
+    
+    if(Testing >= 3){  soundManager.playSuccessSwapSound();}
     
     return Testing;
   }

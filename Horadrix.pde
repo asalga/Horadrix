@@ -43,6 +43,8 @@ Token[][] board = new Token[BOARD_ROWS][BOARD_COLS];
 
 Stack<IScreen> screenStack = new Stack<IScreen>();
 
+SoundManager soundManager;
+
 /*
   Wrap println so we can easily disable all console output on release
 */
@@ -61,6 +63,9 @@ void setup(){
   
   globalApplet = this;
   
+  soundManager = new SoundManager(globalApplet);
+  soundManager.init();
+
   screenStack.push(new ScreenSplash());
 }
 
