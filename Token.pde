@@ -317,9 +317,6 @@ public class Token{
           scaleSize = 0;
         }
         scale(scaleSize * 1.0f);
-        
-        // TODO: fix me
-        //tint(255, 255 - ((scaleSize - 1.0f) * 255));
       }
       else{
         pushMatrix();
