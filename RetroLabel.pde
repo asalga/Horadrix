@@ -175,7 +175,7 @@ public class RetroLabel extends RetroPanel{
     }
   }
    
-  public PImage getGlyph(char ch){
+  private PImage getGlyph(char ch){
     if(horizontalTrimming == true){
       return font.getTrimmedGlyph(ch );
     }
