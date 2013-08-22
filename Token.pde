@@ -267,7 +267,10 @@ public class Token{
    *
    */
   public void draw(){
-    
+     if(Keyboard.isKeyDown(KEY_P)){
+     return;
+     }
+     
     pushStyle();
     
     if( type != TokenType.NULL){
@@ -305,15 +308,18 @@ public class Token{
         resetMatrix();
         imageMode(CENTER);
 
-        scaleSize += animTicker.getDeltaSec() * 1.0f;
-               
+        scaleSize -= animTicker.getDeltaSec() * 1.0f;
+        
         translate(START_X, START_Y);
         translate(x, y);
         
+        if(scaleSize <= 0){
+          scaleSize = 0;
+        }
         scale(scaleSize * 1.0f);
         
         // TODO: fix me
-        tint(255, 255 - ((scaleSize - 1.0f) * 255));
+        //tint(255, 255 - ((scaleSize - 1.0f) * 255));
       }
       else{
         pushMatrix();
@@ -326,11 +332,11 @@ public class Token{
       }
       
       // Debugging
-      pushStyle();
-      noFill();
-      stroke(0,100,50);
+      //pushStyle();
+      //noFill();
+      //stroke(0, 100, 50);
       //rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
-      popStyle();
+      //popStyle();
       
       // We need to somehow distinguish tokens that have gems.
       if(hasGem()){

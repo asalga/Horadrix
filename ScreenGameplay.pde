@@ -136,26 +136,37 @@ public class ScreenGameplay implements IScreen, Subject{
   /*
   */
   public void draw(){
-    background(0);
+ 
     
+     if(Keyboard.isKeyDown(KEY_P)){
+       return;
+     }
+ 
+    background(0);
     pushMatrix();
 
     translate(START_X, START_Y);
-    //translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
-    // Offset the image slighly so that it lines up with the grid of tokens.
+    
+    // Draw the board background image
     pushStyle();
     imageMode(CORNER);
+    // Offset the image slighly so that it lines up with the grid of tokens.
     image(bk, -13, -16);
     popStyle();
     
     // Draw the debug board with gridlines
     //pushMatrix();
     //translate(0, 300);
-    fill(33,66,99,100);
-    strokeWeight(1);
+    //fill(33,66,99,100);
+    //strokeWeight(1);
     //rect(START_X, START_Y, BOARD_W_IN_PX, BOARD_H_IN_PX);
-    rect(0, 0, BOARD_W_IN_PX, BOARD_H_IN_PX);
-   // popMatrix();
+    //rect(0, 0, BOARD_W_IN_PX, BOARD_H_IN_PX);
+    //popMatrix();
+    
+    // The dying tokens shrink and the falling tokens get rendered on top of them.
+    for(int i = 0; i < dyingTokens.size(); i++){
+      dyingTokens.get(i).draw();
+    }
     
     for(int i = 0; i < floatingTokens.size(); i++){
       floatingTokens.get(i).draw();
@@ -176,16 +187,11 @@ public class ScreenGameplay implements IScreen, Subject{
       popStyle();
     }
     
-    drawBoard();
-    
-    
 
-    
-    // Draw the Dying tokens above the board as if they are coming out of it.
-    // So when the tokens above fall down, those falling tokens render BEHIND these ones.
-    for(int i = 0; i < dyingTokens.size(); i++){
-      dyingTokens.get(i).draw();
-    }
+
+
+    drawBoard();
+        
 
     // In some cases it is necessary to see the non-visible tokens
     // above the visible board. Other cases, I want that part covered.
@@ -197,9 +203,9 @@ public class ScreenGameplay implements IScreen, Subject{
     popStyle();
 
     // Draw a box around the grid, just for debugging.
-    noFill();
-    stroke(255);
-    strokeWeight(1);
+    //noFill();
+    //stroke(255);
+    //strokeWeight(1);
     //rect(0, 350, TOKEN_SIZE, 320);
     
     popMatrix();
@@ -216,6 +222,8 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
+
+
     debug.draw();
   }
   
