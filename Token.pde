@@ -177,6 +177,11 @@ public class Token{
   /*
    */
   public void update(){
+    
+    if(Keyboard.isKeyDown(KEY_P)){
+      return;
+    }
+    
     ticker.tick();
     
     if(animTicker != null){
@@ -244,9 +249,9 @@ public class Token{
     // column row swapped here.
     //detachedPos = new PVector((column-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f), (row-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f));
     
-    int xx = (int)(column  * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0 ));
-    int yy = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0 ));
-    detachedPos = new PVector(xx, yy);//new PVector((column-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f), (row-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f));
+    int detachedX = (int)(column  * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0 ));
+    int detachedY = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0 ));
+    detachedPos = new PVector(detachedX, detachedY);//new PVector((column-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f), (row-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f));
     
     rowToMoveTo = r;
     colToMoveTo = c;
@@ -267,104 +272,83 @@ public class Token{
    *
    */
   public void draw(){
-     if(Keyboard.isKeyDown(KEY_P)){
-     return;
-     }
-     
-    pushStyle();
     
-    if( type != TokenType.NULL){
-      int x = 0; 
-      int y = 0;
-      
-      // 
-      if(detached){
-        x = (int)detachedPos.x;// * TOKEN_SIZE - (TOKEN_SIZE/2);
-        y = (int)detachedPos.y;// * TOKEN_SIZE - (TOKEN_SIZE/2);
-      }
-      else{
-        // x = column * TOKEN_SIZE;// - (TOKEN_SIZE/2);// + (column);
-        // y = row * TOKEN_SIZE;// - (TOKEN_SIZE/2);// + (row);
-        x = (int)(column * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0 ));
-        
-        // 8 here is the number of visible rows. We need to essentially move the visible tokens up
-        // where the invisible ones would be drawn.
-        y = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0 ));
-      }
-      
-      if(isSelected){
-        //noFill();
-        pushStyle();
-        rectMode(CENTER);
-        fill(255,0,0,128);
-        strokeWeight(2);
-        stroke(255);
-        rect(x, y, TOKEN_SIZE, TOKEN_SIZE);
-        popStyle();
-      }
-      
-      if(animTicker != null){
-        pushMatrix();
-        resetMatrix();
-        imageMode(CENTER);
-
-        scaleSize -= animTicker.getDeltaSec() * 1.0f;
-        
-        translate(START_X, START_Y);
-        translate(x, y);
-        
-        if(scaleSize <= 0){
-          scaleSize = 0;
-        }
-        scale(scaleSize * 1.0f);
-      }
-      else{
-        pushMatrix();
-        resetMatrix();
-          // translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
-           translate(START_X, START_Y);
-          // translate(x + TOKEN_SPACING, y);
-          // translate(0, row * 0.5);
-          translate(x, y);
-      }
-      
-      // Debugging
-      //pushStyle();
-      //noFill();
-      //stroke(0, 100, 50);
-      //rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
-      //popStyle();
-      
-      // We need to somehow distinguish tokens that have gems.
-      if(hasGem()){
-        pushStyle();
-        rectMode(CENTER);
-        fill(33, 60, 90, 255);
-        noFill();
-        stroke(255);
-        rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
-        popStyle();
-      }
-      
-      imageMode(CENTER);
-      AssetStore store = AssetStore.Instance(globalApplet);
-      //
-      switch(type){
-        case TokenType.RED:    image(store.get(TokenType.RED),0,0);break;
-        case TokenType.GREEN:  image(store.get(TokenType.GREEN),0,0);break;
-        case TokenType.BLUE:   image(store.get(TokenType.BLUE),0,0);break;
-        case TokenType.YELLOW: image(store.get(TokenType.YELLOW),0,0);break;
-        case TokenType.SKULL:  image(store.get(TokenType.SKULL),0,0);break;
-        case TokenType.WHITE:  image(store.get(TokenType.WHITE),0,0);break;
-        case TokenType.PURPLE: image(store.get(TokenType.PURPLE),0,0);break;
-        default: ellipse(column * TOKEN_SIZE, row * TOKEN_SIZE, TOKEN_SIZE, TOKEN_SIZE);break;
-      }
-      popStyle();
-      
-      popMatrix();
+    if(Keyboard.isKeyDown(KEY_P) || type == TokenType.NULL){
+      return;
     }
+    
+    int x = 0; 
+    int y = 0;
+    
+    // 
+    if(detached){
+      x = (int)detachedPos.x;// * TOKEN_SIZE - (TOKEN_SIZE/2);
+      y = (int)detachedPos.y;// * TOKEN_SIZE - (TOKEN_SIZE/2);
+    }
+    else{
+      // x = column * TOKEN_SIZE;// - (TOKEN_SIZE/2);// + (column);
+      // y = row * TOKEN_SIZE;// - (TOKEN_SIZE/2);// + (row);
+      x = (int)(column * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0 ));
+      
+      // 8 here is the number of visible rows. We need to essentially move the visible tokens up
+      // where the invisible ones would be drawn.
+      y = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0 ));
+    }
+    
+    // Draw a rectangle around the selected tokens
+    if(isSelected){
+      pushStyle();
+      fill(33, 66, 99);
+      rectMode(CENTER);
+      fill(255,0,0,255);
+      strokeWeight(2);
+      stroke(255);
+      rect(x, y, TOKEN_SIZE, TOKEN_SIZE);
+      popStyle();
+    }
+
+    // TODO: comment
+    pushMatrix();
+    resetMatrix();
+    
+    translate(START_X, START_Y);
+    translate(x, y);
+    
+    // Shrink the token if it is dying
+    if(animTicker != null){
+      scaleSize -= animTicker.getDeltaSec() * 1.0f;
+      scale(scaleSize >= 0 ? scaleSize : 0);      
+    }
+    
+    // Draws an outline around all tokens
+    if(DEBUG_ON){
+      pushStyle();
+      rectMode(CENTER);
+      noFill();
+      stroke(0, 100, 50);
+      rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
+      popStyle();
+    }
+    
+    // We need to somehow distinguish tokens that have gems.
+    if(hasGem()){
+      pushStyle();
+      rectMode(CENTER);
+      fill(33, 60, 90, 128);
+      rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
+      popStyle();
+    }
+    
+    AssetStore store = AssetStore.Instance(globalApplet);
+    
+    pushStyle();
+    imageMode(CENTER);
+    image(store.get(type), 0, 0);
+    popStyle();
+    
+    popMatrix();
   }
-  
+
   /*
       Instead of directly checking the type between tokens, we
       have a method that just asks if it can match with whatever. This 
