@@ -30,7 +30,10 @@ public class ScreenGameplay implements IScreen, Subject{
   
   private final int TOKEN_SCORE = 100;
   
-  public boolean screenAlive;
+  // time it takes for the tokens above the ones that were destroyed to start falling down.
+  private float DELAY_PAUSE = 0.035f; 
+  
+  private boolean screenAlive;
   
   // Only for debugging to see which token would be selected
   // by the player.
@@ -91,7 +94,7 @@ public class ScreenGameplay implements IScreen, Subject{
   
   public void notifyObservers(){
     for(int i = 0; i < layerObserver.size(); i++){
-    layerObserver.get(i).notifyObserver();
+      layerObserver.get(i).notifyObserver();
     }
   }
   
@@ -100,7 +103,7 @@ public class ScreenGameplay implements IScreen, Subject{
   */
   ScreenGameplay(){
     screenAlive = true;
-      
+    
     gemsRequiredForLevel = currLevel * 5;
   
     floatingTokens = new ArrayList<Token>();
@@ -137,11 +140,10 @@ public class ScreenGameplay implements IScreen, Subject{
   */
   public void draw(){
  
-    
-     if(Keyboard.isKeyDown(KEY_P)){
-       return;
-     }
- 
+    if(isPaused){
+      return;
+    }
+
     background(0);
     pushMatrix();
 
@@ -187,12 +189,8 @@ public class ScreenGameplay implements IScreen, Subject{
       popStyle();
     }
     
-
-
-
     drawBoard();
-        
-
+    
     // In some cases it is necessary to see the non-visible tokens
     // above the visible board. Other cases, I want that part covered.
     // for example, when tokens are falling.
@@ -222,26 +220,12 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
-
-
     debug.draw();
   }
   
   /**
    */
   public void update(){
-       
-    // Once the player meets their quota...
-    if(gemCounter >= gemsRequiredForLevel){
-      goToNextLevel();    
-    }
-    
-    if(waitingForTokensToFall && floatingTokens.size() == 0){
-      waitingForTokensToFall = false;
-      fillHoles();
-    }
-    
-    isPaused = Keyboard.isKeyDown(KEY_P);
 
     // Goes right to the game over screen, just for testing
     if(Keyboard.isKeyDown(KEY_Q)){
@@ -250,6 +234,16 @@ public class ScreenGameplay implements IScreen, Subject{
 
     if(isPaused){
       return;
+    }
+    
+    // Once the player meets their quota...
+    if(gemCounter >= gemsRequiredForLevel){
+      goToNextLevel();    
+    }
+    
+    if(waitingForTokensToFall && floatingTokens.size() == 0){
+      waitingForTokensToFall = false;
+      fillHoles();
     }
     
     debug.clear();
@@ -368,13 +362,13 @@ public class ScreenGameplay implements IScreen, Subject{
       delayTicker.tick();
     }
     
-    if(gemRemovalTicker != null && gemRemovalTicker.getTotalTime() > 0.5f){
+    if(gemRemovalTicker != null && gemRemovalTicker.getTotalTime() > DELAY_PAUSE){
       gemRemovalTicker = null;
       removeMarkedTokens(true);
       delayTicker = new Ticker();
     }
     
-    if(delayTicker != null && delayTicker.getTotalTime() > 0.35f){
+    if(delayTicker != null && delayTicker.getTotalTime() > DELAY_PAUSE){
       dropTokens();
       
       if(validSwapExists() == false){
@@ -396,7 +390,7 @@ public class ScreenGameplay implements IScreen, Subject{
     int seconds = (int)levelCountDownTimer.getTotalTime() % 60;
     
     // 
-    if( (int)levelCountDownTimer.getTotalTime() == 0){
+    if((int)levelCountDownTimer.getTotalTime() == 0){
       screenAlive = false;
     }
     
@@ -639,20 +633,19 @@ public class ScreenGameplay implements IScreen, Subject{
   }
 
   /**
-   1) From bottom to top, search to find first gap
-    ) After finding the first gap, set the marker
-    ) Find first token, set dst to marker
-    ) Increment marker by 1
-    ) Find next token
-    ) 
-    ) For all the tokens above that gap, until very top
+   - From bottom to top, search to find first gap
+   - After finding the first gap, set the marker
+   - Find first token, set dst to marker
+   - Increment marker by 1
+   - Find next token
+     
+     For all the tokens above that gap, until very top
      a) detach tokens from board
      b) give them appropriate positions
      c) give them a velocity
      d) give them destination positions
-     e)
-     f) place tokens in special floating tokens array to keep track of them.
-     g) update tokens and allow them to add themselves back in
+     e) place tokens in special floating tokens array to keep track of them.
+     f) update tokens and allow them to add themselves back in
   */
   void dropTokens(){
     
@@ -673,9 +666,6 @@ public class ScreenGameplay implements IScreen, Subject{
             
             // Found non-empty cell, move 
             if(board[row][c].getType() != TokenType.NULL){
-              //println("found non empty cell at: " + row);
-              //println("move to: " + firstEmptyCellIndex);
-              
               // We need to remove the token from the board because each frame
               // the board is rendered, all the tokens in it get rendered also.
               // And if the tokens are floating down, they shouldn't appear in the board.
@@ -815,7 +805,9 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
-    if(Testing >= 3){  soundManager.playSuccessSwapSound();}
+    if(Testing >= 3){
+      soundManager.playSuccessSwapSound();
+    }
     
     return Testing;
   }
@@ -1000,8 +992,8 @@ public class ScreenGameplay implements IScreen, Subject{
     // Draw the invisible part, for debugging
     for(int r = 0; r < START_ROW_INDEX; r++){
       for(int c = 0; c < BOARD_COLS; c++){
-        if(board[r][c].isMoving() == false){
-         // board[r][c].draw();
+        if(board[r][c].isMoving()){
+          board[r][c].draw();
         }
       }
     }
@@ -1047,8 +1039,8 @@ public class ScreenGameplay implements IScreen, Subject{
         
         Token tokenToDestroy = board[r][c];
         
-        if(tokenToDestroy.isDying()){//.isMarkedForDeletion()){
-          tokenToDestroy.destroy();
+        if(tokenToDestroy.isDying()){
+          tokenToDestroy.kill();
           
           if(doDyingAnimation){
             dyingTokens.add(tokenToDestroy);
@@ -1071,10 +1063,39 @@ public class ScreenGameplay implements IScreen, Subject{
   
   void keyPressed(){
     Keyboard.setKeyDown(keyCode, true);
+    
+    // P key is locked
+    isPaused = Keyboard.isKeyDown(KEY_P);
+    pauseAllTokens(isPaused);
   }
   
   void keyReleased(){
     Keyboard.setKeyDown(keyCode, false);
+    
+    soundManager.setMute(!soundManager.isMuted());
+    
+    isPaused = Keyboard.isKeyDown(KEY_P);
+    pauseAllTokens(false);
+  }
+  
+  /*
+      
+  */
+  private void pauseAllTokens(boolean pause){
+    
+    for(int i = 0; i < floatingTokens.size(); i++){
+      floatingTokens.get(i).setPaused(pause);
+    }
+    
+    for(int i = 0; i < dyingTokens.size(); i++){
+      dyingTokens.get(i).setPaused(pause);
+    }
+    
+    for(int r = 0; r < BOARD_ROWS; r++){
+      for(int c = 0; c < BOARD_COLS; c++){
+        board[r][c].setPaused(pause);
+      }
+    }
   }
   
   public int getNumGems(){

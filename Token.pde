@@ -7,9 +7,18 @@
 */
 public class Token{
   
-  private Ticker animTicker;
+  private int state;
+  
+  private final int IDLE   = 0;
+  private final int MOVING = 1;// falling/swapping/detached.
+  private final int DYING  = 2;
+  private final int DEAD   = 3;
+  
+  private final float MOVE_SPEED = TOKEN_SIZE * 5.0f; // token size per second
+  private final float DROP_SPEED = 10;
+  
+  // Ticker is reset for each state to keep us from having too many tickers.
   private Ticker ticker;
-  private Ticker deathTicker;
   
   // Used for debugging
   private int id;
@@ -20,10 +29,6 @@ public class Token{
   private int row;
   private int column;
   
-  private boolean dying;
-  private boolean isLiving;
-  
-  private boolean colored;
   private int type;
   private boolean doesHaveGem;
   
@@ -33,61 +38,47 @@ public class Token{
   private boolean returning;
   private boolean hasArrivedAtDest;
   
-  private boolean detached;
   private PVector detachedPos;
   
   // Set this and decrement until we reach zero.
   private float distanceToMove;
-  
   private float scaleSize;
   
   private int moveDirection;
-  private final float MOVE_SPEED = TOKEN_SIZE * 5.0f; // token size per second
-  private final float DROP_SPEED = 10;
   
   // Use can select up to 2 tokens before they get swapped.
   private boolean isSelected;
   
+  private boolean isPaused;
+  
+  /*
+  */
   public Token(){
     setType(TokenType.NULL);
-    
     id = Utils.nextID();
     
     isSelected = false;
-    isLiving = true;
+    
     ticker = new Ticker();
+    isPaused = false;
     
     row = 0;
     column = 0;
     
     doesHaveGem = false;
-    
-    detached = false;
-    
-    //markedForRemoval = false;
-    dying = false;
-    colored = true;
-    
-    detachedPos = new PVector();
+    scaleSize = 1.0f;
     
     // TODO: need to really need to set these?
     rowToMoveTo = 0;
     colToMoveTo = 0;
     moveDirection = 0;
-    
-    scaleSize = 1.0f;
+    detachedPos = new PVector();
     
     returning = false;
     hasArrivedAtDest = false;
+    state = IDLE;
   }
-  
-  /**
-  */
-  //public void moveToRow(int rowToMoveTo){
-  //  this.rowToMoveTo = rowToMoveTo;
-  //  detached = true;
-  //}
-  
+    
   public void setRowColumn(int row, int column){
     this.row = row;
     this.column = column;
@@ -109,22 +100,24 @@ public class Token{
     type = t;
   }
   
+  /*
+    Used for debugging
+  */
   public int getID(){
     return id;
   }
   
-  /*public void unMark(){
-    //markedForRemoval = false;
-    dying = false;
-    animTicker = null;
-    colored = true;
-  }*/
-  
+  /*
+    When a token is selected, it is somehow outlined to show the user
+    it is the 'current' token.
+  */
   public void setSelect(boolean select){
     isSelected = select;
   }
   
   /**
+    Immediately swap the position (row, column) of this token with another.
+    Used to help testing if swapping will result in a match 3.
    */
   public void swap(Token other){
     int tempRow = row;
@@ -134,14 +127,21 @@ public class Token{
     other.setRowColumn(tempRow, tempCol);    
   }
   
-  public void kill(){//markForDeletion(){
-    dying = true;
-    animTicker = new Ticker();
-    //deathTicker = new Ticker();
+  /**
+    Gameplay doesn't keep track if it has already killed a token, so we have
+    to keep track of it ourselves to make sure the ticker doesn't get reset.
+  */
+  public void kill(){
+    // We can only kill the token if its idle.
+    if(state != IDLE){
+      return;
+    }
+    
+    state = DYING;
   }
   
   public boolean isDying(){
-    return dying;
+    return state == DYING;
   }
   
   public boolean isReturning(){
@@ -156,12 +156,22 @@ public class Token{
     return hasArrivedAtDest;
   }
   
+  /**
+    Rename this.
+  */
   public boolean isMoving(){
     return moveDirection != 0;
   }
   
-  //
+  /**
+    TODO: fix this
+    If you think of a moving token as floating above the board, once it reaches
+    the destination, it drops into its cell.
+  */
   public void dropIntoCell(){
+    
+    state = IDLE;
+    
     row = rowToMoveTo;
     column = colToMoveTo;
     
@@ -174,17 +184,33 @@ public class Token{
     moveDirection = 0;
   }
   
+  /**
+    When paused, animation, movement etc. no longer do anything.
+  */
+  public void setPaused(boolean isPaused){
+    this.isPaused = isPaused;
+
+    if(isPaused){
+      ticker.pause();
+    }
+    else{
+      ticker.resume();
+    }
+  }
+  
   /*
-   */
+  */
   public void update(){
+    
+    if(isPaused){
+      return;
+    }
+
     ticker.tick();
     
-    if(animTicker != null){
-      animTicker.tick();
-    }
-    
-    if(detached){
-      float amtToMove = MOVE_SPEED * moveDirection * ticker.getDeltaSec();
+    //
+    if(state == MOVING){
+      float amtToMove = ticker.getDeltaSec() * MOVE_SPEED * moveDirection;
       
       if(row == rowToMoveTo){
         detachedPos.x += amtToMove;
@@ -196,30 +222,28 @@ public class Token{
       distanceToMove -= abs(amtToMove);
       
       if(distanceToMove <= 0){
-        detached = false;
+        state = IDLE;
         hasArrivedAtDest = true;
-        //floatingTokens.remove(this);
       }
     }
-    
-    if(deathTicker != null){
-      deathTicker.tick();
-      if(deathTicker.getTotalTime() >= 1.0f){
-        isLiving = false;
+    else if(state == DYING){
+      // Shrink the token if it is dying.
+      scaleSize -= ticker.getDeltaSec() * 2.5f;
+      
+      if(scaleSize <= 0){
+        state = DEAD;
       }
     }
   }
   
-  /* Don't use isAlive for variable name because Processing.js gets confused
+  /*
+     Don't use isAlive for variable name because Processing.js gets confused
      with method and variable names that share the same name.
+     
+     Once the sprite completes its death animation, its state gets set to dead.
    */
   public boolean isAlive(){
-    return isLiving;
-  }
-  
-  public void destroy(){
-    deathTicker = new Ticker();
-    //animTicker = new Ticker();
+    return state != DEAD;
   }
   
   public void addGem(){
@@ -237,16 +261,19 @@ public class Token{
   /**
    */
   public void animateTo(int r, int c){
+
+    // We can really only animate a token if it is idle.
+    if(state != IDLE){
+      return;
+    }
+    
     // TODO: fix, it really isn't detached
-    detached = true;
+    state = MOVING;
     
-    // TODO: fix, why -1??
-    // column row swapped here.
-    //detachedPos = new PVector((column-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f), (row-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f));
-    
-    int xx = (int)(column  * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0 ));
-    int yy = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0 ));
-    detachedPos = new PVector(xx, yy);//new PVector((column-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f), (row-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f));
+    // column row swapped here!    
+    int detachedX = (int)(column  * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0f ));
+    int detachedY = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0f ));
+    detachedPos = new PVector(detachedX, detachedY);
     
     rowToMoveTo = r;
     colToMoveTo = c;
@@ -264,107 +291,83 @@ public class Token{
   }
   
   /*
-   *
-   */
+    Calculates the air speed velocity of an unladen swallow.
+  */
   public void draw(){
-     if(Keyboard.isKeyDown(KEY_P)){
-     return;
-     }
-     
-    pushStyle();
     
-    if( type != TokenType.NULL){
-      int x = 0; 
-      int y = 0;
-      
-      // 
-      if(detached){
-        x = (int)detachedPos.x;// * TOKEN_SIZE - (TOKEN_SIZE/2);
-        y = (int)detachedPos.y;// * TOKEN_SIZE - (TOKEN_SIZE/2);
-      }
-      else{
-        // x = column * TOKEN_SIZE;// - (TOKEN_SIZE/2);// + (column);
-        // y = row * TOKEN_SIZE;// - (TOKEN_SIZE/2);// + (row);
-        x = (int)(column * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0 ));
-        
-        // 8 here is the number of visible rows. We need to essentially move the visible tokens up
-        // where the invisible ones would be drawn.
-        y = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0 ));
-      }
-      
-      if(isSelected){
-        //noFill();
-        pushStyle();
-        rectMode(CENTER);
-        fill(255,0,0,128);
-        strokeWeight(2);
-        stroke(255);
-        rect(x, y, TOKEN_SIZE, TOKEN_SIZE);
-        popStyle();
-      }
-      
-      if(animTicker != null){
-        pushMatrix();
-        resetMatrix();
-        imageMode(CENTER);
-
-        scaleSize -= animTicker.getDeltaSec() * 1.0f;
-        
-        translate(START_X, START_Y);
-        translate(x, y);
-        
-        if(scaleSize <= 0){
-          scaleSize = 0;
-        }
-        scale(scaleSize * 1.0f);
-      }
-      else{
-        pushMatrix();
-        resetMatrix();
-          // translate(TOKEN_SIZE/2, TOKEN_SIZE/2);
-           translate(START_X, START_Y);
-          // translate(x + TOKEN_SPACING, y);
-          // translate(0, row * 0.5);
-          translate(x, y);
-      }
-      
-      // Debugging
-      //pushStyle();
-      //noFill();
-      //stroke(0, 100, 50);
-      //rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
-      //popStyle();
-      
-      // We need to somehow distinguish tokens that have gems.
-      if(hasGem()){
-        pushStyle();
-        rectMode(CENTER);
-        fill(33, 60, 90, 255);
-        noFill();
-        stroke(255);
-        rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
-        popStyle();
-      }
-      
-      imageMode(CENTER);
-      AssetStore store = AssetStore.Instance(globalApplet);
-      //
-      switch(type){
-        case TokenType.RED:    image(store.get(TokenType.RED),0,0);break;
-        case TokenType.GREEN:  image(store.get(TokenType.GREEN),0,0);break;
-        case TokenType.BLUE:   image(store.get(TokenType.BLUE),0,0);break;
-        case TokenType.YELLOW: image(store.get(TokenType.YELLOW),0,0);break;
-        case TokenType.SKULL:  image(store.get(TokenType.SKULL),0,0);break;
-        case TokenType.WHITE:  image(store.get(TokenType.WHITE),0,0);break;
-        case TokenType.PURPLE: image(store.get(TokenType.PURPLE),0,0);break;
-        default: ellipse(column * TOKEN_SIZE, row * TOKEN_SIZE, TOKEN_SIZE, TOKEN_SIZE);break;
-      }
-      popStyle();
-      
-      popMatrix();
+    if(isPaused || type == TokenType.NULL){
+      return;
     }
+    
+    int x = 0; 
+    int y = 0;
+    
+    // 
+    if(state == MOVING){
+      x = (int)detachedPos.x;
+      y = (int)detachedPos.y;
+    }
+    else{
+      x = (int)(column * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0 ));
+      
+      // 8 here is the number of visible rows. We need to essentially move the visible tokens up
+      // where the invisible ones would be drawn.
+      y = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0 ));
+    }
+    
+    // Draw a rectangle around the selected tokens
+    if(isSelected){
+      pushStyle();
+      fill(33, 66, 99);
+      rectMode(CENTER);
+      fill(255, 0, 0, 255);
+      strokeWeight(2);
+      stroke(255);
+      rect(x, y, TOKEN_SIZE, TOKEN_SIZE);
+      popStyle();
+    }
+
+    // TODO: comment
+    pushMatrix();
+    resetMatrix();
+    
+    translate(START_X, START_Y);
+    translate(x, y);
+    
+    // Draws an outline around all tokens
+    if(DEBUG_ON){
+      pushStyle();
+      rectMode(CENTER);
+      noFill();
+      stroke(0, 100, 50);
+      rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
+      popStyle();
+    }
+    
+    // We need to somehow distinguish tokens that have gems.
+    if(hasGem()){
+      pushStyle();
+      rectMode(CENTER);
+      fill(33, 60, 90, 128);
+      rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
+      popStyle();
+    }
+    
+    // 
+    if(state == DYING){
+      scale(scaleSize >= 0 ? scaleSize : 0);
+    }
+    
+    AssetStore store = AssetStore.Instance(globalApplet);
+    
+    pushStyle();
+    imageMode(CENTER);
+    image(store.get(type), 0, 0);
+    popStyle();
+    
+    popMatrix();
   }
-  
+
   /*
       Instead of directly checking the type between tokens, we
       have a method that just asks if it can match with whatever. This 
