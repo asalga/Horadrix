@@ -37,6 +37,12 @@ function SoundManager(){
 
   /*
   */
+  this.isMuted = function(){
+    return muted;
+  };
+
+  /*
+  */
   this.stop = function(){
     
   }
