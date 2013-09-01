@@ -1,5 +1,5 @@
 /*
-    
+    see processing.js wrapper
 */
 public class SoundManager{
   boolean muted = false;
@@ -7,6 +7,7 @@ public class SoundManager{
   
   AudioPlayer failSwap;
   AudioPlayer successSwap;
+  
   
   public void init(){
   }
@@ -22,8 +23,11 @@ public class SoundManager{
     muted = isMuted;
   }
   
+  /*
+    
+  */
   private void play(AudioPlayer player){
-    if(muted){
+    if(muted || player.isPlaying()){
       return;
     }
     

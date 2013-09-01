@@ -11,7 +11,7 @@
 import ddf.minim.*;
 
 final boolean DEBUG_CONSOLE_ON = false;
-final boolean DEBUG_ON = true;
+final boolean DEBUG_ON = false;
 
 // This includes the entire board, including the 'queued' tokens not visible
 // to the user, that sit above the token the user interacts with.
@@ -56,7 +56,6 @@ void debugPrint(String str){
 }
 
 void setup(){
-  //START_X + TOKEN_SIZE * BOARD_COLS + START_X - 4 +200, START_Y + TOKEN_SIZE * BOARD_ROWS + 40 - 8 + 400);
   size(CANVAS_WIDTH, CANVAS_HEIGHT);
   
   // The style of the game is pixel art, so we don't want anti-aliasing

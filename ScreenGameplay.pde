@@ -100,7 +100,7 @@ public class ScreenGameplay implements IScreen, Subject{
   */
   ScreenGameplay(){
     screenAlive = true;
-      
+    
     gemsRequiredForLevel = currLevel * 5;
   
     floatingTokens = new ArrayList<Token>();
@@ -137,11 +137,10 @@ public class ScreenGameplay implements IScreen, Subject{
   */
   public void draw(){
  
-    
-     if(Keyboard.isKeyDown(KEY_P)){
-       return;
-     }
- 
+    if(isPaused){
+      return;
+    }
+
     background(0);
     pushMatrix();
 
@@ -187,12 +186,8 @@ public class ScreenGameplay implements IScreen, Subject{
       popStyle();
     }
     
-
-
-
     drawBoard();
-        
-
+    
     // In some cases it is necessary to see the non-visible tokens
     // above the visible board. Other cases, I want that part covered.
     // for example, when tokens are falling.
@@ -222,16 +217,12 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
-
-
     debug.draw();
   }
   
   /**
    */
   public void update(){
-    
-    isPaused = Keyboard.isKeyDown(KEY_P);
 
     // Goes right to the game over screen, just for testing
     if(Keyboard.isKeyDown(KEY_Q)){
@@ -639,20 +630,19 @@ public class ScreenGameplay implements IScreen, Subject{
   }
 
   /**
-   1) From bottom to top, search to find first gap
-    ) After finding the first gap, set the marker
-    ) Find first token, set dst to marker
-    ) Increment marker by 1
-    ) Find next token
-    ) 
-    ) For all the tokens above that gap, until very top
+   - From bottom to top, search to find first gap
+   - After finding the first gap, set the marker
+   - Find first token, set dst to marker
+   - Increment marker by 1
+   - Find next token
+     
+     For all the tokens above that gap, until very top
      a) detach tokens from board
      b) give them appropriate positions
      c) give them a velocity
      d) give them destination positions
-     e)
-     f) place tokens in special floating tokens array to keep track of them.
-     g) update tokens and allow them to add themselves back in
+     e) place tokens in special floating tokens array to keep track of them.
+     f) update tokens and allow them to add themselves back in
   */
   void dropTokens(){
     
@@ -673,9 +663,6 @@ public class ScreenGameplay implements IScreen, Subject{
             
             // Found non-empty cell, move 
             if(board[row][c].getType() != TokenType.NULL){
-              //println("found non empty cell at: " + row);
-              //println("move to: " + firstEmptyCellIndex);
-              
               // We need to remove the token from the board because each frame
               // the board is rendered, all the tokens in it get rendered also.
               // And if the tokens are floating down, they shouldn't appear in the board.
@@ -815,7 +802,9 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
-    if(Testing >= 3){  soundManager.playSuccessSwapSound();}
+    if(Testing >= 3){
+      soundManager.playSuccessSwapSound();
+    }
     
     return Testing;
   }
