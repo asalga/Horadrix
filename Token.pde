@@ -9,10 +9,10 @@ public class Token{
   
   private int state;
   
-  private final int IDLE = 0;
+  private final int IDLE   = 0;
   private final int MOVING = 1;// falling/swapping/detached.
-  private final int DYING = 2;
-  private final int DEAD = 3;
+  private final int DYING  = 2;
+  private final int DEAD   = 3;
   
   private final float MOVE_SPEED = TOKEN_SIZE * 5.0f; // token size per second
   private final float DROP_SPEED = 10;
@@ -42,6 +42,7 @@ public class Token{
   
   // Set this and decrement until we reach zero.
   private float distanceToMove;
+  private float scaleSize;
   
   private int moveDirection;
   
@@ -65,6 +66,7 @@ public class Token{
     column = 0;
     
     doesHaveGem = false;
+    scaleSize = 1.0f;
     
     // TODO: need to really need to set these?
     rowToMoveTo = 0;
@@ -136,7 +138,6 @@ public class Token{
     }
     
     state = DYING;
-    ticker = new Ticker();
   }
   
   public boolean isDying(){
@@ -188,7 +189,7 @@ public class Token{
   */
   public void setPaused(boolean isPaused){
     this.isPaused = isPaused;
-    
+
     if(isPaused){
       ticker.pause();
     }
@@ -209,7 +210,7 @@ public class Token{
     
     //
     if(state == MOVING){
-      float amtToMove = MOVE_SPEED * moveDirection * ticker.getDeltaSec();
+      float amtToMove = ticker.getDeltaSec() * MOVE_SPEED * moveDirection;
       
       if(row == rowToMoveTo){
         detachedPos.x += amtToMove;
@@ -226,7 +227,10 @@ public class Token{
       }
     }
     else if(state == DYING){
-      if(ticker.getTotalTime() >= 1.0f){
+      // Shrink the token if it is dying.
+      scaleSize -= ticker.getDeltaSec() * 2.5f;
+      
+      if(scaleSize <= 0){
         state = DEAD;
       }
     }
@@ -291,7 +295,7 @@ public class Token{
   */
   public void draw(){
     
-    if( isPaused || type == TokenType.NULL){
+    if(isPaused || type == TokenType.NULL){
       return;
     }
     
@@ -330,12 +334,6 @@ public class Token{
     translate(START_X, START_Y);
     translate(x, y);
     
-    // Shrink the token if it is dying.
-    if(state == DYING){
-      float scaleSize = 1.0f - ticker.getTotalTime() * 1.0f;
-      scale(scaleSize >= 0 ? scaleSize : 0);      
-    }
-    
     // Draws an outline around all tokens
     if(DEBUG_ON){
       pushStyle();
@@ -353,6 +351,11 @@ public class Token{
       fill(33, 60, 90, 128);
       rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
+    }
+    
+    // 
+    if(state == DYING){
+      scale(scaleSize >= 0 ? scaleSize : 0);
     }
     
     AssetStore store = AssetStore.Instance(globalApplet);

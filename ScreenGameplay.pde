@@ -30,7 +30,10 @@ public class ScreenGameplay implements IScreen, Subject{
   
   private final int TOKEN_SCORE = 100;
   
-  public boolean screenAlive;
+  // time it takes for the tokens above the ones that were destroyed to start falling down.
+  private float DELAY_PAUSE = 0.035f; 
+  
+  private boolean screenAlive;
   
   // Only for debugging to see which token would be selected
   // by the player.
@@ -91,7 +94,7 @@ public class ScreenGameplay implements IScreen, Subject{
   
   public void notifyObservers(){
     for(int i = 0; i < layerObserver.size(); i++){
-    layerObserver.get(i).notifyObserver();
+      layerObserver.get(i).notifyObserver();
     }
   }
   
@@ -359,13 +362,13 @@ public class ScreenGameplay implements IScreen, Subject{
       delayTicker.tick();
     }
     
-    if(gemRemovalTicker != null && gemRemovalTicker.getTotalTime() > 0.5f){
+    if(gemRemovalTicker != null && gemRemovalTicker.getTotalTime() > DELAY_PAUSE){
       gemRemovalTicker = null;
       removeMarkedTokens(true);
       delayTicker = new Ticker();
     }
     
-    if(delayTicker != null && delayTicker.getTotalTime() > 0.35f){
+    if(delayTicker != null && delayTicker.getTotalTime() > DELAY_PAUSE){
       dropTokens();
       
       if(validSwapExists() == false){
@@ -387,7 +390,7 @@ public class ScreenGameplay implements IScreen, Subject{
     int seconds = (int)levelCountDownTimer.getTotalTime() % 60;
     
     // 
-    if( (int)levelCountDownTimer.getTotalTime() == 0){
+    if((int)levelCountDownTimer.getTotalTime() == 0){
       screenAlive = false;
     }
     
@@ -1061,25 +1064,37 @@ public class ScreenGameplay implements IScreen, Subject{
   void keyPressed(){
     Keyboard.setKeyDown(keyCode, true);
     
+    // P key is locked
     isPaused = Keyboard.isKeyDown(KEY_P);
-    
-    pauseAllTokens(true);
+    pauseAllTokens(isPaused);
   }
   
   void keyReleased(){
     Keyboard.setKeyDown(keyCode, false);
     
-    isPaused = Keyboard.isKeyDown(KEY_P);
+    soundManager.setMute(!soundManager.isMuted());
     
+    isPaused = Keyboard.isKeyDown(KEY_P);
     pauseAllTokens(false);
   }
   
-  /**
+  /*
+      
   */
   private void pauseAllTokens(boolean pause){
     
     for(int i = 0; i < floatingTokens.size(); i++){
       floatingTokens.get(i).setPaused(pause);
+    }
+    
+    for(int i = 0; i < dyingTokens.size(); i++){
+      dyingTokens.get(i).setPaused(pause);
+    }
+    
+    for(int r = 0; r < BOARD_ROWS; r++){
+      for(int c = 0; c < BOARD_COLS; c++){
+        board[r][c].setPaused(pause);
+      }
     }
   }
   

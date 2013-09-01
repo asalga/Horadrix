@@ -23,6 +23,10 @@ public class SoundManager{
     muted = isMuted;
   }
   
+  public boolean isMuted(){
+    return muted;
+  }
+  
   /*
     
   */

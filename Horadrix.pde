@@ -63,8 +63,10 @@ void setup(){
   
   globalApplet = this;
   
+  // Start muted, because sound can be annoying.
   soundManager = new SoundManager(globalApplet);
   soundManager.init();
+  soundManager.setMute(true);
 
   screenStack.push(new ScreenSplash());
 }
