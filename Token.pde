@@ -7,9 +7,18 @@
 */
 public class Token{
   
-  private Ticker animTicker;
+  private int state;
+  
+  private final int IDLE = 0;
+  private final int MOVING = 1;// falling/swapping/detached.
+  private final int DYING = 2;
+  private final int DEAD = 3;
+  
+  private final float MOVE_SPEED = TOKEN_SIZE * 5.0f; // token size per second
+  private final float DROP_SPEED = 10;
+  
+  // Ticker is reset for each state to keep us from having too many tickers.
   private Ticker ticker;
-  private Ticker deathTicker;
   
   // Used for debugging
   private int id;
@@ -20,10 +29,6 @@ public class Token{
   private int row;
   private int column;
   
-  private boolean dying;
-  private boolean isLiving;
-  
-  private boolean colored;
   private int type;
   private boolean doesHaveGem;
   
@@ -33,61 +38,45 @@ public class Token{
   private boolean returning;
   private boolean hasArrivedAtDest;
   
-  private boolean detached;
   private PVector detachedPos;
   
   // Set this and decrement until we reach zero.
   private float distanceToMove;
   
-  private float scaleSize;
-  
   private int moveDirection;
-  private final float MOVE_SPEED = TOKEN_SIZE * 5.0f; // token size per second
-  private final float DROP_SPEED = 10;
   
   // Use can select up to 2 tokens before they get swapped.
   private boolean isSelected;
   
+  private boolean isPaused;
+  
+  /*
+  */
   public Token(){
     setType(TokenType.NULL);
-    
     id = Utils.nextID();
     
     isSelected = false;
-    isLiving = true;
+    
     ticker = new Ticker();
+    isPaused = false;
     
     row = 0;
     column = 0;
     
     doesHaveGem = false;
     
-    detached = false;
-    
-    //markedForRemoval = false;
-    dying = false;
-    colored = true;
-    
-    detachedPos = new PVector();
-    
     // TODO: need to really need to set these?
     rowToMoveTo = 0;
     colToMoveTo = 0;
     moveDirection = 0;
-    
-    scaleSize = 1.0f;
+    detachedPos = new PVector();
     
     returning = false;
     hasArrivedAtDest = false;
+    state = IDLE;
   }
-  
-  /**
-  */
-  //public void moveToRow(int rowToMoveTo){
-  //  this.rowToMoveTo = rowToMoveTo;
-  //  detached = true;
-  //}
-  
+    
   public void setRowColumn(int row, int column){
     this.row = row;
     this.column = column;
@@ -109,22 +98,24 @@ public class Token{
     type = t;
   }
   
+  /*
+    Used for debugging
+  */
   public int getID(){
     return id;
   }
   
-  /*public void unMark(){
-    //markedForRemoval = false;
-    dying = false;
-    animTicker = null;
-    colored = true;
-  }*/
-  
+  /*
+    When a token is selected, it is somehow outlined to show the user
+    it is the 'current' token.
+  */
   public void setSelect(boolean select){
     isSelected = select;
   }
   
   /**
+    Immediately swap the position (row, column) of this token with another.
+    Used to help testing if swapping will result in a match 3.
    */
   public void swap(Token other){
     int tempRow = row;
@@ -134,14 +125,22 @@ public class Token{
     other.setRowColumn(tempRow, tempCol);    
   }
   
-  public void kill(){//markForDeletion(){
-    dying = true;
-    animTicker = new Ticker();
-    //deathTicker = new Ticker();
+  /**
+    Gameplay doesn't keep track if it has already killed a token, so we have
+    to keep track of it ourselves to make sure the ticker doesn't get reset.
+  */
+  public void kill(){
+    // We can only kill the token if its idle.
+    if(state != IDLE){
+      return;
+    }
+    
+    state = DYING;
+    ticker = new Ticker();
   }
   
   public boolean isDying(){
-    return dying;
+    return state == DYING;
   }
   
   public boolean isReturning(){
@@ -156,12 +155,22 @@ public class Token{
     return hasArrivedAtDest;
   }
   
+  /**
+    Rename this.
+  */
   public boolean isMoving(){
     return moveDirection != 0;
   }
   
-  //
+  /**
+    TODO: fix this
+    If you think of a moving token as floating above the board, once it reaches
+    the destination, it drops into its cell.
+  */
   public void dropIntoCell(){
+    
+    state = IDLE;
+    
     row = rowToMoveTo;
     column = colToMoveTo;
     
@@ -174,21 +183,32 @@ public class Token{
     moveDirection = 0;
   }
   
+  /**
+    When paused, animation, movement etc. no longer do anything.
+  */
+  public void setPaused(boolean isPaused){
+    this.isPaused = isPaused;
+    
+    if(isPaused){
+      ticker.pause();
+    }
+    else{
+      ticker.resume();
+    }
+  }
+  
   /*
-   */
+  */
   public void update(){
     
-    if(Keyboard.isKeyDown(KEY_P)){
+    if(isPaused){
       return;
     }
-    
+
     ticker.tick();
     
-    if(animTicker != null){
-      animTicker.tick();
-    }
-    
-    if(detached){
+    //
+    if(state == MOVING){
       float amtToMove = MOVE_SPEED * moveDirection * ticker.getDeltaSec();
       
       if(row == rowToMoveTo){
@@ -201,30 +221,25 @@ public class Token{
       distanceToMove -= abs(amtToMove);
       
       if(distanceToMove <= 0){
-        detached = false;
+        state = IDLE;
         hasArrivedAtDest = true;
-        //floatingTokens.remove(this);
       }
     }
-    
-    if(deathTicker != null){
-      deathTicker.tick();
-      if(deathTicker.getTotalTime() >= 1.0f){
-        isLiving = false;
+    else if(state == DYING){
+      if(ticker.getTotalTime() >= 1.0f){
+        state = DEAD;
       }
     }
   }
   
-  /* Don't use isAlive for variable name because Processing.js gets confused
+  /*
+     Don't use isAlive for variable name because Processing.js gets confused
      with method and variable names that share the same name.
+     
+     Once the sprite completes its death animation, its state gets set to dead.
    */
   public boolean isAlive(){
-    return isLiving;
-  }
-  
-  public void destroy(){
-    deathTicker = new Ticker();
-    //animTicker = new Ticker();
+    return state != DEAD;
   }
   
   public void addGem(){
@@ -242,16 +257,19 @@ public class Token{
   /**
    */
   public void animateTo(int r, int c){
+
+    // We can really only animate a token if it is idle.
+    if(state != IDLE){
+      return;
+    }
+    
     // TODO: fix, it really isn't detached
-    detached = true;
+    state = MOVING;
     
-    // TODO: fix, why -1??
-    // column row swapped here.
-    //detachedPos = new PVector((column-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f), (row-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f));
-    
-    int detachedX = (int)(column  * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0 ));
-    int detachedY = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0 ));
-    detachedPos = new PVector(detachedX, detachedY);//new PVector((column-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f), (row-1) * TOKEN_SIZE + (TOKEN_SIZE/2.0f));
+    // column row swapped here!    
+    int detachedX = (int)(column  * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0f ));
+    int detachedY = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0f ));
+    detachedPos = new PVector(detachedX, detachedY);
     
     rowToMoveTo = r;
     colToMoveTo = c;
@@ -269,11 +287,11 @@ public class Token{
   }
   
   /*
-   *
-   */
+    Calculates the air speed velocity of an unladen swallow.
+  */
   public void draw(){
     
-    if(Keyboard.isKeyDown(KEY_P) || type == TokenType.NULL){
+    if( isPaused || type == TokenType.NULL){
       return;
     }
     
@@ -281,13 +299,11 @@ public class Token{
     int y = 0;
     
     // 
-    if(detached){
-      x = (int)detachedPos.x;// * TOKEN_SIZE - (TOKEN_SIZE/2);
-      y = (int)detachedPos.y;// * TOKEN_SIZE - (TOKEN_SIZE/2);
+    if(state == MOVING){
+      x = (int)detachedPos.x;
+      y = (int)detachedPos.y;
     }
     else{
-      // x = column * TOKEN_SIZE;// - (TOKEN_SIZE/2);// + (column);
-      // y = row * TOKEN_SIZE;// - (TOKEN_SIZE/2);// + (row);
       x = (int)(column * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0 ));
       
       // 8 here is the number of visible rows. We need to essentially move the visible tokens up
@@ -300,7 +316,7 @@ public class Token{
       pushStyle();
       fill(33, 66, 99);
       rectMode(CENTER);
-      fill(255,0,0,255);
+      fill(255, 0, 0, 255);
       strokeWeight(2);
       stroke(255);
       rect(x, y, TOKEN_SIZE, TOKEN_SIZE);
@@ -314,9 +330,9 @@ public class Token{
     translate(START_X, START_Y);
     translate(x, y);
     
-    // Shrink the token if it is dying
-    if(animTicker != null){
-      scaleSize -= animTicker.getDeltaSec() * 1.0f;
+    // Shrink the token if it is dying.
+    if(state == DYING){
+      float scaleSize = 1.0f - ticker.getTotalTime() * 1.0f;
       scale(scaleSize >= 0 ? scaleSize : 0);      
     }
     

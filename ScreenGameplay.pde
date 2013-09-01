@@ -230,16 +230,6 @@ public class ScreenGameplay implements IScreen, Subject{
   /**
    */
   public void update(){
-       
-    // Once the player meets their quota...
-    if(gemCounter >= gemsRequiredForLevel){
-      goToNextLevel();    
-    }
-    
-    if(waitingForTokensToFall && floatingTokens.size() == 0){
-      waitingForTokensToFall = false;
-      fillHoles();
-    }
     
     isPaused = Keyboard.isKeyDown(KEY_P);
 
@@ -250,6 +240,16 @@ public class ScreenGameplay implements IScreen, Subject{
 
     if(isPaused){
       return;
+    }
+    
+    // Once the player meets their quota...
+    if(gemCounter >= gemsRequiredForLevel){
+      goToNextLevel();    
+    }
+    
+    if(waitingForTokensToFall && floatingTokens.size() == 0){
+      waitingForTokensToFall = false;
+      fillHoles();
     }
     
     debug.clear();
@@ -1000,8 +1000,8 @@ public class ScreenGameplay implements IScreen, Subject{
     // Draw the invisible part, for debugging
     for(int r = 0; r < START_ROW_INDEX; r++){
       for(int c = 0; c < BOARD_COLS; c++){
-        if(board[r][c].isMoving() == false){
-         // board[r][c].draw();
+        if(board[r][c].isMoving()){
+          board[r][c].draw();
         }
       }
     }
@@ -1047,8 +1047,8 @@ public class ScreenGameplay implements IScreen, Subject{
         
         Token tokenToDestroy = board[r][c];
         
-        if(tokenToDestroy.isDying()){//.isMarkedForDeletion()){
-          tokenToDestroy.destroy();
+        if(tokenToDestroy.isDying()){
+          tokenToDestroy.kill();
           
           if(doDyingAnimation){
             dyingTokens.add(tokenToDestroy);
@@ -1071,10 +1071,27 @@ public class ScreenGameplay implements IScreen, Subject{
   
   void keyPressed(){
     Keyboard.setKeyDown(keyCode, true);
+    
+    isPaused = Keyboard.isKeyDown(KEY_P);
+    
+    pauseAllTokens(true);
   }
   
   void keyReleased(){
     Keyboard.setKeyDown(keyCode, false);
+    
+    isPaused = Keyboard.isKeyDown(KEY_P);
+    
+    pauseAllTokens(false);
+  }
+  
+  /**
+  */
+  private void pauseAllTokens(boolean pause){
+    
+    for(int i = 0; i < floatingTokens.size(); i++){
+      floatingTokens.get(i).setPaused(pause);
+    }
   }
   
   public int getNumGems(){
