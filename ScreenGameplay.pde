@@ -204,7 +204,7 @@ public class ScreenGameplay implements IScreen, Subject{
     
     // hacky way to make sure the falling tokens don't render
     // on top of the top part of the board background image.
-    image(bk, 0, 0);
+    //image(bk, 0, 0);
 
     // Draw a box around the grid, just for debugging.
     //noFill();
