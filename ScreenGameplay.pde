@@ -153,7 +153,8 @@ public class ScreenGameplay implements IScreen, Subject{
     pushStyle();
     imageMode(CORNER);
     // Offset the image slighly so that it lines up with the grid of tokens.
-    image(bk, -13, -16);
+    //image(bk, -13, -16);//for diablo board
+    image(bk, 0, 0);
     popStyle();
     
     // Draw the debug board with gridlines

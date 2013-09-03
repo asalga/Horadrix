@@ -10,7 +10,7 @@ public class AssetStore{
   
   private String BASE_IMG_PATH = "data/images/";
   private PImage[] images;
-  private String[] imageNames = {  "red.gif","green.gif", "blue.gif", "yellow.gif", "white.gif", "skull.gif", "purple.gif",
+  private String[] imageNames = {  "red.png","green.png", "blue.png", "yellow.png", "white.png", "skull.gif", "purple.png",
                                    //"red_gem.gif", "green_gem.gif", "blue_gem.gif", "yellow_gem.gif", "white_gem.gif", "skull_gem.gif", "purple_gem.gif"};
                                    "red_normal.gif", "green_normal.gif", "blue_normal.gif", "yellow_normal.gif", "white_normal.gif", "skull_normal.gif", "purple_normal.gif"};
   
