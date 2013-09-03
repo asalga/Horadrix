@@ -198,8 +198,13 @@ public class ScreenGameplay implements IScreen, Subject{
     pushStyle();
     fill(0);
     noStroke();
-    rect(START_X-150, -237, 250, 222);
+    rect(0, -100, 300, 100);
+    //rect(START_X-150, -237, 250, 222);
     popStyle();
+    
+    // hacky way to make sure the falling tokens don't render
+    // on top of the top part of the board background image.
+    image(bk, 0, 0);
 
     // Draw a box around the grid, just for debugging.
     //noFill();
