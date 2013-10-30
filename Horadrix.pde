@@ -29,8 +29,8 @@ final int CANVAS_HEIGHT = 400;
 // We define the board size in pixels and allow it to be any size
 // and have the tokens center themselves inside those dimensions.
 // This allows us to define a variable board size.
-final int BOARD_W_IN_PX = 273;
-final int BOARD_H_IN_PX = 273;
+final int BOARD_W_IN_PX = TOKEN_SIZE * 8; //273;
+final int BOARD_H_IN_PX = TOKEN_SIZE * 8; //273;
 
 // 234 is the size of the diablo board.
 // 28 is size of diablo token

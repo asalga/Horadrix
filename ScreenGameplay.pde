@@ -14,6 +14,7 @@ public class ScreenGameplay implements IScreen, Subject{
   ArrayList<LayerObserver> layerObserver;
 
   PImage bk;
+  PImage bk2;
   
   // When a match is created, the matched tokens are removed from the board array
   // and 'float' above the board and drop down until they arrive where they need to go.
@@ -109,7 +110,8 @@ public class ScreenGameplay implements IScreen, Subject{
     floatingTokens = new ArrayList<Token>();
     dyingTokens = new ArrayList<Token>();
     
-    bk = loadImage("data/images/board.png");
+    bk =  loadImage("data/images/boards/board.png");
+    bk2 = loadImage("data/images/background/background.png");
     
     //
     layerObserver = new ArrayList<LayerObserver>();
@@ -145,6 +147,10 @@ public class ScreenGameplay implements IScreen, Subject{
     }
 
     background(0);
+    
+    // Draw a background image?
+    // image(bk2, 0, 0);
+    
     pushMatrix();
 
     translate(START_X, START_Y);
@@ -154,6 +160,7 @@ public class ScreenGameplay implements IScreen, Subject{
     imageMode(CORNER);
     // Offset the image slighly so that it lines up with the grid of tokens.
     //image(bk, -13, -16);//for diablo board
+    
     image(bk, 0, 0);
     popStyle();
     
@@ -233,6 +240,21 @@ public class ScreenGameplay implements IScreen, Subject{
    */
   public void update(){
 
+    if(Keyboard.isKeyDown(KEY_T)){
+      for(int c = 0; c < BOARD_COLS; c++){
+        for(int r = BOARD_ROWS - 1; r >= 10; r--){
+              Token nullToken = new Token();
+          nullToken.setType(TokenType.NULL);
+          nullToken.setRowColumn(r, c);
+          
+          board[r][c] = nullToken; 
+        }
+      }
+      
+      dropTokens();
+      
+    }
+    
     // Goes right to the game over screen, just for testing
     if(Keyboard.isKeyDown(KEY_Q)){
       screenAlive = false;
