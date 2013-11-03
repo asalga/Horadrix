@@ -9,16 +9,16 @@ public class Token{
   
   private int state;
   
+  // States
   private final int IDLE   = 0;
   private final int MOVING = 1;// falling/swapping/detached.
   private final int DYING  = 2;
   private final int DEAD   = 3;
   
-  private final float MOVE_SPEED = TOKEN_SIZE * 5.0f; // token size per second
-  private final float DROP_SPEED = 10;
+  private final float MOVE_SPEED = TOKEN_SIZE * 1.25f; // token size per second
+  private final float DROP_SPEED = 25;
   
-  // Ticker is reset for each state to keep us from having too many tickers.
-  private Ticker ticker;
+  public boolean isReserved;
   
   // Used for debugging
   private int id;
@@ -46,6 +46,8 @@ public class Token{
   
   private int moveDirection;
   
+  private boolean isFillCellMarker;
+  
   // Use can select up to 2 tokens before they get swapped.
   private boolean isSelected;
   
@@ -59,8 +61,9 @@ public class Token{
     
     isSelected = false;
     
-    ticker = new Ticker();
     isPaused = false;
+    
+    isReserved = false;
     
     row = 0;
     column = 0;
@@ -78,7 +81,10 @@ public class Token{
     hasArrivedAtDest = false;
     state = IDLE;
   }
-    
+  
+  /**
+  
+  */
   public void setRowColumn(int row, int column){
     this.row = row;
     this.column = column;
@@ -92,12 +98,25 @@ public class Token{
     return column;
   }
   
+  
+  public int getState(){
+    return state;
+  }
+  
   public int getType(){
     return type;
   }
   
   public void setType(int t){
     type = t;
+  }
+  
+  public void setFillCellMarker(){
+    isFillCellMarker = true;
+  }
+  
+  public boolean getFillCellMarker(){
+    return isFillCellMarker;
   }
   
   /*
@@ -127,6 +146,10 @@ public class Token{
     other.setRowColumn(tempRow, tempCol);    
   }
   
+  public boolean isIdle(){
+    return state == IDLE;
+  }
+  
   /**
     Gameplay doesn't keep track if it has already killed a token, so we have
     to keep track of it ourselves to make sure the ticker doesn't get reset.
@@ -140,6 +163,11 @@ public class Token{
     state = DYING;
   }
   
+  /**
+      If the token is dying it is in the process of animating its
+      death, which might take a second or so. Once the death animation
+      is finished, the token is considered dead.
+  */
   public boolean isDying(){
     return state == DYING;
   }
@@ -167,9 +195,10 @@ public class Token{
     TODO: fix this
     If you think of a moving token as floating above the board, once it reaches
     the destination, it drops into its cell.
+    
+    -- Does it still occupy the old space until it falls?
   */
   public void dropIntoCell(){
-    
     state = IDLE;
     
     row = rowToMoveTo;
@@ -177,7 +206,9 @@ public class Token{
     
     board[rowToMoveTo][colToMoveTo] = this;
     
+    //
     hasArrivedAtDest = false;
+    
     
     distanceToMove = 0;
     
@@ -189,28 +220,25 @@ public class Token{
   */
   public void setPaused(boolean isPaused){
     this.isPaused = isPaused;
-
-    if(isPaused){
-      ticker.pause();
-    }
-    else{
-      ticker.resume();
-    }
+    //if(isPaused){
+      //ticker.pause();
+    //}
+    //else{
+    //  ticker.resume();
+    //}
   }
   
   /*
   */
-  public void update(){
+  public void update(float td){
     
     if(isPaused){
       return;
     }
-
-    ticker.tick();
     
     //
     if(state == MOVING){
-      float amtToMove = ticker.getDeltaSec() * MOVE_SPEED * moveDirection;
+      float amtToMove = td *  MOVE_SPEED * moveDirection;
       
       if(row == rowToMoveTo){
         detachedPos.x += amtToMove;
@@ -221,6 +249,7 @@ public class Token{
       
       distanceToMove -= abs(amtToMove);
       
+      // !!!
       if(distanceToMove <= 0){
         state = IDLE;
         hasArrivedAtDest = true;
@@ -228,9 +257,10 @@ public class Token{
     }
     else if(state == DYING){
       // Shrink the token if it is dying.
-      scaleSize -= ticker.getDeltaSec() * 2.5f;
+      scaleSize -= td * 0.5f;
       
       if(scaleSize <= 0){
+        //scaleSize = 0.0f;
         state = DEAD;
       }
     }
@@ -262,15 +292,21 @@ public class Token{
    */
   public void animateTo(int r, int c){
 
-    // We can really only animate a token if it is idle.
+    // We can only animate a token if it is idle.
     if(state != IDLE){
       return;
     }
     
+    
+    
     // TODO: fix, it really isn't detached
     state = MOVING;
     
-    // column row swapped here!    
+    // TODO: fix literal 8
+    // column row swapped here!
+    
+    // !!! why are we dividing by 2
+    //
     int detachedX = (int)(column  * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0f ));
     int detachedY = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0f ));
     detachedPos = new PVector(detachedX, detachedY);
@@ -281,7 +317,14 @@ public class Token{
     //
     if(c == column){
       int rowDiff = rowToMoveTo - row;
+      
+      // Calculating the number of pixels the token has to move isn't as easy as just
+      // rowDiff * TOKEN_SIZE
+      // Since the board dimensions can be arbitrary.
+      
       distanceToMove = abs(rowDiff) * TOKEN_SIZE;
+      
+      // TODO fix / by zero !!!!
       moveDirection = rowDiff / abs(rowDiff);
     }else{
       int columnDiff = colToMoveTo - column;
@@ -294,6 +337,13 @@ public class Token{
     Calculates the air speed velocity of an unladen swallow.
   */
   public void draw(){
+    
+    // There is a bug in ScreenGameplay which draws the entire
+    // board and ends up drawing dead tokens, so prevent that from
+    // happening here.
+    if(state == DEAD){
+      // return;
+    }
     
     if(isPaused || type == TokenType.NULL){
       return;
@@ -334,6 +384,13 @@ public class Token{
     translate(START_X, START_Y);
     translate(x, y);
     
+    if(state == DEAD || state == DYING){
+      /*pushStyle();
+      tint(128,0,0);
+      rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
+      popStyle();*/
+    }
+
     // Draws an outline around all tokens
     if(DEBUG_ON){
       pushStyle();
@@ -374,6 +431,7 @@ public class Token{
       allows us to later on match tokens with wildcards.
   */
   public boolean matchesWith(int other){
+    if(type == TokenType.NULL){return false;}
     return type == other;
   }  
 }

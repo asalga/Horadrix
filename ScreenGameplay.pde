@@ -1,11 +1,7 @@
 /*
     This screen is the main gameplay screen.
-    
-    
 */
 public class ScreenGameplay implements IScreen, Subject{
-  
-  final int TOKEN_SPACING = 3;
   
   // Tokens that have been remove from the board, but still need to be rendered for their
   // death animation.
@@ -32,7 +28,8 @@ public class ScreenGameplay implements IScreen, Subject{
   private final int TOKEN_SCORE = 100;
   
   // time it takes for the tokens above the ones that were destroyed to start falling down.
-  private float DELAY_PAUSE = 0.035f; 
+  private float DELAY_PAUSE = 2.5f; 
+  //0.035f; 
   
   private boolean screenAlive;
   
@@ -43,13 +40,11 @@ public class ScreenGameplay implements IScreen, Subject{
   Debugger debug;
   int mouseRowIndex = 0;
   int mouseColumnIndex = 0;
-  int Testing = 0;
   
-  
-  Ticker debugTicker;
-  Ticker delayTicker;
-  Ticker gemRemovalTicker;
+  //Ticker delayTicker;
+  //Ticker gemRemovalTicker;
   Ticker levelCountDownTimer;
+  Ticker timer;
   
   int tokensDestroyed = 0;
   
@@ -74,10 +69,6 @@ public class ScreenGameplay implements IScreen, Subject{
   
   // 
   int numGemsOnBoard = 2;
-  
-  // TODO: fix
-  // Keep track of the number of gems removed from the board.
-  //int[] numMatchedGems;
   
   Token currToken1 = null;
   Token currToken2 = null;
@@ -104,6 +95,7 @@ public class ScreenGameplay implements IScreen, Subject{
   */
   ScreenGameplay(){
     screenAlive = true;
+    timer = new Ticker();
     
     gemsRequiredForLevel = currLevel * 5;
   
@@ -122,8 +114,7 @@ public class ScreenGameplay implements IScreen, Subject{
     Layer hudLayer = new HUDLayer();
     observers.add(hudLayer);*/
     
-    
-    debugTicker = new Ticker();
+    //debugTicker = new Ticker();
     debug = new Debugger();
    
     // lock P for pause
@@ -155,13 +146,15 @@ public class ScreenGameplay implements IScreen, Subject{
 
     translate(START_X, START_Y);
     
+    //rect(0,0, BOARD_W_IN_PX, BOARD_H_IN_PX);
+    
     // Draw the board background image
     pushStyle();
     imageMode(CORNER);
     // Offset the image slighly so that it lines up with the grid of tokens.
     //image(bk, -13, -16);//for diablo board
     
-    image(bk, 0, 0);
+    //image(bk, 0, 0);
     popStyle();
     
     // Draw the debug board with gridlines
@@ -240,74 +233,136 @@ public class ScreenGameplay implements IScreen, Subject{
    */
   public void update(){
 
-    if(Keyboard.isKeyDown(KEY_T)){
+    if(isPaused){
+      return;
+    }
+    
+    if(Keyboard.isKeyDown(KEY_D)){
+      dropTokens();
+    }
+    
+    //
+    if(Keyboard.isKeyDown(KEY_C)){
+      int r = 10;
+      int c = 6;
+      
+    /*  Token t1 = new Token();
+      t1.setType(TokenType.SKULL);
+      board[r][c] = t1;
+      t1.setRowColumn(r,c);*/
+
+      Token t2 = new Token();
+      t2.setType(TokenType.SKULL);
+      board[r+1][c] = t2;
+      t2.setRowColumn(r+1,c);
+
+      Token t4 = new Token();
+      t4.setType(TokenType.SKULL);
+      board[r][c-1] = t4;
+      t4.setRowColumn(r,c-1);
+
+      Token t5 = new Token();
+      t5.setType(TokenType.SKULL);
+      board[r][c-2] = t5;
+      t5.setRowColumn(r,c-2);
+
+      Token t6 = new Token();
+      t6.setType(TokenType.SKULL);
+      board[r+2][c] = t6;
+      t6.setRowColumn(r+2,c);
+
+      Token t7 = new Token();
+      t7.setType(TokenType.SKULL);
+      board[r-1][c] = t7;
+      t7.setRowColumn(r-1,c);
+      
+    }
+    
+    // !!! Debugging
+    // D for debug. Kill a bunch of rows for testing.
+    /*if(Keyboard.isKeyDown(KEY_D)){
       for(int c = 0; c < BOARD_COLS; c++){
         for(int r = BOARD_ROWS - 1; r >= 10; r--){
-              Token nullToken = new Token();
+          Token nullToken = new Token();
           nullToken.setType(TokenType.NULL);
           nullToken.setRowColumn(r, c);
           
           board[r][c] = nullToken; 
         }
       }
-      
       dropTokens();
-      
-    }
+    }*/
     
-    // Goes right to the game over screen, just for testing
-    if(Keyboard.isKeyDown(KEY_Q)){
-      screenAlive = false;
-    }
-
-    if(isPaused){
-      return;
-    }
+    
+    timer.tick();
+    float td = timer.getDeltaSec();
     
     // Once the player meets their quota...
     if(gemCounter >= gemsRequiredForLevel){
       goToNextLevel();    
     }
     
-    if(waitingForTokensToFall && floatingTokens.size() == 0){
-      waitingForTokensToFall = false;
-      fillHoles();
-    }
+    // !!! TODO: comment
+    //if(/*waitingForTokensToFall &&*/ floatingTokens.size() == 0){
+      //waitingForTokensToFall = false;
+      //fillHoles(false);
+    //}
     
+    // TODO: rename to RealTimeDebug?
     debug.clear();
     
-    debugTicker.tick();
+    //debugTicker.tick();
     levelCountDownTimer.tick();
+    
+    int numTokensArrivedAtDest = 0;
+    
+    ArrayList<Token> toRemove = new ArrayList<Token>();
     
     // Update all the tokens that are falling down
     for(int i = 0; i < floatingTokens.size(); i++){
       Token token = floatingTokens.get(i);
-      token.update();
+      token.update(td);
       
-      // 
+      //
       if(token.arrivedAtDest()){
         token.dropIntoCell();
+        numTokensArrivedAtDest++;
         
-        markTokensForRemoval();
-        delayTicker = new Ticker();
+        //delayTicker = new Ticker();
+        
+        if( token.getFillCellMarker()){
+          fillColumn(token.getColumn());
+        }
         
         // the token could have been floating down, if it wasn't
         // Don't need to explicitly check if it was in the list, the
         // structure does that for us automatically.
-        floatingTokens.remove(token);
+       // floatingTokens.remove(token);
+       toRemove.add(token);
         
-        //removeMarkedTokens();
-        gemRemovalTicker = new Ticker();
-      }
+        //gemRemovalTicker = new Ticker();
+      }      
       waitingForTokensToFall = true;
     }
     
+    // 
+    for(int i = 0; i < toRemove.size(); i++){
+      floatingTokens.remove(toRemove.get(i));
+    }
+    
+    // If at least one token arrived at their destination, we'll need to 
+    // iterate over the board and find any tokens that need to be marked for removal.
+    if(numTokensArrivedAtDest > 0){
+        markTokensForRemoval();
+        removeMarkedTokens(true);
+        //dropTokens();
+        //fillHoles(false);
+    }
     
     // Now, update the two tokens that the user has swapped
     if(swapToken1 != null){
-      
-      swapToken1.update();
-      swapToken2.update();
+      swapToken1.update(td);
+      swapToken2.update(td);
       
       if(swapToken1.arrivedAtDest() && swapToken1.isReturning() == false && swapToken1.isMoving()){
         //
@@ -341,12 +396,15 @@ public class ScreenGameplay implements IScreen, Subject{
           // gemRemovalTicker = new Ticker();
           markTokensForRemoval();
           removeMarkedTokens(true);
+          dropTokens();
           
           deselectCurrentTokens();
           
+          // !!!
           //soundManager.playSuccessSwapSound();
         } 
       }
+      // 
       else if(swapToken1.arrivedAtDest() && swapToken1.isReturning()){
         swapToken1.dropIntoCell();
         swapToken2.dropIntoCell();
@@ -357,11 +415,10 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
-    // Iterate over all the tokens that are dying and
-    // increase the score.
+    // Iterate over all the tokens that are dying and increase the score.
     for(int i = 0; i < dyingTokens.size(); i++){
       
-      dyingTokens.get(i).update();
+      dyingTokens.get(i).update(td);
       
       if(dyingTokens.get(i).isAlive() == false){
         
@@ -378,25 +435,34 @@ public class ScreenGameplay implements IScreen, Subject{
     
     for(int r = 0; r < BOARD_ROWS; r++){
       for(int c = 0; c < BOARD_COLS; c++){
-        board[r][c].update();
+        board[r][c].update(td);
       }
     }
     
-    if(gemRemovalTicker != null){
-      gemRemovalTicker.tick();
+    // TODO: comment
+    //if(gemRemovalTicker != null){
+    //  gemRemovalTicker.tick();
+    //}
+    
+    // TODO: comment !!!
+    //if(delayTicker != null){
+    //  delayTicker.tick();
+    //}
+    
+    // 
+    //if(gemRemovalTicker != null && gemRemovalTicker.getTotalTime() > DELAY_PAUSE){
+    //  gemRemovalTicker = null;
+    //  removeMarkedTokens(true);
+    //  delayTicker = new Ticker();
+    //}
+    
+    if(numTokensArrivedAtDest > 0){
+      //removeMarkedTokens(true);
+      dropTokens();
     }
     
-    if(delayTicker != null){
-      delayTicker.tick();
-    }
     
-    if(gemRemovalTicker != null && gemRemovalTicker.getTotalTime() > DELAY_PAUSE){
-      gemRemovalTicker = null;
-      removeMarkedTokens(true);
-      delayTicker = new Ticker();
-    }
-    
-    if(delayTicker != null && delayTicker.getTotalTime() > DELAY_PAUSE){
+    /*if(delayTicker != null && delayTicker.getTotalTime() > DELAY_PAUSE){
       dropTokens();
       
       if(validSwapExists() == false){
@@ -408,7 +474,7 @@ public class ScreenGameplay implements IScreen, Subject{
       //}
       
       delayTicker = null;
-    }
+    }*/
     
     resetMatrix();
     
@@ -431,10 +497,14 @@ public class ScreenGameplay implements IScreen, Subject{
       secStr = "" + seconds;
     }
     
-    //debug.addString( "" + (int)(levelCountDownTimer.getTotalTime()/60) + ":" + secStr  );
-    //  debug.addString("color: " + numMatchedGems[i]);
+    //if(gemRemovalTicker != null){
+    //  debug.addString("" + gemRemovalTicker.getTotalTime());
+    //}
+    //dropTokens();
   }
   
+  /*
+  */
   public boolean isAlive(){
     return screenAlive;
   }
@@ -448,7 +518,7 @@ public class ScreenGameplay implements IScreen, Subject{
   }
   
   public int getColumnIndex(){
-    return (int)map(mouseX, START_X, START_X+ BOARD_W_IN_PX, 0, BOARD_COLS);
+    return (int)map(mouseX, START_X, START_X + BOARD_W_IN_PX, 0, BOARD_COLS);
   }
   
   /**
@@ -456,7 +526,7 @@ public class ScreenGameplay implements IScreen, Subject{
    * are across from each other diagonally or have 1 token between them.
    */
   public boolean isCloseEnoughForSwap(Token t1, Token t2){
-    //
+    // !!!
     return abs(t1.getRow() - t2.getRow()) + abs(t1.getColumn() - t2.getColumn()) == 1;
   }
     
@@ -465,8 +535,7 @@ public class ScreenGameplay implements IScreen, Subject{
     mouseColumnIndex = getColumnIndex();
   }
   
-  public void mouseReleased(){
-  }
+  public void mouseReleased(){}
   
   /*
    *
@@ -487,15 +556,37 @@ public class ScreenGameplay implements IScreen, Subject{
       return;
     }
     
-    if(currToken1 == null){
-      currToken1 = board[r][c];
-      currToken1.setSelect(true);
+    // Prevent the user from trying to swap with anything else until
+    // the last swap animation is done. This prevents the user from
+    // trying to swap with a token that's already being swapped.
+    if(swapToken1 != null && swapToken2 != null){
+      return;
     }
     
+    // Haven't selected the first token yet.
+    if(currToken1 == null){
+      currToken1 = board[r][c];
+      
+      // !!!
+      if(currToken1.getType() == TokenType.NULL){
+        currToken1 = null;
+        return;
+      }
+      
+      currToken1.setSelect(true);
+      return;
+    }
+        
     // The real work is done once we know what to swap with.
-    else if(currToken2 == null){
+    if(currToken2 == null){
       
       currToken2 = board[r][c];
+      
+      if(currToken2.getType() == TokenType.NULL){
+        currToken2 = null;
+        return;
+      }
+      
       // User clicked on a token that's too far to swap with the one already selected
       // In that case, what they are probably doing is starting the 'swap process' over.
       if( isCloseEnoughForSwap(currToken1, currToken2) == false){
@@ -512,7 +603,7 @@ public class ScreenGameplay implements IScreen, Subject{
   
   
   /**
-   * To swap tokens, players will clic/tap a token then drag to the token
+   * To swap tokens, players will click/tap a token then drag to the token
    * they want to swap with.
    */
   public void mouseDragged(){
@@ -525,12 +616,21 @@ public class ScreenGameplay implements IScreen, Subject{
       return;
     }
     
-    
     if(currToken1 != null && currToken2 == null){
   
       //    
       if(c != currToken1.getColumn() || r != currToken1.getRow()){
         currToken2 = board[r][c];
+        
+        if(currToken2.getType() == TokenType.NULL){
+          currToken2 = null;
+          return;
+        }
+        
+        if(currToken1.getType() == TokenType.NULL){
+          currToken1 = null;
+          return;
+        }
         
         if(isCloseEnoughForSwap(currToken1, currToken2) == false){
            currToken2 = null;
@@ -587,7 +687,8 @@ public class ScreenGameplay implements IScreen, Subject{
   /**
     Speed: O(n)
     Returns true as soon as it finds a valid swap/move.
-  
+    
+    Checks to see if the user can make a valid match anywhere in the visible part of the board.
     There may be a case in which there are no valid swap/moves left
     in that case the board needs to be reset.
   */
@@ -602,7 +703,6 @@ public class ScreenGameplay implements IScreen, Subject{
         
         swapTokens(t1, t2);
         
-        //if(wasValidSwap(gem1, gem2)){
         if(getNumCosecutiveMatches(t1, t2) >= 3){
           swapTokens(t1, t2);
           return true;
@@ -634,13 +734,11 @@ public class ScreenGameplay implements IScreen, Subject{
     return false;
   }
   
-  
   /*
   */
-  int getRandomToken(){
+  int getRandomTokenType(){
     return Utils.getRandomInt(0, numTokenTypesOnBoard-1);
   }
-  
   
   /*
     Find any null tokens on the board and replace them with a random token.
@@ -648,16 +746,31 @@ public class ScreenGameplay implements IScreen, Subject{
     This is used at the start of the level when trying to generate a board
     that initially has no matches.
     
-    This is also used to populate the tokens above the board that aren't seen.
+    @param {bool} forEntireBoard This is also used to populate the tokens above the board that aren't seen.
+    
+    @return {int} Num holes/cells filled.
   */
-  void fillHoles(){
-    for(int r = 0; r < BOARD_ROWS; r++){
+  private int fillHoles(boolean forEntireBoard){
+    int numFilled = 0;
+    
+    int endRow = forEntireBoard ? BOARD_ROWS : START_ROW_INDEX;
+    
+    for(int r = 0; r < endRow; r++){
       for(int c = 0; c < BOARD_COLS; c++){
         if(board[r][c].getType() == TokenType.NULL){
-          board[r][c].setType(getRandomToken());
+          board[r][c].setType(getRandomTokenType());
+          numFilled++;
         }
       }
     }
+    return numFilled;
+  }
+  
+  void fillColumn(int c){
+    for(int r = 0; r < 8; r++){
+      board[r][c].setType(getRandomTokenType());
+    }
+    board[0][c].setFillCellMarker();
   }
 
   /**
@@ -676,37 +789,37 @@ public class ScreenGameplay implements IScreen, Subject{
      f) update tokens and allow them to add themselves back in
   */
   void dropTokens(){
-    
     // From bottom to top, search to find first gap
     // Start at the bottom of the grid, so we can properly iterate to the top
     // copying down the gems
     for(int c = 0; c < BOARD_COLS; c++){
+      
       for(int r = BOARD_ROWS - 1; r >= 0; r--){
         
         // After finding the first gap, set the marker. Once we find a 
         // token, we will tell it to move to this marker position.
-        if(board[r][c].getType() == TokenType.NULL){
+        if(board[r][c].getType() == TokenType.NULL && board[r][c].isReserved == false){
           int firstEmptyCellIndex = r;
           
-          // Find first non-empty cell. We can start immediately above the 
-          // empty cell.
+          // Find first non-empty cell. We can start immediately above the empty cell.
           for(int row = firstEmptyCellIndex - 1; row >= 0; row--){
             
-            // Found non-empty cell, move 
-            if(board[row][c].getType() != TokenType.NULL){
+            // Found non-empty cell, move.
+            // !!!
+            if(board[row][c].getType() != TokenType.NULL && board[row][c].isIdle() ){
               // We need to remove the token from the board because each frame
               // the board is rendered, all the tokens in it get rendered also.
               // And if the tokens are floating down, they shouldn't appear in the board.
               
               // tokenToMove.setRowColumn(firstEmptyCellIndex, c);
               // tokenToMove.moveToRow(firstEmptyCellIndex);
-              
               Token tokenToMove = board[row][c];
               tokenToMove.animateTo(firstEmptyCellIndex, c);
+              board[firstEmptyCellIndex][c].isReserved = true;
               
               floatingTokens.add(tokenToMove);
               waitingForTokensToFall = true;
-  
+              
               // Since that token has just been removed, we'll need to
               // place a 'hole' where it used to be.
               Token nullToken = new Token();
@@ -714,31 +827,23 @@ public class ScreenGameplay implements IScreen, Subject{
               nullToken.setRowColumn(row, c);
               board[row][c] = nullToken;
               
-              //
               break;
             }
           }
-        }      
+        }
       }
     }
   }
   
   /**
     Find any 3 matches either going vertically or horizontally and
-    remove them from the board.
+    remove them from the board. Replace the cells in the board will NULL tokens.
     
-    @returns true if at least 3 gems were marked for removal. This means we found at least one match
-    In some cases, this needs to be corrected, for example, when the game starts, there shouldn't be any
-    matches.
+    @returns the number of tokens this method found that need to be removed.    
   */
   int markTokensForRemoval(){
     
-    //
-    boolean markedAtLeast3Gems = false;
-    Testing = 0;
-    
-    // Iterate over the entire board, mark gems for removal
-    // Once complete, remove all gems
+    int numTokensMarked = 0;    
     
     // Mark the matched horizontal gems
     // Add extra column buffer at end of board to fix matches counter?
@@ -765,11 +870,12 @@ public class ScreenGameplay implements IScreen, Subject{
         }
         // We need to also do it at the end of the board 
         else if( (board[r][c].matchesWith(tokenTypeToMatchAgainst) == false && matches >= 3) || (c == BOARD_ROWS - 1 && matches >= 3)){
-          markedAtLeast3Gems = true;
-                    
+          
           for(int gemC = markerIndex; gemC < markerIndex + matches; gemC++){
-            board[r][gemC].kill();//.markForDeletion();
-            Testing++;
+           // if( board[r][gemC].isDying() == false){
+              board[r][gemC].kill();
+              numTokensMarked++;
+           // }
             //numMatchedGems[board[r][gemC].getType()]++;
           }
           matches = 1;
@@ -780,10 +886,13 @@ public class ScreenGameplay implements IScreen, Subject{
       
       // TODO: comment
       if(matches >= 3){
-        markedAtLeast3Gems = true;
         
         for(int gemC = markerIndex; gemC < markerIndex + matches; gemC++){
-          board[r][gemC].kill();//markForDeletion();
+          
+        //  if( board[r][gemC].isDying() == false){
+            board[r][gemC].kill();
+            numTokensMarked++;
+        //  }
           //numMatchedGems[board[r][gemC].getType()]++;
         }
       }
@@ -810,11 +919,13 @@ public class ScreenGameplay implements IScreen, Subject{
         // We need to also do it at the end of the board 
         else if( (board[r][c].matchesWith(tokenTypeToMatchAgainst) == false && matches >= 3)){// || (c == BOARD_COLS - 1 && matches > 2)){
         //else if( (board[r][c].getType() != type && matches >= 3)){// || (c == BOARD_COLS - 1 && matches > 2)){
-          markedAtLeast3Gems = true;
           
           for(int gemR = markerIndex; gemR < markerIndex + matches; gemR++){
-            board[gemR][c].kill();//markForDeletion();
-            Testing++;
+           
+          //  if( board[gemR][c].isDying() == false){
+              board[gemR][c].kill();
+              numTokensMarked++;
+            //}
             //numMatchedGems[board[gemR][c].getType()]++;
           }
           matches = 1;
@@ -824,20 +935,23 @@ public class ScreenGameplay implements IScreen, Subject{
       }
       
       if(matches >= 3){
-        markedAtLeast3Gems = true;
         
         for(int gemR = markerIndex; gemR < markerIndex + matches; gemR++){
-          board[gemR][c].kill();//markForDeletion();
+        
+          //if( board[gemR][c].isDying() == false){
+            board[gemR][c].kill();
+            numTokensMarked++;
+          //}
           //numMatchedGems[board[gemR][c].getType()]++;
         }
       }
     }
     
-    if(Testing >= 3){
+    if(numTokensMarked >= 3){
       soundManager.playSuccessSwapSound();
     }
-    
-    return Testing;
+
+    return numTokensMarked;
   }
   
   /*
@@ -972,31 +1086,40 @@ public class ScreenGameplay implements IScreen, Subject{
   //}
   
   /*
+      Fills the board with random tokens and makes sure
+      there are no immediate matches (at least ones that are displayed)
   */
   void fillBoardWithRandomTokens(){
+    
+    // Stupidly just fill the board with random tokens first
     for(int r = 0; r < BOARD_ROWS; r++){
       for(int c = 0; c < BOARD_COLS; c++){
         Token token = new Token();
-        token.setType(getRandomToken());
+        token.setType(getRandomTokenType());
         token.setRowColumn(r, c);
         board[r][c] = token;
       }
     }
     
-    // Ugly way of making sure there are no immediate matches, but it works for now.
-    do{
-      markTokensForRemoval();
-      removeMarkedTokens(false);
-      fillHoles();
-    }while(markTokensForRemoval() > 0);
+    // Now start removing immediate matches where tokens are displayed.
+    while(markTokensForRemoval() > 0){
+      removeMarkedTokens(false);      
+      fillHoles(true);
+    }
+    
+    for(int c = 0; c < BOARD_COLS; c++){
+      Token t = board[0][c];
+      t.setFillCellMarker();
+    }
+    
     
     // Add the appropriate number of gems the tokens
     for(int i = 0; i < numGemsOnBoard; i++){
       addGemToQueuedToken();
     }  
     
-    if(false == validSwapExists()){
-      //println("**** no moves remaining ****");
+    if(validSwapExists() == false){
+      println("**** no moves remaining ****");
     }
   }
     
@@ -1009,15 +1132,14 @@ public class ScreenGameplay implements IScreen, Subject{
     stroke(255);
     strokeWeight(2);
     
-
-    
     //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE);
     
     // Draw lower part of the board
     //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2 + START_ROW_INDEX * TOKEN_SIZE, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE - 220);
     popStyle();
-    
-    // Draw the invisible part, for debugging
+
+    // Part of the invisible board needs to be drawn because
+    // the tokens coming into to the board need to be shown animating in.    
     for(int r = 0; r < START_ROW_INDEX; r++){
       for(int c = 0; c < BOARD_COLS; c++){
         if(board[r][c].isMoving()){
@@ -1058,18 +1180,26 @@ public class ScreenGameplay implements IScreen, Subject{
     }
   
   /*
+      Move the tokens that have been marked for deletion from
+      the board to the dying tokens list.
+      
+      @returns {int} The number of tokens removed from the board.
    */
-  void removeMarkedTokens(boolean doDyingAnimation){
+  private int removeMarkedTokens(boolean doDyingAnimation){
+    int numRemoved = 0;
     
-    // Now delete everything marked for deletion
+    // Now delete everything marked for deletion.
     for(int r = 0; r < BOARD_ROWS; r++){
       for(int c = 0; c < BOARD_COLS; c++){
         
         Token tokenToDestroy = board[r][c];
         
-        if(tokenToDestroy.isDying()){
-          tokenToDestroy.kill();
-          
+        // Don't need to check if already in the list because we're removing it from
+        // the board, so it can never be placed from the board into the dying token list more than once.
+        if(tokenToDestroy.isDying() ){//|| tokenToDestroy.isAlive() == false){
+          //tokenToDestroy.kill();
+          numRemoved++;
+          // On setup we use this method, but we don't actually want to play the animation.
           if(doDyingAnimation){
             dyingTokens.add(tokenToDestroy);
           }
@@ -1079,14 +1209,13 @@ public class ScreenGameplay implements IScreen, Subject{
           nullToken.setType(TokenType.NULL);
           nullToken.setRowColumn(r, c);
           board[r][c] = nullToken;
-                  
-          delayTicker = new Ticker();
           
-          //removedAtLeastOneMatch = true;
+          //delayTicker = new Ticker();
         }
         board[r][c].setSelect(false);
       }
     }
+    return numRemoved;
   }
   
   void keyPressed(){
@@ -1094,15 +1223,23 @@ public class ScreenGameplay implements IScreen, Subject{
     
     // P key is locked
     isPaused = Keyboard.isKeyDown(KEY_P);
-    pauseAllTokens(isPaused);
+    
+   // if(isPaused){
+      timer.pause();
+  // }else{timer.resume();}
+    
+    //pauseAllTokens(isPaused);
   }
   
+  /**
+  */
   void keyReleased(){
     Keyboard.setKeyDown(keyCode, false);
     
     soundManager.setMute(!soundManager.isMuted());
     
     isPaused = Keyboard.isKeyDown(KEY_P);
+    timer.resume();
     pauseAllTokens(false);
   }
   
