@@ -98,15 +98,13 @@ public class Token{
     return column;
   }
   
-  
-  public int getState(){
-    return state;
-  }
-  
   public int getType(){
     return type;
   }
   
+  /**
+      TODO: add check?
+  */
   public void setType(int t){
     type = t;
   }
@@ -296,8 +294,6 @@ public class Token{
     if(state != IDLE){
       return;
     }
-    
-    
     
     // TODO: fix, it really isn't detached
     state = MOVING;

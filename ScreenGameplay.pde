@@ -567,7 +567,7 @@ public class ScreenGameplay implements IScreen, Subject{
     if(currToken1 == null){
       currToken1 = board[r][c];
       
-      // !!!
+      // If they token player selected is actually null (an empty cell), then back out.
       if(currToken1.getType() == TokenType.NULL){
         currToken1 = null;
         return;
@@ -582,6 +582,7 @@ public class ScreenGameplay implements IScreen, Subject{
       
       currToken2 = board[r][c];
       
+      // Same as a few lines above.
       if(currToken2.getType() == TokenType.NULL){
         currToken2 = null;
         return;
@@ -616,22 +617,19 @@ public class ScreenGameplay implements IScreen, Subject{
       return;
     }
     
+    // They are about to 'drag to' their second selection.
     if(currToken1 != null && currToken2 == null){
   
       //    
       if(c != currToken1.getColumn() || r != currToken1.getRow()){
         currToken2 = board[r][c];
         
+        // If they dragged to an empty cell, we have to back out.
         if(currToken2.getType() == TokenType.NULL){
           currToken2 = null;
           return;
         }
-        
-        if(currToken1.getType() == TokenType.NULL){
-          currToken1 = null;
-          return;
-        }
-        
+                
         if(isCloseEnoughForSwap(currToken1, currToken2) == false){
            currToken2 = null;
         }
