@@ -21,16 +21,19 @@ final int BOARD_ROWS = 16;
 // Only need y index
 final int START_ROW_INDEX = 8;
 
-final int TOKEN_SIZE = 28;
+final int TOKEN_SIZE = 32;
 
-final int CANVAS_WIDTH = 520;
+final int CANVAS_WIDTH = 620;
 final int CANVAS_HEIGHT = 400;
 
 // We define the board size in pixels and allow it to be any size
 // and have the tokens center themselves inside those dimensions.
 // This allows us to define a variable board size.
-final int BOARD_W_IN_PX = 234;
-final int BOARD_H_IN_PX = 234;
+final int BOARD_W_IN_PX = TOKEN_SIZE * 8; //273;
+final int BOARD_H_IN_PX = TOKEN_SIZE * 8; //273;
+
+// 234 is the size of the diablo board.
+// 28 is size of diablo token
 
 // Where on the canvas the tokens start to be rendered.
 final int START_X = (int)(CANVAS_WIDTH/2.0f  - BOARD_W_IN_PX/2.0f);

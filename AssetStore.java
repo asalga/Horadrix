@@ -8,11 +8,11 @@ public class AssetStore{
   private static PApplet app;
   private static AssetStore instance;
   
-  private String BASE_IMG_PATH = "data/images/";
+  private String BASE_IMG_PATH = "data/images/gems/diablo/";
   private PImage[] images;
-  private String[] imageNames = {  "red.gif","green.gif", "blue.gif", "yellow.gif", "white.gif", "skull.gif", "purple.gif",
+  private String[] imageNames = {  "A.png","B.png", "C.png", "D.png", "E.png", "F.png", "G.png"};
                                    //"red_gem.gif", "green_gem.gif", "blue_gem.gif", "yellow_gem.gif", "white_gem.gif", "skull_gem.gif", "purple_gem.gif"};
-                                   "red_normal.gif", "green_normal.gif", "blue_normal.gif", "yellow_normal.gif", "white_normal.gif", "skull_normal.gif", "purple_normal.gif"};
+                                   //"red_normal.gif", "green_normal.gif", "blue_normal.gif", "yellow_normal.gif", "white_normal.gif", "skull_normal.gif", "purple_normal.gif"};
   
   /*  
    */
@@ -31,7 +31,7 @@ public class AssetStore{
     
     images = new PImage[numImages];
     
-    for(int i = 0; i < numImages; i++){
+    for(int i = 0; i < imageNames.length; i++){
       images[i] = app.loadImage(BASE_IMG_PATH + imageNames[i]);
     }
   }
