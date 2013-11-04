@@ -103,7 +103,8 @@ public class ScreenGameplay implements IScreen, Subject{
     dyingTokens = new ArrayList<Token>();
     
     bk =  loadImage("data/images/boards/board.png");
-    bk2 = loadImage("data/images/background/background.png");
+    //bk2 = loadImage("data/images/background/background.png");
+    bk2 = loadImage("data/images/boards/board_tightlypacked.png");
     
     //
     layerObserver = new ArrayList<LayerObserver>();
@@ -154,7 +155,7 @@ public class ScreenGameplay implements IScreen, Subject{
     // Offset the image slighly so that it lines up with the grid of tokens.
     //image(bk, -13, -16);//for diablo board
     
-    //image(bk, 0, 0);
+    image(bk2, 0, 0);
     popStyle();
     
     // Draw the debug board with gridlines
@@ -204,7 +205,7 @@ public class ScreenGameplay implements IScreen, Subject{
     
     // hacky way to make sure the falling tokens don't render
     // on top of the top part of the board background image.
-    //image(bk, 0, 0);
+    //image(bk2, 0, 0);
 
     // Draw a box around the grid, just for debugging.
     //noFill();

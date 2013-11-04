@@ -1,5 +1,5 @@
 /*
- @pjs preload="data/fonts/solarwinds.png,data/images/boards/board.png";
+ @pjs preload="data/fonts/solarwinds.png,data/images/boards/board.png,data/images/boards/board_tightlypacked.png";
 */ 
  
 /**
