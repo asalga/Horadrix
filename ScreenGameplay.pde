@@ -238,6 +238,12 @@ public class ScreenGameplay implements IScreen, Subject{
       return;
     }
     
+    // Instant death
+    if(Keyboard.isKeyDown(KEY_I)){
+      // TODO: fix not being able to set to 1
+      levelCountDownTimer.setTime(0, 3);
+    }
+    
     if(Keyboard.isKeyDown(KEY_D)){
       dropTokens();
     }

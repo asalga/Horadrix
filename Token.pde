@@ -16,7 +16,7 @@ public class Token{
   private final int DEAD   = 3;
   
   private final float MOVE_SPEED = TOKEN_SIZE * 1.25f; // token size per second
-  private final float DROP_SPEED = 25;
+  private final float DROP_SPEED = 125;
   
   public boolean isReserved;
   
@@ -236,7 +236,7 @@ public class Token{
     
     //
     if(state == MOVING){
-      float amtToMove = td *  MOVE_SPEED * moveDirection;
+      float amtToMove = td * DROP_SPEED * moveDirection;
       
       if(row == rowToMoveTo){
         detachedPos.x += amtToMove;
@@ -255,7 +255,7 @@ public class Token{
     }
     else if(state == DYING){
       // Shrink the token if it is dying.
-      scaleSize -= td * 0.5f;
+      scaleSize -= td * 2.5f;
       
       if(scaleSize <= 0){
         //scaleSize = 0.0f;
