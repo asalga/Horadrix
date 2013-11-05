@@ -249,25 +249,29 @@ public class ScreenGameplay implements IScreen, Subject{
     // NEW BOARD
     if(Keyboard.isKeyDown(KEY_N)){
       
-      // Clear the top/invisible part of the board
-      while(markTokensForRemoval(true) > 0){
-        removeMarkedTokens(false);
-        fillHoles(true);
-      }
-      
-      // TODO: !!!
-      setFillMarkers();
-      
-      // Clear the visible part of the board since the tokens we
-      // generated will be falling down and replacing these guys.
+      // Kill all the tokens on the visible part of the board
       for(int c = 0; c < BOARD_COLS; c++){
-        for(int r = 8; r < BOARD_ROWS; r++){
+        for(int r = START_ROW_INDEX; r < BOARD_ROWS; r++){
+          board[r][c].kill();
+          
+          dyingTokens.add(board[r][c]);
+          
           Token nullToken = new Token();
           nullToken.setType(TokenType.NULL);
           nullToken.setRowColumn(r, c);
           board[r][c] = nullToken; 
         }
       }
+      
+      // The invisible part of the board will come down, so we need to 
+      // remove all immediate matches so there are no matches as soon as it falls.
+      while(markTokensForRemoval(true) > 0){
+        removeMarkedTokens(false);
+        fillHoles(true);
+      }
+      
+      // !!!
+      setFillMarkers();
       
       dropTokens();
     }
@@ -424,9 +428,9 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
+    
     // Iterate over all the tokens that are dying and increase the score.
     for(int i = 0; i < dyingTokens.size(); i++){
-      
       dyingTokens.get(i).update(td);
       
       if(dyingTokens.get(i).isAlive() == false){
@@ -436,6 +440,7 @@ public class ScreenGameplay implements IScreen, Subject{
           addGemToQueuedToken();
         }
         
+        // TODO: fix
         addToScore(TOKEN_SCORE);
         dyingTokens.remove(i);
         tokensDestroyed++;
@@ -752,16 +757,17 @@ public class ScreenGameplay implements IScreen, Subject{
     This is used at the start of the level when trying to generate a board
     that initially has no matches.
     
-    @param {bool} forEntireBoard This is also used to populate the tokens above the board that aren't seen.
+    @param {bool}
     
     @return {int} Num holes/cells filled.
   */
-  private int fillHoles(boolean forEntireBoard){
+  private int fillHoles(boolean forTopPart){
     int numFilled = 0;
     
-    int endRow = forEntireBoard ? BOARD_ROWS : START_ROW_INDEX;
+    //int endRow = forEntireBoard ? BOARD_ROWS : START_ROW_INDEX;
+    int startRow = forTopPart ? 0 : START_ROW_INDEX;
     
-    for(int r = 0; r < endRow; r++){
+    for(int r = startRow; r < startRow + (BOARD_ROWS/2); r++){
       for(int c = 0; c < BOARD_COLS; c++){
         if(board[r][c].getType() == TokenType.NULL){
           board[r][c].setType(getRandomTokenType());
@@ -1118,7 +1124,7 @@ public class ScreenGameplay implements IScreen, Subject{
     // Now start removing immediate matches where tokens are displayed.
     while(markTokensForRemoval(false) > 0){
       removeMarkedTokens(false);      
-      fillHoles(true);
+      fillHoles(false);
     }
     
     setFillMarkers();
@@ -1183,8 +1189,6 @@ public class ScreenGameplay implements IScreen, Subject{
         board[r][c].draw();
       }
     }
-    
-    
   }
   
     /**
@@ -1243,9 +1247,11 @@ public class ScreenGameplay implements IScreen, Subject{
           
           //delayTicker = new Ticker();
         }
+        // !!! TODO: check
         board[r][c].setSelect(false);
       }
     }
+    
     return numRemoved;
   }
   
