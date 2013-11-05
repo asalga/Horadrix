@@ -397,6 +397,15 @@ public class Token{
       popStyle();
     }
     
+    
+    if(row < START_ROW_INDEX && DEBUG_ON){
+      pushStyle();
+      rectMode(CENTER);
+      fill(255, 255, 255, 32);
+      rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
+      popStyle();
+    }
+    
     // We need to somehow distinguish tokens that have gems.
     if(hasGem()){
       pushStyle();
@@ -405,6 +414,8 @@ public class Token{
       rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
     }
+    
+    
     
     // 
     if(state == DYING){

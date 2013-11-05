@@ -12,6 +12,7 @@ import ddf.minim.*;
 
 final boolean DEBUG_CONSOLE_ON = false;
 final boolean DEBUG_ON = false;
+//final boolean SHOW_ALL_TOKENS = true;
 
 // This includes the entire board, including the 'queued' tokens not visible
 // to the user, that sit above the token the user interacts with.
@@ -24,7 +25,7 @@ final int START_ROW_INDEX = 8;
 final int TOKEN_SIZE = 32;
 
 final int CANVAS_WIDTH = 620;
-final int CANVAS_HEIGHT = 400;
+final int CANVAS_HEIGHT = 400;//650;
 
 // We define the board size in pixels and allow it to be any size
 // and have the tokens center themselves inside those dimensions.
@@ -37,7 +38,7 @@ final int BOARD_H_IN_PX = TOKEN_SIZE * 8; //273;
 
 // Where on the canvas the tokens start to be rendered.
 final int START_X = (int)(CANVAS_WIDTH/2.0f  - BOARD_W_IN_PX/2.0f);
-final int START_Y = (int)(CANVAS_HEIGHT/2.0f - BOARD_H_IN_PX/2.0f);
+final int START_Y = (int)(CANVAS_HEIGHT/2.0f - BOARD_H_IN_PX/2.0f);// + 150;
 
 
 // Used by the AssetStore
