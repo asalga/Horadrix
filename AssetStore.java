@@ -24,12 +24,8 @@ public class AssetStore{
   
   /* As soon as this is contructed, load all the assets
    */
-  private AssetStore(){
-    
-    // TODO: fix me
-    int numImages = 14;
-    
-    images = new PImage[numImages];
+  private AssetStore(){    
+    images = new PImage[imageNames.length];
     
     for(int i = 0; i < imageNames.length; i++){
       images[i] = app.loadImage(BASE_IMG_PATH + imageNames[i]);

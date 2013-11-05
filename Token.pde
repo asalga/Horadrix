@@ -16,7 +16,7 @@ public class Token{
   private final int DEAD   = 3;
   
   private final float MOVE_SPEED = TOKEN_SIZE * 1.25f; // token size per second
-  private final float DROP_SPEED = 25;
+  private final float DROP_SPEED = 125;
   
   public boolean isReserved;
   
@@ -236,7 +236,7 @@ public class Token{
     
     //
     if(state == MOVING){
-      float amtToMove = td *  MOVE_SPEED * moveDirection;
+      float amtToMove = td * DROP_SPEED * moveDirection;
       
       if(row == rowToMoveTo){
         detachedPos.x += amtToMove;
@@ -255,7 +255,7 @@ public class Token{
     }
     else if(state == DYING){
       // Shrink the token if it is dying.
-      scaleSize -= td * 0.5f;
+      scaleSize -= td * 2.5f;
       
       if(scaleSize <= 0){
         //scaleSize = 0.0f;
@@ -397,6 +397,15 @@ public class Token{
       popStyle();
     }
     
+    
+    if(row < START_ROW_INDEX && DEBUG_ON){
+      pushStyle();
+      rectMode(CENTER);
+      fill(255, 255, 255, 32);
+      rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
+      popStyle();
+    }
+    
     // We need to somehow distinguish tokens that have gems.
     if(hasGem()){
       pushStyle();
@@ -405,6 +414,8 @@ public class Token{
       rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
     }
+    
+    
     
     // 
     if(state == DYING){

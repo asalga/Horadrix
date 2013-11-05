@@ -8,6 +8,7 @@ public class ScreenGameOver implements IScreen{
   RetroFont solarWindsFont;
 
   RetroLabel gameOverLabel;
+  RetroLabel retryLabel;
   
   public ScreenGameOver(){
     screenAlive = true;
@@ -18,6 +19,10 @@ public class ScreenGameOver implements IScreen{
     gameOverLabel = new RetroLabel(solarWindsFont);
     gameOverLabel.setText("G A M E  O V E R");
     gameOverLabel.pixelsFromCenter(0, 0);
+    
+    retryLabel = new RetroLabel(solarWindsFont);
+    retryLabel.setText("<< Retry? >>");
+    retryLabel.pixelsFromCenter(0, 50);
   }
   
   /**
@@ -25,6 +30,7 @@ public class ScreenGameOver implements IScreen{
   public void draw(){
     background(0);
     gameOverLabel.draw();
+    retryLabel.draw();
   }
   
   public void update(){
@@ -46,7 +52,17 @@ public class ScreenGameOver implements IScreen{
   public void keyReleased(){}
   public void keyPressed(){}
   
-  public void mousePressed(){}
+  /**
+      TODO: clean
+  */
+  public void mousePressed(){
+    ScreenGameplay gameplay = new ScreenGameplay();
+    LayerObserver hudLayer = new HUDLayer(gameplay);
+    gameplay.addObserver(hudLayer);
+        
+    screenStack.push(gameplay);
+  }
+  
   public void mouseReleased(){}
   public void mouseDragged(){}
   public void mouseMoved(){}
