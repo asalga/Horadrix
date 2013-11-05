@@ -81,7 +81,7 @@ public class ScreenGameplay implements IScreen, Subject{
   }
   
   public void removeObserver(LayerObserver o){
-    // recalc
+    // recalc?
   }
   
   public void notifyObservers(){
@@ -241,9 +241,8 @@ public class ScreenGameplay implements IScreen, Subject{
       return;
     }
     
-    // INSTANT DEATH
+    // INSTANT DEATH - for some reason, can't set it to 1 second
     if(Keyboard.isKeyDown(KEY_I)){
-      // TODO: fix not being able to set to 1
       levelCountDownTimer.setTime(0, 3);
     }
     
@@ -316,13 +315,7 @@ public class ScreenGameplay implements IScreen, Subject{
     if(gemCounter >= gemsRequiredForLevel){
       goToNextLevel();    
     }
-    
-    // !!! TODO: comment
-    //if(/*waitingForTokensToFall &&*/ floatingTokens.size() == 0){
-      //waitingForTokensToFall = false;
-      //fillHoles(false);
-    //}
-    
+        
     debug.clear();
     
     //debugTicker.tick();
@@ -516,7 +509,6 @@ public class ScreenGameplay implements IScreen, Subject{
     //if(gemRemovalTicker != null){
     //  debug.addString("" + gemRemovalTicker.getTotalTime());
     //}
-    //dropTokens();
   }
   
   /*
@@ -780,8 +772,11 @@ public class ScreenGameplay implements IScreen, Subject{
     return numFilled;
   }
   
+  /**
+      
+  */
   void fillColumn(int c){
-    for(int r = 0; r < 8; r++){
+    for(int r = 0; r < BOARD_COLS; r++){
       board[r][c].setType(getRandomTokenType());
     }
   }
