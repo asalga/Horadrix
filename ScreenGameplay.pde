@@ -248,32 +248,7 @@ public class ScreenGameplay implements IScreen, Subject{
     
     // NEW BOARD
     if(Keyboard.isKeyDown(KEY_N)){
-      
-      // Kill all the tokens on the visible part of the board
-      for(int c = 0; c < BOARD_COLS; c++){
-        for(int r = START_ROW_INDEX; r < BOARD_ROWS; r++){
-          board[r][c].kill();
-          
-          dyingTokens.add(board[r][c]);
-          
-          Token nullToken = new Token();
-          nullToken.setType(TokenType.NULL);
-          nullToken.setRowColumn(r, c);
-          board[r][c] = nullToken; 
-        }
-      }
-      
-      // The invisible part of the board will come down, so we need to 
-      // remove all immediate matches so there are no matches as soon as it falls.
-      while(markTokensForRemoval(true) > 0){
-        removeMarkedTokens(false);
-        fillHoles(true);
-      }
-      
-      // !!!
-      setFillMarkers();
-      
-      dropTokens();
+      generateNewBoard();
     }
     
     // DROP TOKENS
@@ -1261,9 +1236,11 @@ public class ScreenGameplay implements IScreen, Subject{
     // P key is locked
     isPaused = Keyboard.isKeyDown(KEY_P);
     
-   // if(isPaused){
+    if(isPaused){
       timer.pause();
-  // }else{timer.resume();}
+    }else{
+      timer.resume();
+    }
     
     //pauseAllTokens(isPaused);
   }
@@ -1306,6 +1283,44 @@ public class ScreenGameplay implements IScreen, Subject{
   
   public int getNumGemsForNextLevel(){
     return gemsRequiredForLevel;
+  }
+  
+  /**
+      This can only be done if nothing is moving or animating to make
+      sure they board stays in a proper state.
+  */
+  public void generateNewBoard(){
+    
+    // If anything is falling, we can't have the new board fall on top of those already falling tokens
+    // Generating a new board while swapping is unlikely, but prevent it anyway, just in case.
+    if(floatingTokens.size() > 0 || swapToken1 != null || swapToken2 !=null){
+      return;
+    }
+    
+    // Kill all the tokens on the visible part of the board
+    for(int c = 0; c < BOARD_COLS; c++){
+      for(int r = START_ROW_INDEX; r < BOARD_ROWS; r++){
+        board[r][c].kill();
+        dyingTokens.add(board[r][c]);
+        
+        Token nullToken = new Token();
+        nullToken.setType(TokenType.NULL);
+        nullToken.setRowColumn(r, c);
+        board[r][c] = nullToken; 
+      }
+    }
+    
+    // The invisible part of the board will come down, so we need to 
+    // remove all immediate matches so there are no matches as soon as it falls.
+    while(markTokensForRemoval(true) > 0){
+      removeMarkedTokens(false);
+      fillHoles(true);
+    }
+    
+    // !!!
+    setFillMarkers();
+    
+    dropTokens();
   }
   
   /*
