@@ -406,17 +406,20 @@ public class ScreenGameplay implements IScreen, Subject{
     
     // Iterate over all the tokens that are dying and increase the score.
     for(int i = 0; i < dyingTokens.size(); i++){
-      dyingTokens.get(i).update(td);
       
-      if(dyingTokens.get(i).isAlive() == false){
+      Token dyingToken = dyingTokens.get(i);
+      
+      dyingToken.update(td);
+      
+      if(dyingToken.isAlive() == false){
         
-        if(dyingTokens.get(i).hasGem()){
+        if(dyingToken.hasGem()){
           gemCounter++;
           addGemToQueuedToken();
         }
         
-        // TODO: fix
-        addToScore(TOKEN_SCORE);
+        addToScore(dyingToken.getScore());
+        
         dyingTokens.remove(i);
         tokensDestroyed++;
       }
@@ -1300,6 +1303,8 @@ public class ScreenGameplay implements IScreen, Subject{
     // Kill all the tokens on the visible part of the board
     for(int c = 0; c < BOARD_COLS; c++){
       for(int r = START_ROW_INDEX; r < BOARD_ROWS; r++){
+        // Set score to zero so once they die, the score total isn't changed.
+        board[r][c].setScore(0);
         board[r][c].kill();
         dyingTokens.add(board[r][c]);
         

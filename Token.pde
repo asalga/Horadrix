@@ -53,6 +53,8 @@ public class Token{
   
   private boolean isPaused;
   
+  private int score;
+  
   /*
   */
   public Token(){
@@ -80,6 +82,19 @@ public class Token{
     returning = false;
     hasArrivedAtDest = false;
     state = IDLE;
+    
+    score = 100;
+  }
+  
+  
+  public void setScore(int s){
+    if(s >= 0){
+      score = s;
+    }
+  }
+  
+  public int getScore(){
+    return score;
   }
   
   /**
