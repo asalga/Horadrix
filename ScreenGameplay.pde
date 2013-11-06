@@ -65,7 +65,7 @@ public class ScreenGameplay implements IScreen, Subject{
   
   // As the levels increase, more and more token types are added
   // This makes it a slightly harder to match tokens.
-  int numTokenTypesOnBoard = 5;
+  int numTokenTypesOnBoard = 7;
   
   // 
   int numGemsOnBoard = 2;
@@ -133,10 +133,6 @@ public class ScreenGameplay implements IScreen, Subject{
   /*
   */
   public void draw(){
- 
-    if(isPaused){
-      return;
-    }
 
     background(0);
     
@@ -222,9 +218,8 @@ public class ScreenGameplay implements IScreen, Subject{
     // If removed, the board would translate diagonally on the canvas.
     // when tokens are removed.
     resetMatrix();
-      
+    
     if(layerObserver != null){
-      
       for(int i = 0; i < layerObserver.size(); i++){
         layerObserver.get(i).draw();
       }
@@ -236,8 +231,11 @@ public class ScreenGameplay implements IScreen, Subject{
   /**
    */
   public void update(){
-
+    
+    // TODO: fix
+    // Need to notify that we are paused so the HUD can draw an overlay
     if(isPaused){
+      notifyObservers();
       return;
     }
     
@@ -254,38 +252,7 @@ public class ScreenGameplay implements IScreen, Subject{
     // DROP TOKENS
     if(Keyboard.isKeyDown(KEY_D)){
       dropTokens();
-    }
-    
-    // CREATE TEST TOKENS
-    if(Keyboard.isKeyDown(KEY_C)){
-      int r = 10;
-      int c = 6;
-
-      Token t2 = new Token();
-      t2.setType(TokenType.SKULL);
-      board[r+1][c] = t2;
-      t2.setRowColumn(r+1,c);
-
-      Token t4 = new Token();
-      t4.setType(TokenType.SKULL);
-      board[r][c-1] = t4;
-      t4.setRowColumn(r,c-1);
-
-      Token t5 = new Token();
-      t5.setType(TokenType.SKULL);
-      board[r][c-2] = t5;
-      t5.setRowColumn(r,c-2);
-
-      Token t6 = new Token();
-      t6.setType(TokenType.SKULL);
-      board[r+2][c] = t6;
-      t6.setRowColumn(r+2,c);
-
-      Token t7 = new Token();
-      t7.setType(TokenType.SKULL);
-      board[r-1][c] = t7;
-      t7.setRowColumn(r-1,c);
-    }    
+    } 
     
     timer.tick();
     float td = timer.getDeltaSec();
@@ -480,8 +447,6 @@ public class ScreenGameplay implements IScreen, Subject{
       screenAlive = false;
     }
     
-    notifyObservers();
-    
     if(seconds <= 9){
       secStr  = Utils.prependStringWithString( "" + seconds, "0", 2);
     }
@@ -489,6 +454,7 @@ public class ScreenGameplay implements IScreen, Subject{
       secStr = "" + seconds;
     }
     
+    notifyObservers();
     //if(gemRemovalTicker != null){
     //  debug.addString("" + gemRemovalTicker.getTotalTime());
     //}
@@ -1113,6 +1079,7 @@ public class ScreenGameplay implements IScreen, Subject{
     }  
     
     if(validSwapExists() == false){
+      generateNewBoard();
       println("**** no moves remaining ****");
     }
   }
@@ -1238,11 +1205,9 @@ public class ScreenGameplay implements IScreen, Subject{
     
     // P key is locked
     isPaused = Keyboard.isKeyDown(KEY_P);
-    
     if(isPaused){
       timer.pause();
-    }else{
-      timer.resume();
+      levelCountDownTimer.pause();
     }
     
     //pauseAllTokens(isPaused);
@@ -1256,7 +1221,11 @@ public class ScreenGameplay implements IScreen, Subject{
     //soundManager.setMute(!soundManager.isMuted());
     
     isPaused = Keyboard.isKeyDown(KEY_P);
-    timer.resume();
+    if(isPaused == false){
+      timer.resume();
+      levelCountDownTimer.resume();
+    }
+   
     pauseAllTokens(false);
   }
   
@@ -1282,6 +1251,10 @@ public class ScreenGameplay implements IScreen, Subject{
   
   public int getNumGems(){
     return gemCounter;
+  }
+  
+  public boolean Paused(){
+    return isPaused;
   }
   
   public int getNumGemsForNextLevel(){

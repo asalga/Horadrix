@@ -31,9 +31,9 @@ public class Ticker{
   }
   
   public void resume(){
-    if(isPaused == true){
-      reset();
-    }
+    deltaTime = 0f;
+    lastTime = -1;
+    isPaused = false;
   }
   
   public void setTime(int min, int sec){    
