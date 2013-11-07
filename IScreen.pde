@@ -16,6 +16,4 @@ public interface IScreen{
   public void keyReleased();
   
   public String getName();
-  
-  public boolean isAlive();
 }

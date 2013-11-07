@@ -40,13 +40,12 @@ final int BOARD_H_IN_PX = TOKEN_SIZE * 8; //273;
 final int START_X = (int)(CANVAS_WIDTH/2.0f  - BOARD_W_IN_PX/2.0f);
 final int START_Y = (int)(CANVAS_HEIGHT/2.0f - BOARD_H_IN_PX/2.0f);// + 150;
 
-
 // Used by the AssetStore
 PApplet globalApplet;
 
 Token[][] board = new Token[BOARD_ROWS][BOARD_COLS];
 
-Stack<IScreen> screenStack = new Stack<IScreen>();
+ScreenSet screens = new ScreenSet();
 
 SoundManager soundManager;
 
@@ -72,60 +71,43 @@ void setup(){
   soundManager.init();
   soundManager.setMute(true);
 
-  screenStack.push(new ScreenSplash());
+  screens.add(new ScreenSplash());
+  screens.add(new ScreenGameplay());
+  screens.add(new ScreenGameOver());
+  
+  screens.transitionTo("splash");
 }
 
 void update(){
-  IScreen currScreen = screenStack.top();
-  
-  currScreen.update();
-  
-  // Once the splash screen is dead, move on to the gameplay screen.
-  if(currScreen.getName() == "splash" && currScreen.isAlive() == false){
-    screenStack.pop();
-    
-    ScreenGameplay gameplay = new ScreenGameplay();
-    
-    LayerObserver hudLayer = new HUDLayer(gameplay);
-    gameplay.addObserver(hudLayer);
-    
-    screenStack.push(gameplay);
-  }
-  
-  // Gameplay screen only dies if the player loses.
-  if(currScreen.getName() == "gameplay" && currScreen.isAlive() == false){
-    screenStack.pop();
-    
-    screenStack.push(new ScreenGameOver());
-  }
+  screens.curr.update();
 }
 
 void draw(){
   update();
-  screenStack.top().draw();
+  screens.curr.draw();
 }
 
 public void mousePressed(){
-  screenStack.top().mousePressed();
+  screens.curr.mousePressed();
 }
 
 public void mouseReleased(){
-  screenStack.top().mouseReleased();
+  screens.curr.mouseReleased();
 }
 
 public void mouseDragged(){
-  screenStack.top().mouseDragged();
+  screens.curr.mouseDragged();
 }
 
 public void mouseMoved(){
-  screenStack.top().mouseMoved();
+  screens.curr.mouseMoved();
 }
 
 public void keyPressed(){
-  screenStack.top().keyPressed();
+  screens.curr.keyPressed();
 }
 
 public void keyReleased(){
-  screenStack.top().keyReleased();
+  screens.curr.keyReleased();
 }
 

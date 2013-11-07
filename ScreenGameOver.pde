@@ -2,8 +2,6 @@
     Displays game name and credits
 */
 public class ScreenGameOver implements IScreen{
-
-  boolean screenAlive;
   
   RetroFont solarWindsFont;
 
@@ -11,7 +9,6 @@ public class ScreenGameOver implements IScreen{
   RetroLabel retryLabel;
   
   public ScreenGameOver(){
-    screenAlive = true;
     
     // TODO: convert this to a singleton or factory.
     solarWindsFont = new RetroFont("data/fonts/solarwinds.png", 14, 16, 2);
@@ -34,33 +31,17 @@ public class ScreenGameOver implements IScreen{
   }
   
   public void update(){
-/*    ticker.tick();
-    if(ticker.getTotalTime() > 0.5f){
-      screenAlive = false;
-      debugPrint("Splash screen closed.");
-    }*/
   }
   
   public String getName(){
-    return "game over";
+    return "gameover";
   }
 
-  public boolean isAlive(){
-    return screenAlive;
-  }
-  
   public void keyReleased(){}
   public void keyPressed(){}
   
-  /**
-      TODO: clean
-  */
   public void mousePressed(){
-    ScreenGameplay gameplay = new ScreenGameplay();
-    LayerObserver hudLayer = new HUDLayer(gameplay);
-    gameplay.addObserver(hudLayer);
-        
-    screenStack.push(gameplay);
+    screens.setCurr(new ScreenGameplay());
   }
   
   public void mouseReleased(){}

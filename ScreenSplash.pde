@@ -4,7 +4,6 @@
 public class ScreenSplash implements IScreen{
 
   Ticker ticker;
-  boolean screenAlive;
   
   RetroFont solarWindsFont;
 
@@ -14,7 +13,6 @@ public class ScreenSplash implements IScreen{
   
   public ScreenSplash(){
     ticker = new Ticker();
-    screenAlive = true;
     
     // TODO: convert this to a singleton or factory.
     solarWindsFont = new RetroFont("data/fonts/solarwinds.png", 14, 16, 2);
@@ -48,17 +46,12 @@ public class ScreenSplash implements IScreen{
   public void update(){
     ticker.tick();
     if(ticker.getTotalTime() > 0.5f){
-      screenAlive = false;
-      debugPrint("Splash screen closed.");
+      screens.transitionTo("gameplay");
     }
   }
   
   public String getName(){
     return "splash";
-  }
-
-  public boolean isAlive(){
-    return screenAlive;
   }
   
   public void keyReleased(){}
