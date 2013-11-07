@@ -130,9 +130,6 @@ public class ScreenGameplay implements IScreen, Subject{
 
     background(0);
     
-    // Draw a background image?
-    // image(bk2, 0, 0);
-    
     pushMatrix();
 
     translate(START_X, START_Y);
@@ -413,7 +410,7 @@ public class ScreenGameplay implements IScreen, Subject{
   }
   
   public int getRowIndex(){
-    return (int)map(mouseY, START_Y, START_Y + BOARD_H_IN_PX, 8, 16);
+    return (int)map(mouseY, START_Y, START_Y + BOARD_H_IN_PX, START_ROW_INDEX, BOARD_ROWS);
   }
   
   public int getColumnIndex(){
@@ -758,10 +755,8 @@ public class ScreenGameplay implements IScreen, Subject{
         else if( (board[r][c].matchesWith(tokenTypeToMatchAgainst) == false && matches >= 3) || (c == BOARD_COLS - 1 && matches >= 3)){
           
           for(int gemC = markerIndex; gemC < markerIndex + matches; gemC++){
-           // if( board[r][gemC].isDying() == false){
-              board[r][gemC].kill();
-              numTokensMarked++;
-           // }
+            board[r][gemC].kill();
+            numTokensMarked++;
           }
           matches = 1;
           markerIndex = c;
@@ -769,13 +764,11 @@ public class ScreenGameplay implements IScreen, Subject{
         }
       }
       
-      // TODO: comment
+      // TODO: fix
       if(matches >= 3){
         for(int gemC = markerIndex; gemC < markerIndex + matches; gemC++){
-        //  if( board[r][gemC].isDying() == false){
-            board[r][gemC].kill();
-            numTokensMarked++;
-        //  }
+          board[r][gemC].kill();
+          numTokensMarked++;
         }
       }
     }
@@ -816,12 +809,8 @@ public class ScreenGameplay implements IScreen, Subject{
       
       if(matches >= 3){
         for(int gemR = markerIndex; gemR < markerIndex + matches; gemR++){
-        
-          //if( board[gemR][c].isDying() == false){
             board[gemR][c].kill();
             numTokensMarked++;
-          //}
-          //numMatchedGems[board[gemR][c].getType()]++;
         }
       }
     }
@@ -1171,8 +1160,6 @@ public class ScreenGameplay implements IScreen, Subject{
     // Should the score be reset?
     // score = 0;
     gemCounter = 0;
-
-    //numMatchedGems = new int[numTokenTypesOnBoard];
     
     currLevel++;
     gemsRequiredForLevel += 5;
@@ -1189,6 +1176,5 @@ public class ScreenGameplay implements IScreen, Subject{
     numGemsOnBoard = currLevel + 1;
     
     fillBoardWithRandomTokens();
-    //resetGemMatchCount();
   }
 }
