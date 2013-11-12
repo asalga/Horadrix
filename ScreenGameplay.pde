@@ -16,7 +16,7 @@ public class ScreenGameplay implements IScreen, Subject{
   // and 'float' above the board and drop down until they arrive where they need to go.
   // We do this because as they fall, we can't give them a integer position, but need to
   // use a float.
-  ArrayList<Token> floatingTokens;
+  //ArrayList<Token> floatingTokens;
 
   // These are used to specify the direction of checking
   // matches in numMatchesSideways and numMatches
@@ -92,7 +92,7 @@ public class ScreenGameplay implements IScreen, Subject{
     
     gemsRequiredForLevel = currLevel * 5;
   
-    floatingTokens = new ArrayList<Token>();
+    //floatingTokens = new ArrayList<Token>();
     dyingTokens = new ArrayList<Token>();
     
     bk =  loadImage("data/images/boards/board.png");
@@ -158,10 +158,11 @@ public class ScreenGameplay implements IScreen, Subject{
     for(int i = 0; i < dyingTokens.size(); i++){
       dyingTokens.get(i).draw();
     }
+    //println("dying tokens: " + dyingTokens.size());
     
-    for(int i = 0; i < floatingTokens.size(); i++){
-      floatingTokens.get(i).draw();
-    }
+    //for(int i = 0; i < floatingTokens.size(); i++){
+    //  floatingTokens.get(i).draw();
+    // }
     
     if(swapToken1 != null){
       swapToken1.draw();
@@ -175,7 +176,7 @@ public class ScreenGameplay implements IScreen, Subject{
     // In some cases it is necessary to see the non-visible tokens
     // above the visible board. Other cases, I want that part covered.
     // for example, when tokens are falling.
-    if(DEBUG_ON == false){
+    /*if(DEBUG_ON == false){
       pushStyle();
       fill(0);
       noStroke();
@@ -183,12 +184,8 @@ public class ScreenGameplay implements IScreen, Subject{
       rect(0, -100, 260, 100);
       //rect(START_X-150, -237, 250, 222);
       popStyle();
-    }
+    }*/
     
-    // hacky way to make sure the falling tokens don't render
-    // on top of the top part of the board background image.
-    //image(bk2, 0, 0);
-
     // Draw a box around the grid, just for debugging.
     //noFill();
     //stroke(255);
@@ -253,38 +250,6 @@ public class ScreenGameplay implements IScreen, Subject{
     
     ArrayList<Token> toRemove = new ArrayList<Token>();
     
-    // Update all the tokens that are falling down
-    for(int i = 0; i < floatingTokens.size(); i++){
-      Token token = floatingTokens.get(i);
-      token.update(td);
-      
-      //
-      if(token.arrivedAtDest()){
-        token.dropIntoCell();
-        numTokensArrivedAtDest++;
-        
-        // If the top token arrived at its destination, it means we can safely
-        // fill up tokens above it.
-        if(token.getFillCellMarker()){
-          fillColumn(token.getColumn());
-          setFillMarkers(token.getColumn());
-        }
-        
-        // the token could have been floating down, if it wasn't
-        // Don't need to explicitly check if it was in the list, the
-        // structure does that for us automatically.
-        // floatingTokens.remove(token);
-        toRemove.add(token);
-        
-        //gemRemovalTicker = new Ticker();
-      }
-    }
-    
-    // 
-    for(int i = 0; i < toRemove.size(); i++){
-      floatingTokens.remove(toRemove.get(i));
-    }
-    
     // If at least one token arrived at their destination, we'll need to 
     // iterate over the board and find any tokens that need to be marked for removal.
     if(numTokensArrivedAtDest > 0){
@@ -323,16 +288,12 @@ public class ScreenGameplay implements IScreen, Subject{
           
           //soundManager.playFailSwapSound();
         }
-        
         // Swap was valid
         else{
           swapToken1 = swapToken2 = null;
-          
-          // gemRemovalTicker = new Ticker();
           markTokensForRemoval(false);
           removeMarkedTokens(true);
           dropTokens();
-          
           deselectCurrentTokens();
           
           // !!!
@@ -349,7 +310,6 @@ public class ScreenGameplay implements IScreen, Subject{
         swapToken1 = swapToken2 = null;
       }
     }
-    
     
     // Iterate over all the tokens that are dying and increase the score.
     for(int i = 0; i < dyingTokens.size(); i++){
@@ -372,15 +332,29 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
-    for(int r = 0; r < BOARD_ROWS; r++){
+    // Update all tokens on board along with falling tokens
+    for(int r = BOARD_ROWS-1; r >= 0 ; r--){
       for(int c = 0; c < BOARD_COLS; c++){
         board[r][c].update(td);
+        
+        if(board[r][c].fallingDown && board[r][c].arrivedAtDest()  ){
+          board[r][c].dropIntoCell();
+          numTokensArrivedAtDest++;
+        
+          // If the top token arrived at its destination, it means we can safely
+          // fill up tokens above it.
+          if(board[r][c].getFillCellMarker()){
+          //  board[r][c].setFillCellMarker(false);
+            fillInvisibleSectionOfColumn(board[r][c].getColumn());
+            setFillMarkers(board[r][c].getColumn());
+          }
+        }
       }
     }
     
     if(numTokensArrivedAtDest > 0){
       //removeMarkedTokens(true);
-      dropTokens();
+    //  dropTokens();
     }
     
     resetMatrix();
@@ -649,21 +623,25 @@ public class ScreenGameplay implements IScreen, Subject{
   
   /**
       Several columns may be dropping down tokens, but once a column
-      is finished dropping its gems, it should immediately fill up the holes
+      is finished dropping its gems, it should immediately fill up the holes.
       
+      Note this does not change whether the token has a gem or not.
   */
-  void fillColumn(int c){
-    for(int r = 0; r < BOARD_COLS; r++){
-      board[r][c].setType(getRandomTokenType());
+  void fillInvisibleSectionOfColumn(int c){
+    for(int r = 0; r < START_ROW_INDEX; r++){
+      Token t = new Token();
+      t.setType(getRandomTokenType());
+      t.setRowColumn(r, c);
+      board[r][c] = t;
     }
   }
 
   /**
-   - From bottom to top, search to find first gap
-   - After finding the first gap, set the marker
-   - Find first token, set dst to marker
-   - Increment marker by 1
-   - Find next token
+      From bottom to top, search to find first gap
+      After finding the first gap, set the marker
+      Find first token, set dst to marker
+      Increment marker by 1
+      Find next token
      
      For all the tokens above that gap, until very top
      a) detach tokens from board
@@ -674,41 +652,41 @@ public class ScreenGameplay implements IScreen, Subject{
      f) update tokens and allow them to add themselves back in
   */
   void dropTokens(){
-    // From bottom to top, search to find first gap Start at the bottom of the grid, 
-    // so we can properly iterate to the top copying down the gems
+    
     for(int c = 0; c < BOARD_COLS; c++){
-      for(int r = BOARD_ROWS - 1; r >= 0; r--){
-        
-        // After finding the first gap, set the marker. Once we find a 
-        // token, we will tell it to move to this marker position.
-        if(board[r][c].getType() == TokenType.NULL && board[r][c].isReserved == false){
-          int firstEmptyCellIndex = r;
-          
-          // Find first non-empty cell. We can start immediately above the empty cell.
-          for(int row = firstEmptyCellIndex - 1; row >= 0; row--){
-            
-            // Found non-empty cell, move.
-            // !!!
-            if(board[row][c].getType() != TokenType.NULL && board[row][c].isIdle() ){
-              // We need to remove the token from the board because each frame
-              // the board is rendered, all the tokens in it get rendered also.
-              // And if the tokens are floating down, they shouldn't appear in the board.
-              
-              // tokenToMove.setRowColumn(firstEmptyCellIndex, c);
-              // tokenToMove.moveToRow(firstEmptyCellIndex);
-              Token tokenToMove = board[row][c];
-              tokenToMove.animateTo(firstEmptyCellIndex, c);
-              board[firstEmptyCellIndex][c].isReserved = true;
-              
-              floatingTokens.add(tokenToMove);
-              
-              // Since that token has just been removed, we'll need to
-              // place a 'hole' where it used to be.
-              createNullToken(row, c);              
-              break;
-            }
-          }
+      boolean ok = false;
+      int dst = BOARD_ROWS;
+      int src;
+      
+      while(dst >= 2){
+        dst--;
+        if(board[dst][c].getType() == TokenType.NULL){
+          ok = true;
+          break;
         }
+      }
+      
+      // Don't subtract 1 because we do that already in the next line
+      src = dst;
+      while(src >= 1){
+        src--;
+        if(board[src][c].getType() != TokenType.NULL){
+          break;
+        }
+      }
+      
+      while(src >= 0){
+        // move the first token
+        if(ok){
+          Token tokenToMove = board[src][c];
+          tokenToMove.fallingDown = true;
+          tokenToMove.animateTo(dst, c);
+        }
+        do{
+          src--;
+        }while(src >= 1 && board[src][c].getType() == TokenType.NULL);
+        
+        dst--;
       }
     }
   }
@@ -1055,7 +1033,7 @@ public class ScreenGameplay implements IScreen, Subject{
           }
           
           // Replace the token we removed with a null Token
-          createNullToken(r,c);
+          createNullToken(r, c);
         }
         // !!! TODO: check
         board[r][c].setSelect(false);
@@ -1070,6 +1048,8 @@ public class ScreenGameplay implements IScreen, Subject{
     nullToken.setType(TokenType.NULL);
     nullToken.setRowColumn(r, c);
     board[r][c] = nullToken;
+    
+    println("null token at " + r + ", " + c);
   }
   
   void keyPressed(){
@@ -1117,7 +1097,10 @@ public class ScreenGameplay implements IScreen, Subject{
     
     // If anything is falling, we can't have the new board fall on top of those already falling tokens
     // Generating a new board while swapping is unlikely, but prevent it anyway, just in case.
-    if(floatingTokens.size() > 0 || swapToken1 != null || swapToken2 !=null){
+    //if(floatingTokens.size() > 0 || swapToken1 != null || swapToken2 !=null){
+      
+      // !!! Make sure everything has stopped
+    if(swapToken1 != null || swapToken2 !=null){
       return;
     }
     

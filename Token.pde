@@ -16,9 +16,7 @@ public class Token{
   private final int DEAD   = 3;
   
   private final float MOVE_SPEED = TOKEN_SIZE * 1.25f; // token size per second
-  private final float DROP_SPEED = 125;
-  
-  public boolean isReserved;
+  private final float DROP_SPEED = 50;
   
   // Used for debugging
   private int id;
@@ -28,30 +26,31 @@ public class Token{
   // so just define it as a float to begin with.
   private int row;
   private int column;
-  
-  private int type;
-  private boolean doesHaveGem;
-  
+
   private int rowToMoveTo;
   private int colToMoveTo;
-  
-  private boolean returning;
+
   private boolean hasArrivedAtDest;
-  
   private PVector detachedPos;
-  
+
   // Set this and decrement until we reach zero.
   private float distanceToMove;
-  private float scaleSize;
   
+  // !!! We can refactor this
   private int moveDirection;
   
   private boolean isFillCellMarker;
   
+  private int type;
+  private boolean doesHaveGem;
+  
+  private boolean returning;
+  public boolean fallingDown;
+  
+  private float scaleSize;
+
   // Use can select up to 2 tokens before they get swapped.
   private boolean isSelected;
-  
-  private boolean isPaused;
   
   private int score;
   
@@ -63,12 +62,9 @@ public class Token{
     
     isSelected = false;
     
-    isPaused = false;
-    
-    isReserved = false;
-    
     row = 0;
     column = 0;
+    fallingDown = false;
     
     doesHaveGem = false;
     scaleSize = 1.0f;
@@ -127,7 +123,9 @@ public class Token{
   public void setFillCellMarker(){
     isFillCellMarker = true;
   }
-  
+  public void setFillCellMarker(boolean b){
+    isFillCellMarker = b;
+  }  
   public boolean getFillCellMarker(){
     return isFillCellMarker;
   }
@@ -219,35 +217,16 @@ public class Token{
     
     board[rowToMoveTo][colToMoveTo] = this;
     
-    //
     hasArrivedAtDest = false;
     
-    
     distanceToMove = 0;
-    
+    fallingDown = false;
     moveDirection = 0;
   }
-  
-  /**
-    When paused, animation, movement etc. no longer do anything.
-  */
-  public void setPaused(boolean isPaused){
-    this.isPaused = isPaused;
-    //if(isPaused){
-      //ticker.pause();
-    //}
-    //else{
-    //  ticker.resume();
-    //}
-  }
-  
+    
   /*
   */
   public void update(float td){
-    
-    if(isPaused){
-      return;
-    }
     
     //
     if(state == MOVING){
@@ -304,10 +283,9 @@ public class Token{
   /**
    */
   public void animateTo(int r, int c){
-
     // We can only animate a token if it is idle.
     if(state != IDLE){
-      return;
+    ///  return;
     }
     
     // TODO: fix, it really isn't detached
@@ -334,6 +312,7 @@ public class Token{
       // Since the board dimensions can be arbitrary.
       
       distanceToMove = abs(rowDiff) * TOKEN_SIZE;
+      println("to move: " + distanceToMove);
       
       // TODO fix / by zero !!!!
       moveDirection = rowDiff / abs(rowDiff);
@@ -356,7 +335,7 @@ public class Token{
       // return;
     }
     
-    if(isPaused || type == TokenType.NULL){
+    if(type == TokenType.NULL){
       return;
     }
     
@@ -403,23 +382,23 @@ public class Token{
     }
 
     // Draws an outline around all tokens
-    if(DEBUG_ON){
+    /*if(DEBUG_ON){
       pushStyle();
       rectMode(CENTER);
       noFill();
       stroke(0, 100, 50);
       rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
-    }
+    }*/
     
     
-    if(row < START_ROW_INDEX && DEBUG_ON){
+    /*if(row < START_ROW_INDEX && DEBUG_ON){
       pushStyle();
       rectMode(CENTER);
       fill(255, 255, 255, 32);
       rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
-    }
+    }*/
     
     // We need to somehow distinguish tokens that have gems.
     if(hasGem()){
@@ -429,8 +408,6 @@ public class Token{
       rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
     }
-    
-    
     
     // 
     if(state == DYING){
