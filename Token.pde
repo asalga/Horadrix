@@ -16,7 +16,7 @@ public class Token{
   private final int DEAD   = 3;
   
   private final float MOVE_SPEED = TOKEN_SIZE * 1.25f; // token size per second
-  private final float DROP_SPEED = 50;
+  private final float DROP_SPEED = 15;
   
   // Used for debugging
   private int id;
@@ -278,6 +278,13 @@ public class Token{
   */
   public boolean hasGem(){
     return doesHaveGem;
+  }
+  
+  public boolean canBeSwapped(){
+    if(type == TokenType.NULL || fallingDown || state != IDLE){//isMoving()){
+      return false;
+    }
+    return true;
   }
   
   /**

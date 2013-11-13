@@ -252,12 +252,12 @@ public class ScreenGameplay implements IScreen, Subject{
     
     // If at least one token arrived at their destination, we'll need to 
     // iterate over the board and find any tokens that need to be marked for removal.
-    if(numTokensArrivedAtDest > 0){
+    /*if(numTokensArrivedAtDest > 0){
         markTokensForRemoval(false);
         removeMarkedTokens(true);
         //dropTokens();
         //fillHoles(false);
-    }
+    }*/
     
     // Now, update the two tokens that the user has swapped
     if(swapToken1 != null){
@@ -332,7 +332,7 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
-    // Update all tokens on board along with falling tokens
+    // Update all tokens on board. This includes the falling tokens
     for(int r = BOARD_ROWS-1; r >= 0 ; r--){
       for(int c = 0; c < BOARD_COLS; c++){
         board[r][c].update(td);
@@ -344,7 +344,10 @@ public class ScreenGameplay implements IScreen, Subject{
           // If the top token arrived at its destination, it means we can safely
           // fill up tokens above it.
           if(board[r][c].getFillCellMarker()){
-          //  board[r][c].setFillCellMarker(false);
+            //markTokensForRemoval(false);
+            //removeMarkedTokens(true);
+            //dropTokens();
+            //board[r][c].setFillCellMarker(false);
             fillInvisibleSectionOfColumn(board[r][c].getColumn());
             setFillMarkers(board[r][c].getColumn());
           }
@@ -354,7 +357,10 @@ public class ScreenGameplay implements IScreen, Subject{
     
     if(numTokensArrivedAtDest > 0){
       //removeMarkedTokens(true);
-    //  dropTokens();
+      //dropTokens();
+      markTokensForRemoval(false);
+      removeMarkedTokens(true);
+      dropTokens();
     }
     
     resetMatrix();
@@ -433,8 +439,9 @@ public class ScreenGameplay implements IScreen, Subject{
     if(currToken1 == null){
       currToken1 = board[r][c];
       
-      // If the token the player selected is actually null (an empty cell), then back out.
-      if(currToken1.getType() == TokenType.NULL){
+      // If the token the player selected is actually null (an empty cell) or is 
+      // actually falling down, then back out.
+      if(currToken1.canBeSwapped() == false){
         currToken1 = null;
         return;
       }
@@ -449,7 +456,7 @@ public class ScreenGameplay implements IScreen, Subject{
       currToken2 = board[r][c];
       
       // Same as a few lines above.
-      if(currToken2.getType() == TokenType.NULL){
+      if(currToken2.canBeSwapped() == false){
         currToken2 = null;
         return;
       }
@@ -483,7 +490,7 @@ public class ScreenGameplay implements IScreen, Subject{
       return;
     }
     
-    // They are about to 'drag to' their second selection.
+    // Player have had to select the first token before dragging.
     if(currToken1 != null && currToken2 == null){
   
       //    
@@ -491,7 +498,8 @@ public class ScreenGameplay implements IScreen, Subject{
         currToken2 = board[r][c];
         
         // If they dragged to an empty cell, we have to back out.
-        if(currToken2.getType() == TokenType.NULL){
+        //if(currToken2.getType() == TokenType.NULL){
+        if(currToken2.canBeSwapped() == false){
           currToken2 = null;
           return;
         }
@@ -654,6 +662,12 @@ public class ScreenGameplay implements IScreen, Subject{
   void dropTokens(){
     
     for(int c = 0; c < BOARD_COLS; c++){
+      
+      // TODO: fix
+      if(board[0][c].fallingDown){
+        continue;
+      }
+      
       boolean ok = false;
       int dst = BOARD_ROWS;
       int src;
