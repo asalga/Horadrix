@@ -16,7 +16,7 @@ public class Token{
   private final int DEAD   = 3;
   
   private final float MOVE_SPEED = TOKEN_SIZE * 1.25f; // token size per second
-  private final float DROP_SPEED = 15;
+  private final float DROP_SPEED = 35;
   
   // Used for debugging
   private int id;
@@ -54,6 +54,10 @@ public class Token{
   
   private int score;
   
+  public boolean readyForMatch(){
+    return state == IDLE;
+  }
+  
   /*
   */
   public Token(){
@@ -70,7 +74,7 @@ public class Token{
     scaleSize = 1.0f;
     
     // TODO: need to really need to set these?
-    rowToMoveTo = 0;
+    rowToMoveTo = -1;
     colToMoveTo = 0;
     moveDirection = 0;
     detachedPos = new PVector();
@@ -123,6 +127,7 @@ public class Token{
   public void setFillCellMarker(){
     isFillCellMarker = true;
   }
+  
   public void setFillCellMarker(boolean b){
     isFillCellMarker = b;
   }  
@@ -212,10 +217,24 @@ public class Token{
   public void dropIntoCell(){
     state = IDLE;
     
+    int rTemp = row;
+    int cTemp = column;
+    
     row = rowToMoveTo;
     column = colToMoveTo;
     
     board[rowToMoveTo][colToMoveTo] = this;
+    
+    // could be swapping
+    if(fallingDown){
+      // If the token hasn't been overwritten yet
+      if(board[rTemp][cTemp] == this){
+        Token nullToken = new Token();
+        nullToken.setType(TokenType.NULL);
+        nullToken.setRowColumn(rTemp, cTemp);
+        board[rTemp][cTemp] = nullToken;
+      }
+    }
     
     hasArrivedAtDest = false;
     
@@ -281,52 +300,104 @@ public class Token{
   }
   
   public boolean canBeSwapped(){
-    if(type == TokenType.NULL || fallingDown || state != IDLE){//isMoving()){
+    if(type == TokenType.NULL || fallingDown || state != IDLE){
       return false;
     }
     return true;
   }
   
-  /**
-   */
-  public void animateTo(int r, int c){
-    // We can only animate a token if it is idle.
-    if(state != IDLE){
-    ///  return;
+  /*
+  *  The token can only be matched if its just sitting there. If it is dying/moving
+  *  then we can't have that token get matched.
+  */
+  public boolean canBeMatched(){
+    if(state != IDLE || type == TokenType.NULL || fallingDown || isMoving()){
+      return false;
     }
-    
-    // TODO: fix, it really isn't detached
-    state = MOVING;
-    
-    // TODO: fix literal 8
-    // column row swapped here!
-    
-    // !!! why are we dividing by 2
-    //
-    int detachedX = (int)(column  * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0f ));
-    int detachedY = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0f ));
-    detachedPos = new PVector(detachedX, detachedY);
-    
-    rowToMoveTo = r;
-    colToMoveTo = c;
-    
-    //
-    if(c == column){
-      int rowDiff = rowToMoveTo - row;
+    return true;
+  }
+  
+  /*
+      When the tokens fall, they are given new locations
+      If they are already falling, they can fall to a new 'lower' location.
+  */
+  public void animateTo(int r, int c){    
+    // If the token was already moving to another destination,
+    // we need to assign it a new place to go to.
+    if(fallingDown){
+      //println("getting new position");
+      state = MOVING;
       
-      // Calculating the number of pixels the token has to move isn't as easy as just
-      // rowDiff * TOKEN_SIZE
-      // Since the board dimensions can be arbitrary.
+      //
+      if( r == rowToMoveTo){
+        return;
+      }
+      println("T:" + id + "  new row: " + r);
+
       
-      distanceToMove = abs(rowDiff) * TOKEN_SIZE;
-      println("to move: " + distanceToMove);
+      int oldRowToMoveTo = rowToMoveTo;
+      int newRowToMoveTo = r;
       
+      int distBetweenDsts = (newRowToMoveTo - oldRowToMoveTo) * TOKEN_SIZE;
+      
+      // Find the distance between the src and dst in the original movement
+      float dst = (oldRowToMoveTo - r) * TOKEN_SIZE;
+      
+      // how much supposed to move (50)
+      // how much moved (10)
+      // 
+      rowToMoveTo = r;
+      
+      //float finalDst = 
+      distanceToMove = distBetweenDsts + distanceToMove;
+      //float temp = distanceToMove;
+      //distanceToMove = abs(rowDiff) * TOKEN_SIZE - distanceToMove;
+      //println("to move: " + distanceToMove);
+        
       // TODO fix / by zero !!!!
-      moveDirection = rowDiff / abs(rowDiff);
-    }else{
-      int columnDiff = colToMoveTo - column;
-      distanceToMove = abs(columnDiff) * TOKEN_SIZE;
-      moveDirection = columnDiff / abs(columnDiff);
+     // moveDirection = rowDiff / abs(rowDiff);
+      
+    }
+    else{
+      
+     // println("state: " + state);
+      state = MOVING;
+    
+      // TODO: fix literal 8
+      // column row swapped here!
+      // !!! why are we dividing by 2?
+      int detachedX = (int)(column  * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0f ));
+      int detachedY = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0f ));
+      detachedPos = new PVector(detachedX, detachedY);
+      
+      rowToMoveTo = r;
+      colToMoveTo = c;
+      
+      // If the column is the same, it means we are falling down or
+      // swapping
+      if(c == column){
+       
+        int rowDiff = rowToMoveTo - row;
+        
+        // Calculating the number of pixels the token has to move isn't as easy as just
+        // rowDiff * TOKEN_SIZE
+        // Since the board dimensions can be arbitrary.
+        
+        // Get the absolute value since we could be swapping vertically
+        distanceToMove = abs(rowDiff) * TOKEN_SIZE;
+        
+        if(rowDiff < 0){
+          println("ERROR rowDiff: " + rowDiff    +  "  row:"  + row  + "   row to move to: "  + rowToMoveTo);
+        }
+        //println("to move: " + distanceToMove);
+        
+        // TODO fix / by zero !!!!
+        moveDirection = rowDiff / abs(rowDiff);
+      }else{
+        int columnDiff = colToMoveTo - column;
+        distanceToMove = abs(columnDiff) * TOKEN_SIZE;
+        moveDirection = columnDiff / abs(columnDiff);
+      }
     }
   }
   
@@ -338,14 +409,10 @@ public class Token{
     // There is a bug in ScreenGameplay which draws the entire
     // board and ends up drawing dead tokens, so prevent that from
     // happening here.
-    if(state == DEAD){
-      // return;
-    }
-    
-    if(type == TokenType.NULL){
-      return;
-    }
-    
+  //  if(state == DEAD || type == TokenType.NULL){
+   //   return;
+   // }
+
     int x = 0; 
     int y = 0;
     
@@ -373,6 +440,17 @@ public class Token{
       rect(x, y, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
     }
+    
+    if(canBeMatched()){
+      pushStyle();
+      fill(99, 66, 33,33);
+      rectMode(CENTER);
+      //fill(255, 0, 0, 255);
+      strokeWeight(0);
+      stroke(255);
+      rect(x, y, TOKEN_SIZE, TOKEN_SIZE);
+      popStyle();
+    }
 
     // TODO: comment
     pushMatrix();
@@ -381,11 +459,13 @@ public class Token{
     translate(START_X, START_Y);
     translate(x, y);
     
-    if(state == DEAD || state == DYING){
-      /*pushStyle();
-      tint(128,0,0);
+    if(state == DEAD || state == DYING || type == TokenType.NULL){
+      pushStyle();
+      fill(128,128);
+      //tint(128,0,0,32);
+      rectMode(CENTER);
       rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
-      popStyle();*/
+      popStyle();
     }
 
     // Draws an outline around all tokens
@@ -421,14 +501,16 @@ public class Token{
       scale(scaleSize >= 0 ? scaleSize : 0);
     }
     
+    if(state != DEAD && type != TokenType.NULL){
     AssetStore store = AssetStore.Instance(globalApplet);
     
     pushStyle();
     imageMode(CENTER);
     image(store.get(type), 0, 0);
     popStyle();
-    
+    }
     popMatrix();
+    
   }
 
   /*

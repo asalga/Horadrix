@@ -173,6 +173,7 @@ public class ScreenGameplay implements IScreen, Subject{
         
     drawBoard();
     
+    
     // In some cases it is necessary to see the non-visible tokens
     // above the visible board. Other cases, I want that part covered.
     // for example, when tokens are falling.
@@ -335,34 +336,37 @@ public class ScreenGameplay implements IScreen, Subject{
     // Update all tokens on board. This includes the falling tokens
     for(int r = BOARD_ROWS-1; r >= 0 ; r--){
       for(int c = 0; c < BOARD_COLS; c++){
-        board[r][c].update(td);
+        Token t = board[r][c]; 
+        t.update(td);
         
-        if(board[r][c].fallingDown && board[r][c].arrivedAtDest()  ){
-          board[r][c].dropIntoCell();
+        if(t.fallingDown && t.arrivedAtDest()){
+          t.dropIntoCell();
           numTokensArrivedAtDest++;
         
           // If the top token arrived at its destination, it means we can safely
           // fill up tokens above it.
-          if(board[r][c].getFillCellMarker()){
+          if(t.getFillCellMarker()){
+            println("marker fell into slot");
             //markTokensForRemoval(false);
             //removeMarkedTokens(true);
             //dropTokens();
             //board[r][c].setFillCellMarker(false);
-            fillInvisibleSectionOfColumn(board[r][c].getColumn());
-            setFillMarkers(board[r][c].getColumn());
+            fillInvisibleSectionOfColumn(t.getColumn());
+            
+            setFillMarker(t.getColumn());
           }
         }
       }
     }
     
-    if(numTokensArrivedAtDest > 0){
+   // if(numTokensArrivedAtDest > 0){
       //removeMarkedTokens(true);
       //dropTokens();
-      markTokensForRemoval(false);
-      removeMarkedTokens(true);
-      dropTokens();
-    }
-    
+      
+    markTokensForRemoval(false);
+    removeMarkedTokens(true);
+    dropTokens();
+
     resetMatrix();
     
     // Add a leading zero if seconds is a single digit
@@ -664,9 +668,9 @@ public class ScreenGameplay implements IScreen, Subject{
     for(int c = 0; c < BOARD_COLS; c++){
       
       // TODO: fix
-      if(board[0][c].fallingDown){
-        continue;
-      }
+      //if(board[0][c].fallingDown){
+      //  continue;
+      //}
       
       boolean ok = false;
       int dst = BOARD_ROWS;
@@ -674,7 +678,7 @@ public class ScreenGameplay implements IScreen, Subject{
       
       while(dst >= 2){
         dst--;
-        if(board[dst][c].getType() == TokenType.NULL){
+        if(board[dst][c].getType() == TokenType.NULL || board[dst][c].isDying() ){
           ok = true;
           break;
         }
@@ -684,7 +688,7 @@ public class ScreenGameplay implements IScreen, Subject{
       src = dst;
       while(src >= 1){
         src--;
-        if(board[src][c].getType() != TokenType.NULL){
+        if(board[src][c].getType() != TokenType.NULL || board[src][c].isDying() ){
           break;
         }
       }
@@ -693,8 +697,8 @@ public class ScreenGameplay implements IScreen, Subject{
         // move the first token
         if(ok){
           Token tokenToMove = board[src][c];
-          tokenToMove.fallingDown = true;
           tokenToMove.animateTo(dst, c);
+          tokenToMove.fallingDown = true;
         }
         do{
           src--;
@@ -732,7 +736,7 @@ public class ScreenGameplay implements IScreen, Subject{
       for(int c = 1; c < BOARD_COLS; c++){
         
         // Found a match, keep going...
-        if(board[r][c].matchesWith(tokenTypeToMatchAgainst)){
+        if(board[r][c].matchesWith(tokenTypeToMatchAgainst) && board[r][c].canBeMatched()){
           matches++;
         }
         // We bank on finding a different gem. Once that happens, we can see if
@@ -776,7 +780,7 @@ public class ScreenGameplay implements IScreen, Subject{
       
       for(int r = startRow + 1; r <= endRow; r++){
         
-        if(board[r][c].matchesWith(tokenTypeToMatchAgainst)){
+        if(board[r][c].matchesWith(tokenTypeToMatchAgainst) && board[r][c].canBeMatched()){
           matches++;
         }
         // We bank on finding a different gem. Once that happens, we can see if
@@ -946,15 +950,15 @@ public class ScreenGameplay implements IScreen, Subject{
     }
   }
   
-  private void setFillMarkers(int c){
+  private void setFillMarker(int c){
     Token t = board[0][c];
     t.setFillCellMarker();
   }
   
   private void setFillMarkers(){
     for(int c = 0; c < BOARD_COLS; c++){
-      Token t = board[0][c];
-      t.setFillCellMarker();
+      //println(c);
+      board[0][c].setFillCellMarker();
     }
   }
   
@@ -1063,7 +1067,7 @@ public class ScreenGameplay implements IScreen, Subject{
     nullToken.setRowColumn(r, c);
     board[r][c] = nullToken;
     
-    println("null token at " + r + ", " + c);
+    //println("null token at " + r + ", " + c);
   }
   
   void keyPressed(){
