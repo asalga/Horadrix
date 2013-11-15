@@ -11,9 +11,11 @@ public class Token{
   
   // States
   private final int IDLE   = 0;
-  private final int MOVING = 1;// falling/swapping/detached.
+  private final int MOVING = 1;
   private final int DYING  = 2;
   private final int DEAD   = 3;
+  private final int SWAPPING = 4;
+  private final int FALLING = 5;
   
   private final float MOVE_SPEED = TOKEN_SIZE * 1.25f; // token size per second
   private final float DROP_SPEED = 35;
@@ -68,7 +70,7 @@ public class Token{
     
     row = 0;
     column = 0;
-    fallingDown = false;
+    //fallingDown = false;
     
     doesHaveGem = false;
     scaleSize = 1.0f;
@@ -188,6 +190,11 @@ public class Token{
     return state == DYING;
   }
   
+  public boolean isFalling(){
+    //if(state == FALLING){print(state == FALLING);}
+    return state == FALLING;
+  }
+  
   public boolean isReturning(){
     return returning;
   }
@@ -201,7 +208,7 @@ public class Token{
   }
   
   /**
-    Rename this.
+      
   */
   public boolean isMoving(){
     return moveDirection != 0;
@@ -215,7 +222,6 @@ public class Token{
     -- Does it still occupy the old space until it falls?
   */
   public void dropIntoCell(){
-    state = IDLE;
     
     int rTemp = row;
     int cTemp = column;
@@ -226,7 +232,8 @@ public class Token{
     board[rowToMoveTo][colToMoveTo] = this;
     
     // could be swapping
-    if(fallingDown){
+    //if(fallingDown){
+    if(state == FALLING){
       // If the token hasn't been overwritten yet
       if(board[rTemp][cTemp] == this){
         Token nullToken = new Token();
@@ -239,8 +246,10 @@ public class Token{
     hasArrivedAtDest = false;
     
     distanceToMove = 0;
-    fallingDown = false;
     moveDirection = 0;
+    
+    //fallingDown = false;
+    state = IDLE;
   }
     
   /*
@@ -248,7 +257,8 @@ public class Token{
   public void update(float td){
     
     //
-    if(state == MOVING){
+    //if(state == MOVING){
+    if(state == FALLING || state == SWAPPING){
       float amtToMove = td * DROP_SPEED * moveDirection;
       
       if(row == rowToMoveTo){
@@ -260,9 +270,8 @@ public class Token{
       
       distanceToMove -= abs(amtToMove);
       
-      // !!!
+      // Don't set the state yet,
       if(distanceToMove <= 0){
-        state = IDLE;
         hasArrivedAtDest = true;
       }
     }
@@ -299,8 +308,11 @@ public class Token{
     return doesHaveGem;
   }
   
+  /*
+      Token needs to be valid and idle for it to be swapped. 
+  */
   public boolean canBeSwapped(){
-    if(type == TokenType.NULL || fallingDown || state != IDLE){
+    if(type == TokenType.NULL || /*fallingDown ||*/ state != IDLE){
       return false;
     }
     return true;
@@ -311,7 +323,7 @@ public class Token{
   *  then we can't have that token get matched.
   */
   public boolean canBeMatched(){
-    if(state != IDLE || type == TokenType.NULL || fallingDown || isMoving()){
+    if(state != IDLE || type == TokenType.NULL){// || fallingDown || isMoving()){
       return false;
     }
     return true;
@@ -324,16 +336,12 @@ public class Token{
   public void animateTo(int r, int c){    
     // If the token was already moving to another destination,
     // we need to assign it a new place to go to.
-    if(fallingDown){
-      //println("getting new position");
-      state = MOVING;
-      
-      //
-      if( r == rowToMoveTo){
-        return;
-      }
-      println("T:" + id + "  new row: " + r);
-
+    
+    // If we call animateTo, but the token is already falling, it means
+    // the player made a match below this falling token. We are given the new
+    // row and column, but need to recalculate the distance it needs to travel.
+    if(state == FALLING){//fallingDown){
+      ///state = MOVING;
       
       int oldRowToMoveTo = rowToMoveTo;
       int newRowToMoveTo = r;
@@ -342,27 +350,13 @@ public class Token{
       
       // Find the distance between the src and dst in the original movement
       float dst = (oldRowToMoveTo - r) * TOKEN_SIZE;
-      
-      // how much supposed to move (50)
-      // how much moved (10)
-      // 
+
       rowToMoveTo = r;
       
-      //float finalDst = 
       distanceToMove = distBetweenDsts + distanceToMove;
-      //float temp = distanceToMove;
-      //distanceToMove = abs(rowDiff) * TOKEN_SIZE - distanceToMove;
-      //println("to move: " + distanceToMove);
-        
-      // TODO fix / by zero !!!!
-     // moveDirection = rowDiff / abs(rowDiff);
-      
     }
+    // We were idle
     else{
-      
-     // println("state: " + state);
-      state = MOVING;
-    
       // TODO: fix literal 8
       // column row swapped here!
       // !!! why are we dividing by 2?
@@ -376,7 +370,7 @@ public class Token{
       // If the column is the same, it means we are falling down or
       // swapping
       if(c == column){
-       
+        state = FALLING;
         int rowDiff = rowToMoveTo - row;
         
         // Calculating the number of pixels the token has to move isn't as easy as just
@@ -385,15 +379,15 @@ public class Token{
         
         // Get the absolute value since we could be swapping vertically
         distanceToMove = abs(rowDiff) * TOKEN_SIZE;
-        
-        if(rowDiff < 0){
-          println("ERROR rowDiff: " + rowDiff    +  "  row:"  + row  + "   row to move to: "  + rowToMoveTo);
-        }
-        //println("to move: " + distanceToMove);
-        
+                
         // TODO fix / by zero !!!!
         moveDirection = rowDiff / abs(rowDiff);
-      }else{
+      // If the token was told to animate, but the columns were different, it
+      // just means the token is being swapped
+      }
+      else{
+        //state = MOVING;
+        state = SWAPPING;
         int columnDiff = colToMoveTo - column;
         distanceToMove = abs(columnDiff) * TOKEN_SIZE;
         moveDirection = columnDiff / abs(columnDiff);
@@ -405,19 +399,12 @@ public class Token{
     Calculates the air speed velocity of an unladen swallow.
   */
   public void draw(){
-    
-    // There is a bug in ScreenGameplay which draws the entire
-    // board and ends up drawing dead tokens, so prevent that from
-    // happening here.
-  //  if(state == DEAD || type == TokenType.NULL){
-   //   return;
-   // }
-
     int x = 0; 
     int y = 0;
     
     // 
-    if(state == MOVING){
+    //if(state == MOVING){
+    if(state == FALLING || state == SWAPPING){
       x = (int)detachedPos.x;
       y = (int)detachedPos.y;
     }
@@ -452,7 +439,7 @@ public class Token{
       popStyle();
     }
 
-    // TODO: comment
+    // pjs giving issues here
     pushMatrix();
     resetMatrix();
     
@@ -502,15 +489,14 @@ public class Token{
     }
     
     if(state != DEAD && type != TokenType.NULL){
-    AssetStore store = AssetStore.Instance(globalApplet);
-    
-    pushStyle();
-    imageMode(CENTER);
-    image(store.get(type), 0, 0);
-    popStyle();
+      AssetStore store = AssetStore.Instance(globalApplet);
+      pushStyle();
+      imageMode(CENTER);
+      image(store.get(type), 0, 0);
+      popStyle();
     }
-    popMatrix();
     
+    popMatrix();
   }
 
   /*
@@ -519,7 +505,9 @@ public class Token{
       allows us to later on match tokens with wildcards.
   */
   public boolean matchesWith(int other){
-    if(type == TokenType.NULL){return false;}
+    if(type == TokenType.NULL){
+      return false;
+    }
     return type == other;
   }  
 }

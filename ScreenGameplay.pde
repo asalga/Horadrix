@@ -12,12 +12,6 @@ public class ScreenGameplay implements IScreen, Subject{
   PImage bk;
   PImage bk2;
   
-  // When a match is created, the matched tokens are removed from the board array
-  // and 'float' above the board and drop down until they arrive where they need to go.
-  // We do this because as they fall, we can't give them a integer position, but need to
-  // use a float.
-  //ArrayList<Token> floatingTokens;
-
   // These are used to specify the direction of checking
   // matches in numMatchesSideways and numMatches
   private final int LEFT = -1;
@@ -28,8 +22,7 @@ public class ScreenGameplay implements IScreen, Subject{
   private final int TOKEN_SCORE = 100;
   
   // time it takes for the tokens above the ones that were destroyed to start falling down.
-  private float DELAY_PAUSE = 2.5f; 
-  //0.035f; 
+  private float DELAY_PAUSE = 2.5f; //0.035f; 
   
   // Only for debugging to see which token would be selected
   // by the player.
@@ -158,7 +151,6 @@ public class ScreenGameplay implements IScreen, Subject{
     for(int i = 0; i < dyingTokens.size(); i++){
       dyingTokens.get(i).draw();
     }
-    //println("dying tokens: " + dyingTokens.size());
     
     //for(int i = 0; i < floatingTokens.size(); i++){
     //  floatingTokens.get(i).draw();
@@ -339,33 +331,30 @@ public class ScreenGameplay implements IScreen, Subject{
         Token t = board[r][c]; 
         t.update(td);
         
-        if(t.fallingDown && t.arrivedAtDest()){
+        if(t.isFalling() && t.arrivedAtDest()){ //fallingDown
           t.dropIntoCell();
           numTokensArrivedAtDest++;
-        
+          
           // If the top token arrived at its destination, it means we can safely
           // fill up tokens above it.
           if(t.getFillCellMarker()){
-            println("marker fell into slot");
             //markTokensForRemoval(false);
             //removeMarkedTokens(true);
             //dropTokens();
             //board[r][c].setFillCellMarker(false);
             fillInvisibleSectionOfColumn(t.getColumn());
-            
             setFillMarker(t.getColumn());
           }
         }
       }
     }
     
-   // if(numTokensArrivedAtDest > 0){
-      //removeMarkedTokens(true);
-      //dropTokens();
-      
-    markTokensForRemoval(false);
-    removeMarkedTokens(true);
-    dropTokens();
+    //
+    if(numTokensArrivedAtDest > 0){
+      markTokensForRemoval(false);
+      removeMarkedTokens(true);
+      dropTokens();
+    }
 
     resetMatrix();
     
@@ -698,7 +687,7 @@ public class ScreenGameplay implements IScreen, Subject{
         if(ok){
           Token tokenToMove = board[src][c];
           tokenToMove.animateTo(dst, c);
-          tokenToMove.fallingDown = true;
+          //tokenToMove.fallingDown = true;
         }
         do{
           src--;
@@ -957,7 +946,6 @@ public class ScreenGameplay implements IScreen, Subject{
   
   private void setFillMarkers(){
     for(int c = 0; c < BOARD_COLS; c++){
-      //println(c);
       board[0][c].setFillCellMarker();
     }
   }
@@ -1066,8 +1054,6 @@ public class ScreenGameplay implements IScreen, Subject{
     nullToken.setType(TokenType.NULL);
     nullToken.setRowColumn(r, c);
     board[r][c] = nullToken;
-    
-    //println("null token at " + r + ", " + c);
   }
   
   void keyPressed(){
