@@ -6,29 +6,27 @@
     getting enough gems, the player can progress to the next level.
 */
 public class Token{
-  
-  private int state;
-  
-  // States
+
+  // States the token can be in
   private final int IDLE   = 0;
-  private final int MOVING = 1;
-  private final int DYING  = 2;
-  private final int DEAD   = 3;
-  private final int SWAPPING = 4;
-  private final int FALLING = 5;
-  
+  private final int SWAPPING = 1;
+  private final int FALLING = 2;
+  private final int DYING  = 4;
+  private final int DEAD   = 5;
+
   private final float MOVE_SPEED = TOKEN_SIZE * 1.25f; // token size per second
   private final float DROP_SPEED = 35;
-  
-  // Used for debugging
-  private int id;
-  
+
+  private int id;  
+  private int state;
+
   // TODO: find better way of doing this?
   // When the token is falling, we need it to be a float
   // so just define it as a float to begin with.
   private int row;
   private int column;
 
+  // When swapping or falling, a token is given a cell to go to.
   private int rowToMoveTo;
   private int colToMoveTo;
 
@@ -47,7 +45,6 @@ public class Token{
   private boolean doesHaveGem;
   
   private boolean returning;
-  public boolean fallingDown;
   
   private float scaleSize;
 
@@ -55,11 +52,7 @@ public class Token{
   private boolean isSelected;
   
   private int score;
-  
-  public boolean readyForMatch(){
-    return state == IDLE;
-  }
-  
+    
   /*
   */
   public Token(){
@@ -70,7 +63,6 @@ public class Token{
     
     row = 0;
     column = 0;
-    //fallingDown = false;
     
     doesHaveGem = false;
     scaleSize = 1.0f;
@@ -87,7 +79,6 @@ public class Token{
     
     score = 100;
   }
-  
   
   public void setScore(int s){
     if(s >= 0){
@@ -125,14 +116,11 @@ public class Token{
   public void setType(int t){
     type = t;
   }
-  
-  public void setFillCellMarker(){
-    isFillCellMarker = true;
-  }
-  
+    
   public void setFillCellMarker(boolean b){
     isFillCellMarker = b;
-  }  
+  }
+  
   public boolean getFillCellMarker(){
     return isFillCellMarker;
   }
@@ -171,14 +159,13 @@ public class Token{
   /**
     Gameplay doesn't keep track if it has already killed a token, so we have
     to keep track of it ourselves to make sure the ticker doesn't get reset.
-  */
-  public void kill(){
-    // We can only kill the token if its idle.
-    if(state != IDLE){
-      return;
-    }
     
-    state = DYING;
+    It only makes sense that falling or swapping tokens cannot be killed.
+  */
+  public void kill(){ 
+    if(state == IDLE){
+      state = DYING;
+    }
   }
   
   /**
@@ -191,7 +178,6 @@ public class Token{
   }
   
   public boolean isFalling(){
-    //if(state == FALLING){print(state == FALLING);}
     return state == FALLING;
   }
   
@@ -216,13 +202,8 @@ public class Token{
   
   /**
     TODO: fix this
-    If you think of a moving token as floating above the board, once it reaches
-    the destination, it drops into its cell.
-    
-    -- Does it still occupy the old space until it falls?
   */
-  public void dropIntoCell(){
-    
+  public void dropIntoCell(){    
     int rTemp = row;
     int cTemp = column;
     
@@ -232,7 +213,6 @@ public class Token{
     board[rowToMoveTo][colToMoveTo] = this;
     
     // could be swapping
-    //if(fallingDown){
     if(state == FALLING){
       // If the token hasn't been overwritten yet
       if(board[rTemp][cTemp] == this){
@@ -248,7 +228,6 @@ public class Token{
     distanceToMove = 0;
     moveDirection = 0;
     
-    //fallingDown = false;
     state = IDLE;
   }
     
@@ -256,8 +235,6 @@ public class Token{
   */
   public void update(float td){
     
-    //
-    //if(state == MOVING){
     if(state == FALLING || state == SWAPPING){
       float amtToMove = td * DROP_SPEED * moveDirection;
       
@@ -323,26 +300,34 @@ public class Token{
   *  then we can't have that token get matched.
   */
   public boolean canBeMatched(){
-    if(state != IDLE || type == TokenType.NULL){// || fallingDown || isMoving()){
+    if(state != IDLE || type == TokenType.NULL){
       return false;
     }
     return true;
+  }
+  
+  public void swapTo(int r, int c){
+    state = SWAPPING;
+    animateTo(r, c);
+  }
+  
+  public void fallTo(int r, int c){
+    state = FALLING;
+    animateTo(r, c);
   }
   
   /*
       When the tokens fall, they are given new locations
       If they are already falling, they can fall to a new 'lower' location.
   */
-  public void animateTo(int r, int c){    
+  private void animateTo(int r, int c){    
     // If the token was already moving to another destination,
     // we need to assign it a new place to go to.
     
     // If we call animateTo, but the token is already falling, it means
     // the player made a match below this falling token. We are given the new
     // row and column, but need to recalculate the distance it needs to travel.
-    if(state == FALLING){//fallingDown){
-      ///state = MOVING;
-      
+    if(state == FALLING && distanceToMove > 0){
       int oldRowToMoveTo = rowToMoveTo;
       int newRowToMoveTo = r;
       
@@ -355,39 +340,23 @@ public class Token{
       
       distanceToMove = distBetweenDsts + distanceToMove;
     }
-    // We were idle
     else{
-      // TODO: fix literal 8
       // column row swapped here!
-      // !!! why are we dividing by 2?
+      // TODO: fix !!! why are we dividing by 2? literal 8?
       int detachedX = (int)(column  * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0f ));
       int detachedY = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0f ));
       detachedPos = new PVector(detachedX, detachedY);
-      
+
       rowToMoveTo = r;
       colToMoveTo = c;
       
-      // If the column is the same, it means we are falling down or
-      // swapping
+      // Either we are moving the token vertically or horizontally
       if(c == column){
-        state = FALLING;
         int rowDiff = rowToMoveTo - row;
-        
-        // Calculating the number of pixels the token has to move isn't as easy as just
-        // rowDiff * TOKEN_SIZE
-        // Since the board dimensions can be arbitrary.
-        
-        // Get the absolute value since we could be swapping vertically
         distanceToMove = abs(rowDiff) * TOKEN_SIZE;
-                
-        // TODO fix / by zero !!!!
         moveDirection = rowDiff / abs(rowDiff);
-      // If the token was told to animate, but the columns were different, it
-      // just means the token is being swapped
       }
-      else{
-        //state = MOVING;
-        state = SWAPPING;
+      else if(r == row){
         int columnDiff = colToMoveTo - column;
         distanceToMove = abs(columnDiff) * TOKEN_SIZE;
         moveDirection = columnDiff / abs(columnDiff);
@@ -402,8 +371,6 @@ public class Token{
     int x = 0; 
     int y = 0;
     
-    // 
-    //if(state == MOVING){
     if(state == FALLING || state == SWAPPING){
       x = (int)detachedPos.x;
       y = (int)detachedPos.y;
@@ -428,7 +395,7 @@ public class Token{
       popStyle();
     }
     
-    if(canBeMatched()){
+    /*if(canBeMatched()){
       pushStyle();
       fill(99, 66, 33,33);
       rectMode(CENTER);
@@ -437,7 +404,7 @@ public class Token{
       stroke(255);
       rect(x, y, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
-    }
+    }*/
 
     // pjs giving issues here
     pushMatrix();
@@ -446,25 +413,24 @@ public class Token{
     translate(START_X, START_Y);
     translate(x, y);
     
-    if(state == DEAD || state == DYING || type == TokenType.NULL){
+    rectMode(CENTER);
+    
+    // draw a grey box to easily identify dead or null tokens
+    if(DEBUG_ON && state == DEAD || state == DYING || type == TokenType.NULL){
       pushStyle();
       fill(128,128);
-      //tint(128,0,0,32);
-      rectMode(CENTER);
       rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
     }
 
     // Draws an outline around all tokens
-    /*if(DEBUG_ON){
+    if(DEBUG_ON){
       pushStyle();
-      rectMode(CENTER);
       noFill();
-      stroke(0, 100, 50);
+      stroke(255,64);
       rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
-    }*/
-    
+    }
     
     /*if(row < START_ROW_INDEX && DEBUG_ON){
       pushStyle();
@@ -477,7 +443,6 @@ public class Token{
     // We need to somehow distinguish tokens that have gems.
     if(hasGem()){
       pushStyle();
-      rectMode(CENTER);
       fill(33, 60, 90, 128);
       rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();

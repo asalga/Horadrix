@@ -241,8 +241,6 @@ public class ScreenGameplay implements IScreen, Subject{
     
     int numTokensArrivedAtDest = 0;
     
-    ArrayList<Token> toRemove = new ArrayList<Token>();
-    
     // If at least one token arrived at their destination, we'll need to 
     // iterate over the board and find any tokens that need to be marked for removal.
     /*if(numTokensArrivedAtDest > 0){
@@ -273,8 +271,8 @@ public class ScreenGameplay implements IScreen, Subject{
           int r2 = swapToken2.getRow();
           int c2 = swapToken2.getColumn();
           
-          swapToken1.animateTo(r2, c2);
-          swapToken2.animateTo(r1, c1);
+          swapToken1.swapTo(r2, c2);
+          swapToken2.swapTo(r1, c1);
           
           swapToken1.setReturning(true);
           swapToken2.setReturning(true);
@@ -428,7 +426,7 @@ public class ScreenGameplay implements IScreen, Subject{
       return;
     }
     
-    // Haven't selected the first token yet.
+    // Player hasn't selected the first token yet.
     if(currToken1 == null){
       currToken1 = board[r][c];
       
@@ -491,7 +489,6 @@ public class ScreenGameplay implements IScreen, Subject{
         currToken2 = board[r][c];
         
         // If they dragged to an empty cell, we have to back out.
-        //if(currToken2.getType() == TokenType.NULL){
         if(currToken2.canBeSwapped() == false){
           currToken2 = null;
           return;
@@ -530,7 +527,8 @@ public class ScreenGameplay implements IScreen, Subject{
   /*
    * 
    */
-  void animateSwapTokens(Token t1, Token t2){    
+  void animateSwapTokens(Token t1, Token t2){
+    println("animate swap tokens");
     int t1Row = t1.getRow();
     int t1Col = t1.getColumn();
     
@@ -540,9 +538,8 @@ public class ScreenGameplay implements IScreen, Subject{
     swapToken1 = t1;
     swapToken2 = t2;
     
-    // Animate will detach the tokens from the board
-    swapToken1.animateTo(t2Row, t2Col);
-    swapToken2.animateTo(t1Row, t1Col);
+    swapToken1.swapTo(t2Row, t2Col);
+    swapToken2.swapTo(t1Row, t1Col);
     
     deselectCurrentTokens();
   }
@@ -682,11 +679,13 @@ public class ScreenGameplay implements IScreen, Subject{
         }
       }
       
+      //println("drop");
       while(src >= 0){
+        
         // move the first token
         if(ok){
           Token tokenToMove = board[src][c];
-          tokenToMove.animateTo(dst, c);
+          tokenToMove.fallTo(dst, c);
           //tokenToMove.fallingDown = true;
         }
         do{
@@ -941,12 +940,12 @@ public class ScreenGameplay implements IScreen, Subject{
   
   private void setFillMarker(int c){
     Token t = board[0][c];
-    t.setFillCellMarker();
+    t.setFillCellMarker(true);
   }
   
   private void setFillMarkers(){
     for(int c = 0; c < BOARD_COLS; c++){
-      board[0][c].setFillCellMarker();
+      board[0][c].setFillCellMarker(true);
     }
   }
   
@@ -1097,14 +1096,9 @@ public class ScreenGameplay implements IScreen, Subject{
       This can only be done if nothing is moving or animating to make
       sure they board stays in a proper state.
   */
-  public void generateNewBoard(){
-    
-    // If anything is falling, we can't have the new board fall on top of those already falling tokens
+  public void generateNewBoard(){        
     // Generating a new board while swapping is unlikely, but prevent it anyway, just in case.
-    //if(floatingTokens.size() > 0 || swapToken1 != null || swapToken2 !=null){
-      
-      // !!! Make sure everything has stopped
-    if(swapToken1 != null || swapToken2 !=null){
+    if(dyingTokens.size() > 0 || swapToken1 != null || swapToken2 !=null){
       return;
     }
     
@@ -1127,7 +1121,7 @@ public class ScreenGameplay implements IScreen, Subject{
       fillHoles(true);
     }
     
-    // !!!
+    // TODO: comment !!!
     setFillMarkers();
     
     dropTokens();
