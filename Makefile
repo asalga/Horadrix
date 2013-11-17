@@ -6,7 +6,7 @@
 build: minify
 
 minify: 
-	cat Stack.pde Queue.pde ScreenGameOver.pde FPSTimer.pde HUDLayer.pde IScreen.pde Subject.pde LayerObserver.pde SpriteSheetLoader.pde ScreenGameplay.pde ScreenSplash.pde Debugger.pde RetroFont.pde RetroLabel.pde RetroPanel.pde RetroWidget.pde Keyboard.pde Ticker.pde TokenType.pde Horadrix.pde SoundManager.js Token.pde Tuple.pde AssetStore.java IScreen.pde ScreenSplash.pde Utils.js ScreenGameplay.pde > Horadrix-min.pde
+	cat Stack.pde Queue.pde ScreenGameOver.pde HUDLayer.pde IScreen.pde Subject.pde LayerObserver.pde SpriteSheetLoader.pde ScreenGameplay.pde ScreenSplash.pde Debugger.pde RetroFont.pde RetroLabel.pde RetroPanel.pde RetroWidget.pde Keyboard.pde Ticker.pde TokenType.pde Horadrix.pde SoundManager.js Token.pde Tuple.pde AssetStore.java IScreen.pde ScreenSplash.pde Utils.js ScreenGameplay.pde > Horadrix-min.pde
 	
 publish: minify
 	git add Horadrix-min.js
