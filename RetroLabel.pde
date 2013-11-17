@@ -51,15 +51,24 @@ public class RetroLabel extends RetroPanel{
     dirty = true;
     
     int newWidth = 0;
+    int newHeight = font.getGlyphHeight();
+    
+    int longestLine = 0;
+    
     for(int letter = 0; letter < text.length(); letter++){
     
-      PImage glyph = getGlyph(text.charAt(letter)); 
-    
-      if(glyph != null){
-        newWidth += glyph.width + horizontalSpacing;
+      if((text.charAt(letter)) == 10){
+        newHeight += font.getGlyphHeight();
+      }
+      else{
+        PImage glyph = getGlyph(text.charAt(letter));
+        
+        if(glyph != null){
+          newWidth += glyph.width + horizontalSpacing;
+        }
       }
     }
-    
+    h = newHeight;
     w = newWidth;
   }
   

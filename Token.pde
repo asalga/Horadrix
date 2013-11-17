@@ -14,8 +14,8 @@ public class Token{
   private final int DYING  = 4;
   private final int DEAD   = 5;
 
-  private final float MOVE_SPEED = TOKEN_SIZE * 1.25f; // token size per second
-  private final float DROP_SPEED = 35;
+  private final float MOVE_SPEED = TOKEN_SIZE * 2.25f; // token size per second
+  private final float DROP_SPEED = 85;
 
   private int id;  
   private int state;
@@ -39,6 +39,8 @@ public class Token{
   // !!! We can refactor this
   private int moveDirection;
   
+  float test;
+  
   private boolean isFillCellMarker;
   
   private int type;
@@ -60,6 +62,7 @@ public class Token{
     id = Utils.nextID();
     
     isSelected = false;
+    test = 2.25f;//random(1, 2);
     
     row = 0;
     column = 0;
@@ -254,7 +257,7 @@ public class Token{
     }
     else if(state == DYING){
       // Shrink the token if it is dying.
-      scaleSize -= td * 2.5f;
+      scaleSize -= td * test;
       
       if(scaleSize <= 0){
         //scaleSize = 0.0f;
@@ -286,10 +289,10 @@ public class Token{
   }
   
   /*
-      Token needs to be valid and idle for it to be swapped. 
+      Token needs to be valid and idle for it to be swapped.
   */
   public boolean canBeSwapped(){
-    if(type == TokenType.NULL || /*fallingDown ||*/ state != IDLE){
+    if(type == TokenType.NULL || state != IDLE || row < START_ROW_INDEX){
       return false;
     }
     return true;
@@ -416,7 +419,7 @@ public class Token{
     rectMode(CENTER);
     
     // draw a grey box to easily identify dead or null tokens
-    if(DEBUG_ON && state == DEAD || state == DYING || type == TokenType.NULL){
+    if(DEBUG_ON && (state == DEAD || state == DYING || type == TokenType.NULL)){
       pushStyle();
       fill(128,128);
       rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);

@@ -80,6 +80,10 @@ public class RetroFont{
   //PImage fontSheet = loadImage(imageFilename);
   public PImage getGlyph(char ch){
     int asciiCode = Utils.charCodeAt(ch);
+    
+    if(asciiCode-32 >= 96 || asciiCode-32 <= 0){
+      return chars[0];
+    }
  
     return chars[asciiCode-32];
   }

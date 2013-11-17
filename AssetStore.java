@@ -11,16 +11,12 @@ public class AssetStore{
   private String BASE_IMG_PATH = "data/images/gems/diablo/";
   private PImage[] images;
   private String[] imageNames = {  "A.png","B.png", "C.png", "D.png", "E.png", "F.png", "G.png"};
-                                   //"red_gem.gif", "green_gem.gif", "blue_gem.gif", "yellow_gem.gif", "white_gem.gif", "skull_gem.gif", "purple_gem.gif"};
-                                   //"red_normal.gif", "green_normal.gif", "blue_normal.gif", "yellow_normal.gif", "white_normal.gif", "skull_normal.gif", "purple_normal.gif"};
   
   /*  
    */
   public PImage get(int asset){
     return images[asset];
   }
-  
-  //public PImage get(String asset){}
   
   /* As soon as this is contructed, load all the assets
    */

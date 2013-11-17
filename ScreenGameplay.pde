@@ -84,8 +84,7 @@ public class ScreenGameplay implements IScreen, Subject{
     LayerObserver hudLayer = new HUDLayer(this);
     
     gemsRequiredForLevel = currLevel * 5;
-  
-    //floatingTokens = new ArrayList<Token>();
+    
     dyingTokens = new ArrayList<Token>();
     
     bk =  loadImage("data/images/boards/board.png");
@@ -124,7 +123,6 @@ public class ScreenGameplay implements IScreen, Subject{
     background(0);
     
     pushMatrix();
-
     translate(START_X, START_Y);
     
     //rect(0,0, BOARD_W_IN_PX, BOARD_H_IN_PX);
@@ -152,10 +150,6 @@ public class ScreenGameplay implements IScreen, Subject{
       dyingTokens.get(i).draw();
     }
     
-    //for(int i = 0; i < floatingTokens.size(); i++){
-    //  floatingTokens.get(i).draw();
-    // }
-    
     if(swapToken1 != null){
       swapToken1.draw();
     }
@@ -164,7 +158,6 @@ public class ScreenGameplay implements IScreen, Subject{
     }
         
     drawBoard();
-    
     
     // In some cases it is necessary to see the non-visible tokens
     // above the visible board. Other cases, I want that part covered.
@@ -225,7 +218,13 @@ public class ScreenGameplay implements IScreen, Subject{
     // DROP TOKENS
     if(Keyboard.isKeyDown(KEY_D)){
       dropTokens();
-    } 
+    }
+
+    // NEXT LEVEL
+    if(Keyboard.isKeyDown(KEY_L)){
+      goToNextLevel();
+    }    
+    
     
     timer.tick();
     float td = timer.getDeltaSec();
@@ -302,6 +301,7 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
+    // TODO: refactor?
     // Iterate over all the tokens that are dying and increase the score.
     for(int i = 0; i < dyingTokens.size(); i++){
       
@@ -320,26 +320,26 @@ public class ScreenGameplay implements IScreen, Subject{
         
         dyingTokens.remove(i);
         tokensDestroyed++;
+        
       }
     }
     
+    if(DEBUG_ON){
+      debug.addString("dyingTokens: " + dyingTokens.size());
+    }
+    
     // Update all tokens on board. This includes the falling tokens
-    for(int r = BOARD_ROWS-1; r >= 0 ; r--){
+    for(int r = BOARD_ROWS - 1; r >= 0 ; r--){
       for(int c = 0; c < BOARD_COLS; c++){
         Token t = board[r][c]; 
         t.update(td);
         
-        if(t.isFalling() && t.arrivedAtDest()){ //fallingDown
+        if(t.isFalling() && t.arrivedAtDest()){
           t.dropIntoCell();
           numTokensArrivedAtDest++;
           
-          // If the top token arrived at its destination, it means we can safely
-          // fill up tokens above it.
+          // If the top token arrived at its destination, it means we can safely fill up tokens above it.
           if(t.getFillCellMarker()){
-            //markTokensForRemoval(false);
-            //removeMarkedTokens(true);
-            //dropTokens();
-            //board[r][c].setFillCellMarker(false);
             fillInvisibleSectionOfColumn(t.getColumn());
             setFillMarker(t.getColumn());
           }
@@ -528,7 +528,6 @@ public class ScreenGameplay implements IScreen, Subject{
    * 
    */
   void animateSwapTokens(Token t1, Token t2){
-    println("animate swap tokens");
     int t1Row = t1.getRow();
     int t1Col = t1.getColumn();
     
@@ -635,29 +634,16 @@ public class ScreenGameplay implements IScreen, Subject{
   }
 
   /**
+      TODO: refactor 'ok'
       From bottom to top, search to find first gap
       After finding the first gap, set the marker
       Find first token, set dst to marker
       Increment marker by 1
-      Find next token
-     
-     For all the tokens above that gap, until very top
-     a) detach tokens from board
-     b) give them appropriate positions
-     c) give them a velocity
-     d) give them destination positions
-     e) place tokens in special floating tokens array to keep track of them.
-     f) update tokens and allow them to add themselves back in
+      Find next token     
   */
   void dropTokens(){
     
     for(int c = 0; c < BOARD_COLS; c++){
-      
-      // TODO: fix
-      //if(board[0][c].fallingDown){
-      //  continue;
-      //}
-      
       boolean ok = false;
       int dst = BOARD_ROWS;
       int src;
@@ -679,14 +665,11 @@ public class ScreenGameplay implements IScreen, Subject{
         }
       }
       
-      //println("drop");
       while(src >= 0){
-        
         // move the first token
         if(ok){
           Token tokenToMove = board[src][c];
           tokenToMove.fallTo(dst, c);
-          //tokenToMove.fallingDown = true;
         }
         do{
           src--;
@@ -1138,6 +1121,11 @@ public class ScreenGameplay implements IScreen, Subject{
   */
   void goToNextLevel(){
     
+    screenStory.nextLevel();
+    screens.transitionTo("story");
+    
+    
+    
     // Should the score be reset?
     // score = 0;
     gemCounter = 0;
@@ -1156,6 +1144,8 @@ public class ScreenGameplay implements IScreen, Subject{
     
     numGemsOnBoard = currLevel + 1;
     
-    fillBoardWithRandomTokens();
+    //animateLevel();
+    generateNewBoard();
+    //fillBoardWithRandomTokens();
   }
 }
