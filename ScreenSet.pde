@@ -7,10 +7,14 @@ public class ScreenSet{
   
   public ScreenSet(){
     screens = new ArrayList<IScreen>();
+    curr = null;
   }
   
   public void add(IScreen s){
     screens.add(s);
+    if(curr == null){
+      curr = s;
+    }
   }
   
   public void setCurr(IScreen s){
