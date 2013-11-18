@@ -102,7 +102,7 @@ public class ScreenGameplay implements IScreen, Subject{
     debug = new Debugger();
    
     // lock P for pause
-    Keyboard.lockKeys(new int[]{KEY_P, KEY_L});
+    Keyboard.lockKeys(new int[]{KEY_P});
     
     drawBoxUnderCursor = false;
     
@@ -1035,6 +1035,10 @@ public class ScreenGameplay implements IScreen, Subject{
       timer.pause();
       levelCountDownTimer.pause();
     }
+    
+    if(Keyboard.isKeyDown(KEY_L)){
+      goToNextLevel();
+    }
   }
   
   /**
@@ -1048,11 +1052,6 @@ public class ScreenGameplay implements IScreen, Subject{
     if(isPaused == false){
       timer.resume();
       levelCountDownTimer.resume();
-    }
-    
-    if(Keyboard.isKeyDown(KEY_L)){
-      //Keyboard.reset();
-      goToNextLevel();
     }
   }  
 
@@ -1134,25 +1133,8 @@ public class ScreenGameplay implements IScreen, Subject{
     
     screenStory.nextLevel();
     screens.transitionTo("story");
-    
-    // Should the score be reset?
-    // score = 0;
-    gemsWonByPlayer = 0;
-    gemsRequiredForLevel = gemsRequired[currLevel];
-    
-    // Still playing around with this to make later levels challenging.
-    levelCountDownTimer = new Ticker();
-    levelCountDownTimer.setTime(timePermitted[currLevel]);
-    levelCountDownTimer.setDirection(-1);
-    
-    currLevel++;
-    
-    if(currLevel == 4){
-      numTokenTypesOnBoard++;
-    }
-    
-    generateNewBoardWithDyingAnimation(false);
-    //fillBoardWithRandomTokens();
+      currLevel++;
+   
   }
   
   /**
@@ -1162,6 +1144,24 @@ public class ScreenGameplay implements IScreen, Subject{
     //println("On Transition To");
     tokensDestroyed = 0;
     dyingTokens.clear();
+   // generateNewBoardWithDyingAnimation(false);
+    
+    
+     // Should the score be reset?
+    // score = 0;
+    gemsWonByPlayer = 0;
+    gemsRequiredForLevel = gemsRequired[currLevel];
+    
+    // Still playing around with this to make later levels challenging.
+    levelCountDownTimer = new Ticker();
+    levelCountDownTimer.setTime(timePermitted[currLevel]);
+    levelCountDownTimer.setDirection(-1);
+    
+    if(currLevel == 4){
+      numTokenTypesOnBoard++;
+    }
+    
     generateNewBoardWithDyingAnimation(false);
+    //fillBoardWithRandomTokens();
   }
 }

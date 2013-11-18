@@ -78,8 +78,11 @@ public class HUDLayer implements LayerObserver{
     pausedLabel.setVisible(p);
     
     if(p){
+      pushStyle();
+      rectMode(CORNERS);
       fill(128,128);
       rect(0, 0, width, height);
+      popStyle();
     }
     
     parent.draw();
