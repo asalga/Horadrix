@@ -31,13 +31,22 @@ public class Ticker{
   }
   
   public void resume(){
-    if(isPaused == true){
-      reset();
-    }
+    deltaTime = 0f;
+    lastTime = -1;
+    isPaused = false;
   }
   
   public void setTime(int min, int sec){    
     totalTime = min * 60 + sec;
+  }
+  
+  /*
+      Format: 5.5 = 5 minutes 30 seconds
+  */
+  public void setTime(float minutes){
+    int int_min = (int)minutes;
+    int sec = (int)((minutes - (float)int_min) * 60);
+    setTime( int_min, sec);
   }
   
   //public void setMinutes(int min){

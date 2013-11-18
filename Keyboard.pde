@@ -40,6 +40,13 @@ public static class Keyboard{
     }
   }
   
+  /*
+   *
+   */
+  public static void reset(){
+    
+  }
+  
   /* This is for the case when we want to start off the game
    * assuming a key is already down.
    */
@@ -107,7 +114,7 @@ final int KEY_CTRL      = 17;
 final int KEY_ALT       = 18;
 
 final int KEY_CAPS      = 20;
-final int KEY_ESC = 27;
+final int KEY_ESC       = 27;
 
 final int KEY_SPACE  = 32;
 final int KEY_PGUP   = 33;

@@ -12,7 +12,7 @@ import ddf.minim.*;
 
 final boolean DEBUG_CONSOLE_ON = false;
 final boolean DEBUG_ON = false;
-//final boolean SHOW_ALL_TOKENS = true;
+final boolean SHOW_ALL_TOKENS = true;
 
 // This includes the entire board, including the 'queued' tokens not visible
 // to the user, that sit above the token the user interacts with.
@@ -25,7 +25,7 @@ final int START_ROW_INDEX = 8;
 final int TOKEN_SIZE = 32;
 
 final int CANVAS_WIDTH = 620;
-final int CANVAS_HEIGHT = 400;//650;
+final int CANVAS_HEIGHT = DEBUG_ON ? 650 : 400;
 
 // We define the board size in pixels and allow it to be any size
 // and have the tokens center themselves inside those dimensions.
@@ -37,18 +37,24 @@ final int BOARD_H_IN_PX = TOKEN_SIZE * 8; //273;
 // 28 is size of diablo token
 
 // Where on the canvas the tokens start to be rendered.
+int debugPosOffset = DEBUG_ON ? 150 : 0;
 final int START_X = (int)(CANVAS_WIDTH/2.0f  - BOARD_W_IN_PX/2.0f);
-final int START_Y = (int)(CANVAS_HEIGHT/2.0f - BOARD_H_IN_PX/2.0f);// + 150;
-
+final int START_Y = (int)(CANVAS_HEIGHT/2.0f - BOARD_H_IN_PX/2.0f) + debugPosOffset;
 
 // Used by the AssetStore
 PApplet globalApplet;
 
 Token[][] board = new Token[BOARD_ROWS][BOARD_COLS];
 
-Stack<IScreen> screenStack = new Stack<IScreen>();
+ScreenSet screens = new ScreenSet();
+ScreenStory screenStory;
 
 SoundManager soundManager;
+
+// Level progression stuff
+final int NUM_LEVELS         = 4;
+final int[] gemsRequired     = new int[]  {5, 10, 15, 20};
+final float[] timePermitted  = new float[]{5,  8, 14, 20};
 
 /*
   Wrap println so we can easily disable all console output on release
@@ -72,60 +78,47 @@ void setup(){
   soundManager.init();
   soundManager.setMute(true);
 
-  screenStack.push(new ScreenSplash());
+  screenStory = new ScreenStory();
+
+  screens.add(new ScreenSplash());
+  screens.add(new ScreenGameplay());
+  screens.add(new ScreenGameOver());
+  screens.add(new ScreenWin());
+  screens.add(screenStory);
+  
+  screens.transitionTo("splash");
 }
 
 void update(){
-  IScreen currScreen = screenStack.top();
-  
-  currScreen.update();
-  
-  // Once the splash screen is dead, move on to the gameplay screen.
-  if(currScreen.getName() == "splash" && currScreen.isAlive() == false){
-    screenStack.pop();
-    
-    ScreenGameplay gameplay = new ScreenGameplay();
-    
-    LayerObserver hudLayer = new HUDLayer(gameplay);
-    gameplay.addObserver(hudLayer);
-    
-    screenStack.push(gameplay);
-  }
-  
-  // Gameplay screen only dies if the player loses.
-  if(currScreen.getName() == "gameplay" && currScreen.isAlive() == false){
-    screenStack.pop();
-    
-    screenStack.push(new ScreenGameOver());
-  }
+  screens.curr.update();
 }
 
 void draw(){
   update();
-  screenStack.top().draw();
+  screens.curr.draw();
 }
 
 public void mousePressed(){
-  screenStack.top().mousePressed();
+  screens.curr.mousePressed();
 }
 
 public void mouseReleased(){
-  screenStack.top().mouseReleased();
+  screens.curr.mouseReleased();
 }
 
 public void mouseDragged(){
-  screenStack.top().mouseDragged();
+  screens.curr.mouseDragged();
 }
 
 public void mouseMoved(){
-  screenStack.top().mouseMoved();
+  screens.curr.mouseMoved();
 }
 
 public void keyPressed(){
-  screenStack.top().keyPressed();
+  screens.curr.keyPressed();
 }
 
 public void keyReleased(){
-  screenStack.top().keyReleased();
+  screens.curr.keyReleased();
 }
 

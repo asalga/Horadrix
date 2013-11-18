@@ -14,8 +14,7 @@ public interface IScreen{
   
   public void keyPressed();
   public void keyReleased();
+  public void OnTransitionTo();
   
   public String getName();
-  
-  public boolean isAlive();
 }

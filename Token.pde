@@ -6,53 +6,55 @@
     getting enough gems, the player can progress to the next level.
 */
 public class Token{
-  
-  private int state;
-  
-  // States
+
+  // States the token can be in
   private final int IDLE   = 0;
-  private final int MOVING = 1;// falling/swapping/detached.
-  private final int DYING  = 2;
-  private final int DEAD   = 3;
-  
-  private final float MOVE_SPEED = TOKEN_SIZE * 1.25f; // token size per second
-  private final float DROP_SPEED = 125;
-  
-  public boolean isReserved;
-  
-  // Used for debugging
-  private int id;
-  
+  private final int SWAPPING = 1;
+  private final int FALLING = 2;
+  private final int DYING  = 4;
+  private final int DEAD   = 5;
+
+  private final float MOVE_SPEED = TOKEN_SIZE * 2.25f; // token size per second
+  private final float DROP_SPEED = 65;
+
+  private int id;  
+  private int state;
+
   // TODO: find better way of doing this?
   // When the token is falling, we need it to be a float
   // so just define it as a float to begin with.
   private int row;
   private int column;
+
+  // When swapping or falling, a token is given a cell to go to.
+  private int rowToMoveTo;
+  private int colToMoveTo;
+
+  private boolean hasArrivedAtDest;
+  private PVector detachedPos;
+
+  // Set this and decrement until we reach zero.
+  private float distanceToMove;
+  
+  // !!! We can refactor this
+  private int moveDirection;
+  
+  float test;
+  
+  private boolean isFillCellMarker;
   
   private int type;
   private boolean doesHaveGem;
   
-  private int rowToMoveTo;
-  private int colToMoveTo;
-  
   private boolean returning;
-  private boolean hasArrivedAtDest;
   
-  private PVector detachedPos;
-  
-  // Set this and decrement until we reach zero.
-  private float distanceToMove;
   private float scaleSize;
-  
-  private int moveDirection;
-  
-  private boolean isFillCellMarker;
-  
+
   // Use can select up to 2 tokens before they get swapped.
   private boolean isSelected;
   
-  private boolean isPaused;
-  
+  private int score;
+    
   /*
   */
   public Token(){
@@ -60,10 +62,7 @@ public class Token{
     id = Utils.nextID();
     
     isSelected = false;
-    
-    isPaused = false;
-    
-    isReserved = false;
+    test = 1.25f;//random(1, 2);
     
     row = 0;
     column = 0;
@@ -72,7 +71,7 @@ public class Token{
     scaleSize = 1.0f;
     
     // TODO: need to really need to set these?
-    rowToMoveTo = 0;
+    rowToMoveTo = -1;
     colToMoveTo = 0;
     moveDirection = 0;
     detachedPos = new PVector();
@@ -80,6 +79,18 @@ public class Token{
     returning = false;
     hasArrivedAtDest = false;
     state = IDLE;
+    
+    score = 100;
+  }
+  
+  public void setScore(int s){
+    if(s >= 0){
+      score = s;
+    }
+  }
+  
+  public int getScore(){
+    return score;
   }
   
   /**
@@ -108,9 +119,9 @@ public class Token{
   public void setType(int t){
     type = t;
   }
-  
-  public void setFillCellMarker(){
-    isFillCellMarker = true;
+    
+  public void setFillCellMarker(boolean b){
+    isFillCellMarker = b;
   }
   
   public boolean getFillCellMarker(){
@@ -151,14 +162,13 @@ public class Token{
   /**
     Gameplay doesn't keep track if it has already killed a token, so we have
     to keep track of it ourselves to make sure the ticker doesn't get reset.
-  */
-  public void kill(){
-    // We can only kill the token if its idle.
-    if(state != IDLE){
-      return;
-    }
     
-    state = DYING;
+    It only makes sense that falling or swapping tokens cannot be killed.
+  */
+  public void kill(){ 
+    if(state == IDLE){
+      state = DYING;
+    }
   }
   
   /**
@@ -168,6 +178,10 @@ public class Token{
   */
   public boolean isDying(){
     return state == DYING;
+  }
+  
+  public boolean isFalling(){
+    return state == FALLING;
   }
   
   public boolean isReturning(){
@@ -183,7 +197,7 @@ public class Token{
   }
   
   /**
-    Rename this.
+      
   */
   public boolean isMoving(){
     return moveDirection != 0;
@@ -191,51 +205,40 @@ public class Token{
   
   /**
     TODO: fix this
-    If you think of a moving token as floating above the board, once it reaches
-    the destination, it drops into its cell.
-    
-    -- Does it still occupy the old space until it falls?
   */
-  public void dropIntoCell(){
-    state = IDLE;
+  public void dropIntoCell(){    
+    int rTemp = row;
+    int cTemp = column;
     
     row = rowToMoveTo;
     column = colToMoveTo;
     
     board[rowToMoveTo][colToMoveTo] = this;
     
-    //
+    // could be swapping
+    if(state == FALLING){
+      // If the token hasn't been overwritten yet
+      if(board[rTemp][cTemp] == this){
+        Token nullToken = new Token();
+        nullToken.setType(TokenType.NULL);
+        nullToken.setRowColumn(rTemp, cTemp);
+        board[rTemp][cTemp] = nullToken;
+      }
+    }
+    
     hasArrivedAtDest = false;
     
-    
     distanceToMove = 0;
-    
     moveDirection = 0;
+    
+    state = IDLE;
   }
-  
-  /**
-    When paused, animation, movement etc. no longer do anything.
-  */
-  public void setPaused(boolean isPaused){
-    this.isPaused = isPaused;
-    //if(isPaused){
-      //ticker.pause();
-    //}
-    //else{
-    //  ticker.resume();
-    //}
-  }
-  
+    
   /*
   */
   public void update(float td){
     
-    if(isPaused){
-      return;
-    }
-    
-    //
-    if(state == MOVING){
+    if(state == FALLING || state == SWAPPING){
       float amtToMove = td * DROP_SPEED * moveDirection;
       
       if(row == rowToMoveTo){
@@ -247,15 +250,14 @@ public class Token{
       
       distanceToMove -= abs(amtToMove);
       
-      // !!!
+      // Don't set the state yet,
       if(distanceToMove <= 0){
-        state = IDLE;
         hasArrivedAtDest = true;
       }
     }
     else if(state == DYING){
       // Shrink the token if it is dying.
-      scaleSize -= td * 2.5f;
+      scaleSize -= td * test;
       
       if(scaleSize <= 0){
         //scaleSize = 0.0f;
@@ -274,10 +276,10 @@ public class Token{
     return state != DEAD;
   }
   
-  public void addGem(){
-    doesHaveGem = true;
+  public void setHasGem(boolean hasGem){
+    doesHaveGem = hasGem;
   }
-  
+    
   /*
       Once the token is destroyed, the game screen will increment
       the number of gems the player has if this token had a gem.
@@ -286,46 +288,82 @@ public class Token{
     return doesHaveGem;
   }
   
-  /**
-   */
-  public void animateTo(int r, int c){
-
-    // We can only animate a token if it is idle.
-    if(state != IDLE){
-      return;
+  /*
+      Token needs to be valid and idle for it to be swapped.
+  */
+  public boolean canBeSwapped(){
+    if(type == TokenType.NULL || state != IDLE || row < START_ROW_INDEX){
+      return false;
     }
+    return true;
+  }
+  
+  /*
+  *  The token can only be matched if its just sitting there. If it is dying/moving
+  *  then we can't have that token get matched.
+  */
+  public boolean canBeMatched(){
+    if(state != IDLE || type == TokenType.NULL){
+      return false;
+    }
+    return true;
+  }
+  
+  public void swapTo(int r, int c){
+    state = SWAPPING;
+    animateTo(r, c);
+  }
+  
+  public void fallTo(int r, int c){
+    state = FALLING;
+    animateTo(r, c);
+  }
+  
+  /*
+      When the tokens fall, they are given new locations
+      If they are already falling, they can fall to a new 'lower' location.
+  */
+  private void animateTo(int r, int c){    
+    // If the token was already moving to another destination,
+    // we need to assign it a new place to go to.
     
-    // TODO: fix, it really isn't detached
-    state = MOVING;
-    
-    // TODO: fix literal 8
-    // column row swapped here!
-    
-    // !!! why are we dividing by 2
-    //
-    int detachedX = (int)(column  * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0f ));
-    int detachedY = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0f ));
-    detachedPos = new PVector(detachedX, detachedY);
-    
-    rowToMoveTo = r;
-    colToMoveTo = c;
-    
-    //
-    if(c == column){
-      int rowDiff = rowToMoveTo - row;
+    // If we call animateTo, but the token is already falling, it means
+    // the player made a match below this falling token. We are given the new
+    // row and column, but need to recalculate the distance it needs to travel.
+    if(state == FALLING && distanceToMove > 0){
+      int oldRowToMoveTo = rowToMoveTo;
+      int newRowToMoveTo = r;
       
-      // Calculating the number of pixels the token has to move isn't as easy as just
-      // rowDiff * TOKEN_SIZE
-      // Since the board dimensions can be arbitrary.
+      int distBetweenDsts = (newRowToMoveTo - oldRowToMoveTo) * TOKEN_SIZE;
       
-      distanceToMove = abs(rowDiff) * TOKEN_SIZE;
+      // Find the distance between the src and dst in the original movement
+      float dst = (oldRowToMoveTo - r) * TOKEN_SIZE;
+
+      rowToMoveTo = r;
       
-      // TODO fix / by zero !!!!
-      moveDirection = rowDiff / abs(rowDiff);
-    }else{
-      int columnDiff = colToMoveTo - column;
-      distanceToMove = abs(columnDiff) * TOKEN_SIZE;
-      moveDirection = columnDiff / abs(columnDiff);
+      distanceToMove = distBetweenDsts + distanceToMove;
+    }
+    else{
+      // column row swapped here!
+      // TODO: fix !!! why are we dividing by 2? literal 8?
+      int detachedX = (int)(column  * (BOARD_W_IN_PX / 8.0f) + ((BOARD_W_IN_PX / 8.0f)/2.0f ));
+      int detachedY = (int)((row-8) * (BOARD_H_IN_PX / 8.0f) + ((BOARD_H_IN_PX / 8.0f)/2.0f ));
+      detachedPos = new PVector(detachedX, detachedY);
+
+      rowToMoveTo = r;
+      colToMoveTo = c;
+      
+      // Either we are moving the token vertically or horizontally
+      if(c == column){
+        int rowDiff = rowToMoveTo - row;
+        distanceToMove = abs(rowDiff) * TOKEN_SIZE;
+        moveDirection = rowDiff / abs(rowDiff);
+      }
+      else if(r == row){
+        int columnDiff = colToMoveTo - column;
+        distanceToMove = abs(columnDiff) * TOKEN_SIZE;
+        moveDirection = columnDiff / abs(columnDiff);
+      }
     }
   }
   
@@ -333,23 +371,10 @@ public class Token{
     Calculates the air speed velocity of an unladen swallow.
   */
   public void draw(){
-    
-    // There is a bug in ScreenGameplay which draws the entire
-    // board and ends up drawing dead tokens, so prevent that from
-    // happening here.
-    if(state == DEAD){
-      // return;
-    }
-    
-    if(isPaused || type == TokenType.NULL){
-      return;
-    }
-    
     int x = 0; 
     int y = 0;
     
-    // 
-    if(state == MOVING){
+    if(state == FALLING || state == SWAPPING){
       x = (int)detachedPos.x;
       y = (int)detachedPos.y;
     }
@@ -372,62 +397,75 @@ public class Token{
       rect(x, y, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
     }
+    
+    /*if(canBeMatched()){
+      pushStyle();
+      fill(99, 66, 33,33);
+      rectMode(CENTER);
+      //fill(255, 0, 0, 255);
+      strokeWeight(0);
+      stroke(255);
+      rect(x, y, TOKEN_SIZE, TOKEN_SIZE);
+      popStyle();
+    }*/
 
-    // TODO: comment
+    // pjs giving issues here
     pushMatrix();
     resetMatrix();
     
     translate(START_X, START_Y);
     translate(x, y);
     
-    if(state == DEAD || state == DYING){
-      /*pushStyle();
-      tint(128,0,0);
+    rectMode(CENTER);
+    
+    // draw a grey box to easily identify dead or null tokens
+    if(DEBUG_ON && (state == DEAD || state == DYING || type == TokenType.NULL)){
+      pushStyle();
+      fill(128,128);
       rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
-      popStyle();*/
+      popStyle();
     }
 
     // Draws an outline around all tokens
     if(DEBUG_ON){
       pushStyle();
-      rectMode(CENTER);
       noFill();
-      stroke(0, 100, 50);
+      stroke(255,64);
       rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
     }
     
-    
-    if(row < START_ROW_INDEX && DEBUG_ON){
+    /*if(row < START_ROW_INDEX && DEBUG_ON){
       pushStyle();
       rectMode(CENTER);
       fill(255, 255, 255, 32);
       rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
-    }
+    }*/
     
     // We need to somehow distinguish tokens that have gems.
-    if(hasGem()){
+    if(hasGem() && state != DYING){
       pushStyle();
-      rectMode(CENTER);
-      fill(33, 60, 90, 128);
-      rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
+      
+      fill(255 * sin(frameCount/10.0), 60, 90, 128);
+      //rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
+      ellipseMode(CENTER);
+      ellipse(0,0, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
     }
-    
-    
     
     // 
     if(state == DYING){
       scale(scaleSize >= 0 ? scaleSize : 0);
     }
     
-    AssetStore store = AssetStore.Instance(globalApplet);
-    
-    pushStyle();
-    imageMode(CENTER);
-    image(store.get(type), 0, 0);
-    popStyle();
+    if(state != DEAD && type != TokenType.NULL){
+      AssetStore store = AssetStore.Instance(globalApplet);
+      pushStyle();
+      imageMode(CENTER);
+      image(store.get(type), 0, 0);
+      popStyle();
+    }
     
     popMatrix();
   }
@@ -438,7 +476,9 @@ public class Token{
       allows us to later on match tokens with wildcards.
   */
   public boolean matchesWith(int other){
-    if(type == TokenType.NULL){return false;}
+    if(type == TokenType.NULL){
+      return false;
+    }
     return type == other;
   }  
 }
