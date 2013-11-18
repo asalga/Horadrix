@@ -11,6 +11,10 @@ public class ScreenSplash implements IScreen{
   RetroLabel loadingLabel;
   RetroLabel mainTitleLabel;
   
+    public void OnTransitionTo(){
+  }
+
+
   public ScreenSplash(){
     ticker = new Ticker();
     

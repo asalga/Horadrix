@@ -15,7 +15,7 @@ public class Token{
   private final int DEAD   = 5;
 
   private final float MOVE_SPEED = TOKEN_SIZE * 2.25f; // token size per second
-  private final float DROP_SPEED = 85;
+  private final float DROP_SPEED = 65;
 
   private int id;  
   private int state;
@@ -62,7 +62,7 @@ public class Token{
     id = Utils.nextID();
     
     isSelected = false;
-    test = 2.25f;//random(1, 2);
+    test = 1.25f;//random(1, 2);
     
     row = 0;
     column = 0;
@@ -276,10 +276,10 @@ public class Token{
     return state != DEAD;
   }
   
-  public void addGem(){
-    doesHaveGem = true;
+  public void setHasGem(boolean hasGem){
+    doesHaveGem = hasGem;
   }
-  
+    
   /*
       Once the token is destroyed, the game screen will increment
       the number of gems the player has if this token had a gem.
@@ -446,7 +446,7 @@ public class Token{
     // We need to somehow distinguish tokens that have gems.
     if(hasGem()){
       pushStyle();
-      fill(33, 60, 90, 128);
+      fill(255, 60, 90, 128);
       rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
     }

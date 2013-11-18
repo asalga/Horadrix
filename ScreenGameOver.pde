@@ -8,6 +8,9 @@ public class ScreenGameOver implements IScreen{
   RetroLabel gameOverLabel;
   RetroLabel retryLabel;
   
+  public void OnTransitionTo(){
+  }
+  
   public ScreenGameOver(){
     
     // TODO: convert this to a singleton or factory.

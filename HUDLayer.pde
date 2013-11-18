@@ -79,7 +79,7 @@ public class HUDLayer implements LayerObserver{
     
     if(p){
       fill(128,128);
-      rect(0,0,width,height);
+      rect(0, 0, width, height);
     }
     
     parent.draw();
@@ -93,7 +93,10 @@ public class HUDLayer implements LayerObserver{
     int min = Utils.floatToInt(screenGameplay.getLevelTimeLeft() / 60);
     int sec = screenGameplay.getLevelTimeLeft() % 60;
     
-    FPS.setText("FPS: " + (int)frameRate);
+    if(DEBUG_ON){
+      FPS.setText("FPS: " + (int)frameRate);
+    }
+    
     scoreLabel.setText("" + scoreStr);
     levelLabel.setText("Level:" + screenGameplay.getLevel());
     timeLabel.setText("TIME: " + min + ":" +  (sec < 10 ? "0" : "") + sec);

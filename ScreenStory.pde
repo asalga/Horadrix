@@ -2,6 +2,9 @@
 */
 public class ScreenStory implements IScreen{
   
+    public void OnTransitionTo(){
+  }
+
   private int storyPointer = 0;
   
   RetroFont solarWindsFont;
@@ -43,7 +46,7 @@ public class ScreenStory implements IScreen{
   // Mouse methods
   public void mousePressed(){}
   public void mouseReleased(){
-    println("*******");
+    println("going to gameplay");
     screens.transitionTo("gameplay");
   }
   public void mouseDragged(){}
@@ -58,5 +61,7 @@ public class ScreenStory implements IScreen{
   
   public void nextLevel(){
     screens.transitionTo("gameplay");
+    storyLabel.setText("MATCH " + gemsRequired[storyPointer] + " GEMS IN " + (int)timePermitted[storyPointer] + " MINUTES");
+    storyPointer++;
   }
 }

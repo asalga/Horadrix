@@ -24,6 +24,7 @@ public class ScreenSet{
     for(int i = 0; i < screens.size(); i++){
       if(s == screens.get(i).getName()){
         curr = screens.get(i);
+        curr.OnTransitionTo();
         break;
       }
     }

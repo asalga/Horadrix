@@ -12,7 +12,7 @@ import ddf.minim.*;
 
 final boolean DEBUG_CONSOLE_ON = false;
 final boolean DEBUG_ON = false;
-final boolean SHOW_ALL_TOKENS = false;
+final boolean SHOW_ALL_TOKENS = true;
 
 // This includes the entire board, including the 'queued' tokens not visible
 // to the user, that sit above the token the user interacts with.
@@ -25,7 +25,7 @@ final int START_ROW_INDEX = 8;
 final int TOKEN_SIZE = 32;
 
 final int CANVAS_WIDTH = 620;
-final int CANVAS_HEIGHT = 400;
+final int CANVAS_HEIGHT = DEBUG_ON ? 650 : 400;
 
 // We define the board size in pixels and allow it to be any size
 // and have the tokens center themselves inside those dimensions.
@@ -37,8 +37,9 @@ final int BOARD_H_IN_PX = TOKEN_SIZE * 8; //273;
 // 28 is size of diablo token
 
 // Where on the canvas the tokens start to be rendered.
+int debugPosOffset = DEBUG_ON ? 150 : 0;
 final int START_X = (int)(CANVAS_WIDTH/2.0f  - BOARD_W_IN_PX/2.0f);
-final int START_Y = (int)(CANVAS_HEIGHT/2.0f - BOARD_H_IN_PX/2.0f);// + 150;
+final int START_Y = (int)(CANVAS_HEIGHT/2.0f - BOARD_H_IN_PX/2.0f) + debugPosOffset;
 
 // Used by the AssetStore
 PApplet globalApplet;
@@ -49,6 +50,10 @@ ScreenSet screens = new ScreenSet();
 ScreenStory screenStory;
 
 SoundManager soundManager;
+
+// Level progression stuff
+final int[] gemsRequired     = new int[]  {5, 10, 15, 20};
+final float[] timePermitted  = new float[]{5,  8, 14, 20};
 
 /*
   Wrap println so we can easily disable all console output on release
