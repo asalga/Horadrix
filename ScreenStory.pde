@@ -56,7 +56,7 @@ public class ScreenStory implements IScreen{
   }
   
   public void nextLevel(){
-    storyLabel.setText("MATCH " + gemsRequired[storyPointer] + " GEMS IN " + (int)timePermitted[storyPointer] + " MINUTES");
+    storyLabel.setText("MATCH " + gemsRequired[storyPointer] + " SPECIAL GEMS IN " + (int)timePermitted[storyPointer] + " MINUTES");
     storyPointer++;
   }
 }

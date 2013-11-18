@@ -444,10 +444,13 @@ public class Token{
     }*/
     
     // We need to somehow distinguish tokens that have gems.
-    if(hasGem()){
+    if(hasGem() && state != DYING){
       pushStyle();
-      fill(255, 60, 90, 128);
-      rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
+      
+      fill(255 * sin(frameCount/10.0), 60, 90, 128);
+      //rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
+      ellipseMode(CENTER);
+      ellipse(0,0, TOKEN_SIZE, TOKEN_SIZE);
       popStyle();
     }
     
