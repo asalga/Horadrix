@@ -41,7 +41,7 @@ public class ScreenGameplay implements IScreen, Subject{
   private int numGemsOnBoard = 0;
   
   // This is immediately incremented in the ctor by calling goToNextLevel().
-  int currLevel = 0;
+  int currLevel = -1;
   
   // User can only be in the process of swapping two tokens
   // at any given time.
@@ -80,7 +80,7 @@ public class ScreenGameplay implements IScreen, Subject{
     
     LayerObserver hudLayer = new HUDLayer(this);
     
-    gemsRequiredForLevel = gemsRequired[currLevel];
+    gemsRequiredForLevel = gemsRequired[0];
 
     dyingTokens = new ArrayList<Token>();
     
@@ -1133,7 +1133,7 @@ public class ScreenGameplay implements IScreen, Subject{
     
     screenStory.nextLevel();
     screens.transitionTo("story");
-      currLevel++;
+      //currLevel++;
    
   }
   
@@ -1141,6 +1141,7 @@ public class ScreenGameplay implements IScreen, Subject{
       Need to clear off all the crap that was happeneing in the last level
   */
   public void OnTransitionTo(){
+    currLevel++;
     //println("On Transition To");
     tokensDestroyed = 0;
     dyingTokens.clear();
