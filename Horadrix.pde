@@ -79,7 +79,7 @@ void setup(){
   soundManager.setMute(true);
 
   screenStory = new ScreenStory();
-
+  
   screens.add(new ScreenSplash());
   screens.add(new ScreenGameplay());
   screens.add(new ScreenGameOver());

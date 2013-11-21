@@ -38,12 +38,9 @@ public class ScreenStory implements IScreen{
   // Mouse methods
   public void mousePressed(){}
   public void mouseReleased(){
-    if(storyPointer < NUM_LEVELS){
+   // if(storyPointer <= NUM_LEVELS){
       screens.transitionTo("gameplay");
-    }
-    else{
-      screens.transitionTo("win");
-    }
+   // }
   }
   public void mouseDragged(){}
   public void mouseMoved(){}
@@ -56,6 +53,7 @@ public class ScreenStory implements IScreen{
   }
   
   public void nextLevel(){
+    println("story pointer: " + storyPointer);
     storyLabel.setText("MATCH " + gemsRequired[storyPointer] + " SPECIAL GEMS IN " + (int)timePermitted[storyPointer] + " MINUTES");
     storyPointer++;
   }
