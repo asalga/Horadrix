@@ -8,24 +8,24 @@
 public class Token{
 
   // States the token can be in
-  private final int IDLE   = 0;
-  private final int SWAPPING = 1;
-  private final int FALLING = 2;
-  private final int DYING  = 4;
-  private final int DEAD   = 5;
+  private final int IDLE      = 0;
+  private final int SWAPPING  = 1;
+  private final int FALLING   = 2;
+  private final int DYING     = 4;
+  private final int DEAD      = 5;
 
   // Types
   public static final int TYPE_NULL   = 0;
-  public static final int TYPE_RED    = 1;
+  /*public static final int TYPE_RED  = 1;
   public static final int TYPE_GREEN  = 2;
   public static final int TYPE_BLUE   = 3;
   public static final int TYPE_WHITE  = 4;
   public static final int TYPE_YELLOW = 5;
-  public static final int TYPE_SKULL  = 6;// TODO: fix should be a color
-  public static final int TYPE_PURPLE = 7;
+  public static final int TYPE_SKULL  = 6;
+  public static final int TYPE_PURPLE = 7;*/
 
-  private final float MOVE_SPEED = TOKEN_SIZE * 2.25f; // token size per second
-  private final float DROP_SPEED = 65;
+  private final float MOVE_SPEED = TOKEN_SIZE * 5.25f; // token size per second
+  private final float DROP_SPEED = TOKEN_SIZE * 4;
 
   private int state;
 
@@ -205,7 +205,7 @@ public class Token{
   /*
     TODO: fix this
   */
-  public void dropIntoCell(){    
+  public void dropIntoCell(){
     row = rowToMoveTo;
     column = colToMoveTo;
     

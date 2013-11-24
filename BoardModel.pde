@@ -1,6 +1,5 @@
 /*
-	This class is responsible for keeping the integrity of
-	the board array intact.
+	This class is responsible for keeping the integrity of the board data intact.
 */
 public class BoardModel{
 
@@ -18,25 +17,26 @@ public class BoardModel{
 		board = new Token[BOARD_ROWS][BOARD_COLS];
 	}
 
-   /*
-      TODO: refactor 'ok'
-      From bottom to top, search to find first gap
-      After finding the first gap, set the marker
-      Find first token, set dst to marker
-      Increment marker by 1
-      Find next token     
-   */
-  void dropTokens(){
+  /*
+      We are dropping the tokens, so we need to start from the bottom and work out way
+      up to fill in all the gaps.
+
+      First we find a destination for a token to move to. Any cell with an empty cell or that
+      has a dying token will serve as a destination for another token to move to.
+
+      The source token must be above the destination, so we can begin counting above the dest.      
+  */
+  private void dropTokens(){
     
     for(int c = 0; c < BOARD_COLS; c++){
-      boolean ok = false;
+      boolean needsDrop = false;
       int dst = BOARD_ROWS;
       int src;
       
       while(dst >= 2){
         dst--;
         if(board[dst][c].getType() == Token.TYPE_NULL || board[dst][c].isDying() ){
-          ok = true;
+          needsDrop = true;
           break;
         }
       }
@@ -52,7 +52,7 @@ public class BoardModel{
       
       while(src >= 0){
         // move the first token
-        if(ok){
+        if(needsDrop){
           Token tokenToMove = board[src][c];
           tokenToMove.fallTo(dst, c);
         }
@@ -83,49 +83,7 @@ public class BoardModel{
   }
 
   /*
-		TODO: move out
-  */
-  void drawBoard(){
-    
-    pushStyle();
-    noFill();
-    stroke(255);
-    strokeWeight(2);
-    
-    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE);
-    
-    // Draw lower part of the board
-    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2 + START_ROW_INDEX * TOKEN_SIZE, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE - 220);
-    popStyle();
-    
-    // Part of the invisible board needs to be drawn because
-    // the tokens coming into to the board need to be shown animating in.    
-    for(int r = 0; r < START_ROW_INDEX; r++){
-      for(int c = 0; c < BOARD_COLS; c++){
-      	Token token = board[r][c];
-
-        if(DEBUG_ON){
-          token.draw();
-        }
-        else{
-          if(token.isMoving()){
-            token.draw();
-          }
-        }
-      }
-    }
-    
-    int startRow = DEBUG_ON ? 0 : START_ROW_INDEX;
-    
-    // Draw the visible part to the player
-    for(int r = startRow; r < BOARD_ROWS; r++){
-      for(int c = 0; c < BOARD_COLS; c++){
-        board[r][c].draw();
-      }
-    }
-  }
-
-  /*
+    Get a reference to a token at a particular cell  
   */
   public Token getToken(int r, int c){
   	assertTest(r > -1 && r < BOARD_ROWS, "OOB error in getToken");
@@ -134,7 +92,7 @@ public class BoardModel{
   }
 
 	/*
-
+    
 	*/
 	public void setToken(int r, int c, Token t){
 		board[r][c] = t;
@@ -332,6 +290,20 @@ public class BoardModel{
   }
 
   /*
+
+  */
+  public boolean hasMovement(){
+    for(int r = 0; r < BOARD_ROWS; r++){
+      for(int c = 0; c < BOARD_COLS; c++){
+        if(board[r][c].isMoving()){
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /*
    * Return how many tokens match this one on its left or right side
    * Does not include the count of the token itself.
    */
@@ -352,6 +324,7 @@ public class BoardModel{
     // only return the number of matched tokens excluding it.
     return matchesFound - 1;
   }
+
   /**
    * Tokens that are considrered too far to swap include ones that
    * are across from each other diagonally or have 1 token between them.
@@ -411,10 +384,7 @@ public class BoardModel{
           // put a null token in its OLD location
           // If the token hasn't been overwritten yet
           // if(getToken(r, c) == this){
-          Token nullToken = new Token();
-          nullToken.setType(Token.TYPE_NULL);
-          nullToken.setRowColumn(r, c);
-          setToken(r, c, nullToken);
+          createNullToken(r, c);
 
           numTokensArrivedAtDest++;
           
@@ -432,8 +402,50 @@ public class BoardModel{
       removeMarkedTokens(true);
       dropTokens();
     }
-
   }
+
+
+   void drawBoard(){
+      
+      pushStyle();
+      noFill();
+      stroke(255);
+      strokeWeight(2);
+      
+      //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE);
+      
+      // Draw lower part of the board
+      //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2 + START_ROW_INDEX * TOKEN_SIZE, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE - 220);
+      popStyle();
+      
+      // Part of the invisible board needs to be drawn because
+      // the tokens coming into to the board need to be shown animating in.    
+      for(int r = 0; r < START_ROW_INDEX; r++){
+        for(int c = 0; c < BOARD_COLS; c++){
+          Token token = board[r][c];
+
+          if(DEBUG_ON){
+            token.draw();
+          }
+          else{
+            if(token.isMoving()){
+              token.draw();
+            }
+          }
+        }
+      }
+      
+      int startRow = DEBUG_ON ? 0 : START_ROW_INDEX;
+      
+      // Draw the visible part to the player
+      for(int r = startRow; r < BOARD_ROWS; r++){
+        for(int c = 0; c < BOARD_COLS; c++){
+          board[r][c].draw();
+        }
+      }
+    }
+
+
 
   /*
     Find any null tokens on the board and replace them with a random token.
@@ -458,15 +470,16 @@ public class BoardModel{
   }
 
   /*
-  	Don't start with 0, since that is null
+  	Don't start with 0, since that's null
   */
   public int getRandomTokenType(){
     return Utils.getRandomInt(1, numTokenTypesOnBoard);
   }
 
-  /*  Stupidly fill the board with random tokens first.
+  /*
+    Stupidly fill the board with random tokens first.
   */
-  void fillBoardWithRandomTokens(){
+  private void fillBoardWithRandomTokens(){
     for(int r = 0; r < BOARD_ROWS; r++){
       for(int c = 0; c < BOARD_COLS; c++){
         Token token = new Token();
@@ -517,13 +530,13 @@ public class BoardModel{
 
   /**
   */
-  public void setFillMarker(int c){
+  private void setFillMarker(int c){
     board[0][c].setFillCellMarker(true);
   }
   
   /**
   */
-  public void setFillMarkers(){
+  private void setFillMarkers(){
     for(int c = 0; c < BOARD_COLS; c++){
       board[0][c].setFillCellMarker(true);
     }
@@ -532,9 +545,10 @@ public class BoardModel{
   /*
       Move the tokens that have been marked for deletion from
       the board to the dying tokens list.
-      
+    
+      @param {doDyingAnimation}
       @returns {int} The number of tokens removed from the board.
-   */
+  */
   private int removeMarkedTokens(boolean doDyingAnimation){
     int numRemoved = 0;
     
@@ -561,7 +575,6 @@ public class BoardModel{
         board[r][c].setSelect(false);
       }
     }
-    
     return numRemoved;
   }
   
@@ -575,6 +588,8 @@ public class BoardModel{
   }
 
   /*
+    In some cases (like the start of a level) we need to make sure
+    there are no gems on the visible part of the board.
   */
   private void removeAllGemsFromBoard(){
     numGemsOnBoard = 0;

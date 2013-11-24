@@ -55,7 +55,7 @@ ArrayList<Token> dyingTokens;
 int numTokenTypesOnBoard = 4;
 
 
-BoardModel boardModel;
+
 
 ScreenSet screens = new ScreenSet();
 ScreenStory screenStory;

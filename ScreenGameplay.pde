@@ -5,7 +5,6 @@ public class ScreenGameplay implements IScreen, Subject{
   
   ArrayList<LayerObserver> layerObserver;
 
-
   PImage bk;
   PImage bk2;
   
@@ -28,7 +27,10 @@ public class ScreenGameplay implements IScreen, Subject{
   private int gemsWonByPlayer = 0;
   private int gemsRequiredForLevel;
   private int numGemsAllowedAtOnce = 2;
+
+  private boolean allowInputWhenTokensFalling;
   
+  private BoardModel boardModel;
   
   // This is immediately incremented in the ctor by calling goToNextLevel().
   int currLevel = 0;
@@ -66,8 +68,16 @@ public class ScreenGameplay implements IScreen, Subject{
 
   /*
   */
+  public void setAllowInputWhenTokensFalling(boolean b){
+    allowInputWhenTokensFalling = b;
+  }
+
+  /*
+  */
   ScreenGameplay(){
     timer = new Ticker();
+
+    allowInputWhenTokensFalling = false;
     
     LayerObserver hudLayer = new HUDLayer(this);
     
@@ -146,6 +156,9 @@ public class ScreenGameplay implements IScreen, Subject{
     }
     
     boardModel.drawBoard();
+
+
+
     
     // In some cases it is necessary to see the non-visible tokens
     // above the visible board. Other cases, I want that part covered.
@@ -255,7 +268,7 @@ public class ScreenGameplay implements IScreen, Subject{
           
           swapToken1.setReturning(true);
           swapToken2.setReturning(true);
-                
+          
           //soundManager.playFailSwapSound();
         }
         // Swap was valid
@@ -359,6 +372,11 @@ public class ScreenGameplay implements IScreen, Subject{
   public void mousePressed(){
     
     if(isPaused){
+      return;
+    }
+
+    // 
+    if(allowInputWhenTokensFalling == false && boardModel.hasMovement()){
       return;
     }
   
