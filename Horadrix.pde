@@ -52,7 +52,7 @@ int numGemsOnBoard = 0;
 ArrayList<Token> dyingTokens;
 // As the levels increase, more and more token types are added
 // This makes it a slightly harder to match tokens.
-int numTokenTypesOnBoard = 4;
+int numTokenTypesOnBoard = 5;
 
 
 

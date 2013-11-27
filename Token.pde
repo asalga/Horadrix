@@ -8,11 +8,12 @@
 public class Token{
 
   // States the token can be in
-  private final int IDLE      = 0;
-  private final int SWAPPING  = 1;
-  private final int FALLING   = 2;
-  private final int DYING     = 4;
-  private final int DEAD      = 5;
+  private final int IDLE              = 0;
+  private final int MARKED_FOR_DEATH  = 1;
+  private final int SWAPPING          = 2;
+  private final int FALLING           = 3;
+  private final int DYING             = 4;
+  private final int DEAD              = 5;
 
   // Types
   public static final int TYPE_NULL   = 0;
@@ -162,9 +163,21 @@ public class Token{
     It only makes sense that falling or swapping tokens cannot be killed.
   */
   public void kill(){ 
-    if(state == IDLE){
+    if(state == IDLE || state == MARKED_FOR_DEATH){
       state = DYING;
     }
+  }
+
+  /*
+  */
+  public void markForDeath(){
+    if(state == IDLE){
+      state = MARKED_FOR_DEATH;
+    }
+  }
+
+  public boolean isMarkedForDeath(){
+    return state == MARKED_FOR_DEATH;
   }
   
   /*
@@ -286,10 +299,18 @@ public class Token{
   *  then we can't have that token get matched.
   */
   public boolean canBeMatched(){
-    if(state != IDLE || type == TYPE_NULL){
+    if(type == TYPE_NULL){
       return false;
     }
-    return true;
+
+    if(state == MARKED_FOR_DEATH || state == IDLE){
+      return true;
+    }
+
+    //if(state != IDLE || type == TYPE_NULL){
+    //  return false;
+    //}
+    return false;
   }
   
   public void swapTo(int r, int c){
@@ -349,7 +370,7 @@ public class Token{
       }
     }
   }
-  
+
   /*
     Calculates the air speed velocity of an unladen swallow.
   */

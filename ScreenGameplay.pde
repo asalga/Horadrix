@@ -274,7 +274,9 @@ public class ScreenGameplay implements IScreen, Subject{
         // Swap was valid
         else{
           swapToken1 = swapToken2 = null;
-          boardModel.markTokensForRemoval(8, 15);//false);
+
+          int test = boardModel.markTokensForRemoval(8, 15);
+          
           boardModel.removeMarkedTokens(true);
           boardModel.dropTokens();
           deselectCurrentTokens();
@@ -559,6 +561,12 @@ public class ScreenGameplay implements IScreen, Subject{
     if(Keyboard.isKeyDown(KEY_L)){
       gemsWonByPlayer = 50;
       //goToNextLevel();
+    }
+
+    if(Keyboard.isKeyDown(KEY_S)){
+      if(currToken1 != null){
+        currToken1.setType(6);
+      }
     }
   }
   
