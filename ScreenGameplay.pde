@@ -45,6 +45,8 @@ public class ScreenGameplay implements IScreen, Subject{
   
   int score = 0;
   
+  private float opacity = 0.0;
+
   /**
   */
   public void addObserver(LayerObserver o){
@@ -119,6 +121,12 @@ public class ScreenGameplay implements IScreen, Subject{
   public void draw(){
 
     background(0);
+
+    tint(opacity);
+    opacity += 1.0f;
+    if(opacity > 255){
+      opacity = 255;
+    }
     
     pushMatrix();
     translate(START_X, START_Y);
@@ -269,7 +277,7 @@ public class ScreenGameplay implements IScreen, Subject{
           swapToken1.setReturning(true);
           swapToken2.setReturning(true);
           
-          //soundManager.playFailSwapSound();
+          soundManager.playFailSwapSound();
         }
         // Swap was valid
         else{
@@ -575,7 +583,7 @@ public class ScreenGameplay implements IScreen, Subject{
   void keyReleased(){
     Keyboard.setKeyDown(keyCode, false);
     
-    //soundManager.setMute(!soundManager.isMuted());
+    soundManager.setMute(!soundManager.isMuted());
     
     isPaused = Keyboard.isKeyDown(KEY_P);
     if(isPaused == false){

@@ -7,7 +7,8 @@ function SoundManager(){
 
   var BASE_PATH = "data/audio/";
 
-  var paths = [BASE_PATH + "fail_swap.ogg", BASE_PATH + "success_swap.ogg"];
+  var paths = [ BASE_PATH + "fail_swap.ogg",
+                BASE_PATH + "success_swap.ogg"];
   var sounds = [];
 
   var FAIL = 0;
