@@ -64,9 +64,12 @@ public class ScreenStory implements IScreen{
       return;
     }
 
-    clicked = true;
-    target = 300;
-    textPos = 0.1;
+    // Prevent player from making the text skip to the middle.
+    if(textPos >= -1){
+      clicked = true;
+      target = 300;
+      textPos = 0.1;
+    }
   }
   public void mouseDragged(){}
   public void mouseMoved(){}
