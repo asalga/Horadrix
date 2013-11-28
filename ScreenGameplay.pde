@@ -574,7 +574,8 @@ public class ScreenGameplay implements IScreen, Subject{
 
     if(Keyboard.isKeyDown(KEY_S)){
       if(currToken1 != null){
-        currToken1.setType(6);
+        currToken1.setHasGem(true);
+        //setType(6);
       }
     }
   }
@@ -618,22 +619,18 @@ public class ScreenGameplay implements IScreen, Subject{
       - Greater number of gems on board at a given time
       - Sometimes the number of gem types increase
   */
-  void goToNextLevel(){
-    // prevent goToNextLeve from running as soon as the level loads
-    // gemsWonByPlayer = 0;
-    
+  void goToNextLevel(){    
     screenStory.nextLevel();
     screens.transitionTo("story");
   }
   
   /*
-      Need to clear off all the crap that was happeneing in the last level
+      Need to clear off all the crap that was happeneing in the last level.
   */
   public void OnTransitionTo(){
     currLevel++;
     tokensDestroyed = 0;
     dyingTokens.clear();
-    //generateNewBoardWithDyingAnimation(false);
     
     // Should the score be reset?
     // score = 0;
@@ -645,6 +642,8 @@ public class ScreenGameplay implements IScreen, Subject{
     levelCountDownTimer.setTime(timePermitted[currLevel-1]);
     levelCountDownTimer.setDirection(-1);
     
+    timer = new Ticker();
+
     if(currLevel == 4){
       numTokenTypesOnBoard++;
     }
