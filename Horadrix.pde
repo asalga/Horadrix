@@ -47,10 +47,6 @@ PApplet globalApplet;
 
 int numGemsOnBoard = 0;
 
-// Tokens that have been remove from the board, but still need to be rendered for their
-// death animation.
-ArrayList<Token> dyingTokens;
-
 // As the levels increase, more and more token types are added
 // This makes it a slightly harder to match tokens.
 int numTokenTypesOnBoard = 3;
@@ -65,6 +61,9 @@ final int NUM_LEVELS         = 4;
 final int[] gemsRequired     = new int[]  {1, 10, 15, 20};
 final float[] timePermitted  = new float[]{5,  8, 14, 20};
 
+/*
+    Journey starts here
+*/
 void setup(){
   size(CANVAS_WIDTH, CANVAS_HEIGHT);
    

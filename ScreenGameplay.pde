@@ -85,7 +85,7 @@ public class ScreenGameplay implements IScreen, Subject{
     
     gemsRequiredForLevel = gemsRequired[0];
 
-    dyingTokens = new ArrayList<Token>();
+    //dyingTokens = new ArrayList<Token>();
     
     bk =  loadImage("data/images/boards/board.png");
     //bk2 = loadImage("data/images/background/background.png");
@@ -152,6 +152,7 @@ public class ScreenGameplay implements IScreen, Subject{
     //rect(0, 0, BOARD_W_IN_PX, BOARD_H_IN_PX);
     //popMatrix();
     
+    ArrayList<Token> dyingTokens = boardModel.getDyingTokens();
     // The dying tokens shrink and the falling tokens get rendered on top of them.
     for(int i = 0; i < dyingTokens.size(); i++){
       dyingTokens.get(i).draw();
@@ -224,7 +225,7 @@ public class ScreenGameplay implements IScreen, Subject{
     // NEW BOARD
     if(Keyboard.isKeyDown(KEY_N)){
       // Generating a new board while swapping is unlikely, but prevent it anyway, just in case.
-      if(dyingTokens.size() == 0 && swapToken1 == null && swapToken2 == null){
+      if(boardModel.getDyingTokens().size() == 0 && swapToken1 == null && swapToken2 == null){
         boardModel.generateNewBoardWithDyingAnimation(true);
       }
     }
@@ -309,6 +310,8 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
+
+    ArrayList<Token> dyingTokens = boardModel.getDyingTokens();
     // TODO: refactor?
     // Iterate over all the tokens that are dying and increase the score.
     for(int i = 0; i < dyingTokens.size(); i++){
@@ -630,7 +633,8 @@ public class ScreenGameplay implements IScreen, Subject{
   public void OnTransitionTo(){
     currLevel++;
     tokensDestroyed = 0;
-    dyingTokens.clear();
+    
+    //dyingTokens.clear();
     
     // Should the score be reset?
     // score = 0;
@@ -647,6 +651,9 @@ public class ScreenGameplay implements IScreen, Subject{
     if(currLevel == 4){
       numTokenTypesOnBoard++;
     }
+
+    // Easy way to clear the dying tokens which we don't want animating in the next level.
+    boardModel = new BoardModel();
     
     boardModel.generateNewBoardWithDyingAnimation(false);
   }

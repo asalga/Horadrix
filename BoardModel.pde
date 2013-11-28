@@ -11,10 +11,14 @@ public class BoardModel{
 
 	private Token[][] board;
 
+  // Tokens that have been remove from the board, but still need to be rendered for their death animation.
+  private ArrayList<Token> dyingTokens;
+
 	/*
 	*/
 	public BoardModel(){
 		board = new Token[BOARD_ROWS][BOARD_COLS];
+    dyingTokens = new ArrayList<Token>();
 	}
 
   /*
@@ -491,10 +495,16 @@ public class BoardModel{
   }
 
   /*
+  */
+  public ArrayList<Token> getDyingTokens(){
+    return dyingTokens;
+  }
+
+  /*
       This can only be done if nothing is moving or animating to make
       sure the board stays in a proper state.
   */
-  public void generateNewBoardWithDyingAnimation(boolean dieAnim){        
+  public void generateNewBoardWithDyingAnimation(boolean playDyingAnimation){
     
     fillBoardWithRandomTokens();
     
@@ -504,7 +514,7 @@ public class BoardModel{
         // Set score to zero so once they die, the score total isn't changed.
         board[r][c].setScore(0);
         board[r][c].kill();
-        if(dieAnim){
+        if(playDyingAnimation){
           dyingTokens.add(board[r][c]);
         }
         
