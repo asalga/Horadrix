@@ -122,11 +122,12 @@ public class ScreenGameplay implements IScreen, Subject{
 
     background(0);
 
-    tint(opacity);
+    // Break HUD
+    /*tint(opacity);
     opacity += 1.0f;
     if(opacity > 255){
       opacity = 255;
-    }
+    }*/
     
     pushMatrix();
     translate(START_X, START_Y);

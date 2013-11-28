@@ -12,6 +12,7 @@ public class ScreenStory implements IScreen{
   private float textPos = 0;
   private float easing = 0.08;
   private boolean clicked = false;
+  private boolean extro = false;
   
   private float target;
 
@@ -35,7 +36,7 @@ public class ScreenStory implements IScreen{
   
   public void update(){
 
-    if(clicked == false){
+    if(extro == false){
       textPos += (target - textPos) * easing;
     }
     else{
@@ -46,6 +47,13 @@ public class ScreenStory implements IScreen{
 
     if(storyLabel.getY() > height + 30){
      screens.transitionTo("gameplay");
+    }
+
+    // Prevent player from making the text skip to the middle.
+    if(clicked && textPos >= -1 && extro == false){
+      target = 300;
+      textPos = 0.9;
+      extro = true;
     }
   }
 
@@ -58,18 +66,7 @@ public class ScreenStory implements IScreen{
   // Mouse methods
   public void mousePressed(){}
   public void mouseReleased(){
-
-    // Can only reset the target position once.
-    if(clicked == true){
-      return;
-    }
-
-    // Prevent player from making the text skip to the middle.
-    if(textPos >= -1){
-      clicked = true;
-      target = 300;
-      textPos = 0.1;
-    }
+    clicked = true;
   }
   public void mouseDragged(){}
   public void mouseMoved(){}
