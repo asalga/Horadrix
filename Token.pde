@@ -8,16 +8,26 @@
 public class Token{
 
   // States the token can be in
-  private final int IDLE   = 0;
-  private final int SWAPPING = 1;
-  private final int FALLING = 2;
-  private final int DYING  = 4;
-  private final int DEAD   = 5;
+  private final int IDLE              = 0;
+  private final int MARKED_FOR_DEATH  = 1;
+  private final int SWAPPING          = 2;
+  private final int FALLING           = 3;
+  private final int DYING             = 4;
+  private final int DEAD              = 5;
 
-  private final float MOVE_SPEED = TOKEN_SIZE * 2.25f; // token size per second
-  private final float DROP_SPEED = 65;
+  // Types
+  public static final int TYPE_NULL   = 0;
+  /*public static final int TYPE_RED  = 1;
+  public static final int TYPE_GREEN  = 2;
+  public static final int TYPE_BLUE   = 3;
+  public static final int TYPE_WHITE  = 4;
+  public static final int TYPE_YELLOW = 5;
+  public static final int TYPE_SKULL  = 6;
+  public static final int TYPE_PURPLE = 7;*/
 
-  private int id;  
+  private final float MOVE_SPEED = TOKEN_SIZE * 5.25f; // token size per second
+  private final float DROP_SPEED = TOKEN_SIZE * 4;
+
   private int state;
 
   // TODO: find better way of doing this?
@@ -39,8 +49,6 @@ public class Token{
   // !!! We can refactor this
   private int moveDirection;
   
-  float test;
-  
   private boolean isFillCellMarker;
   
   private int type;
@@ -58,29 +66,30 @@ public class Token{
   /*
   */
   public Token(){
-    setType(TokenType.NULL);
-    id = Utils.nextID();
-    
-    isSelected = false;
-    test = 1.25f;//random(1, 2);
-    
+    state = IDLE;
+
     row = 0;
     column = 0;
-    
-    doesHaveGem = false;
-    scaleSize = 1.0f;
     
     // TODO: need to really need to set these?
     rowToMoveTo = -1;
     colToMoveTo = 0;
-    moveDirection = 0;
-    detachedPos = new PVector();
     
-    returning = false;
     hasArrivedAtDest = false;
-    state = IDLE;
+    detachedPos = new PVector();
+
+    moveDirection = 0;
     
-    score = 100;
+    setType(TYPE_NULL);
+    doesHaveGem = false;
+
+    returning = false;
+
+    scaleSize = 1.0f;
+
+    isSelected = false;
+
+    setScore(100);
   }
   
   public void setScore(int s){
@@ -93,8 +102,7 @@ public class Token{
     return score;
   }
   
-  /**
-  
+  /*
   */
   public void setRowColumn(int row, int column){
     this.row = row;
@@ -113,7 +121,7 @@ public class Token{
     return type;
   }
   
-  /**
+  /*
       TODO: add check?
   */
   public void setType(int t){
@@ -127,14 +135,7 @@ public class Token{
   public boolean getFillCellMarker(){
     return isFillCellMarker;
   }
-  
-  /*
-    Used for debugging
-  */
-  public int getID(){
-    return id;
-  }
-  
+    
   /*
     When a token is selected, it is somehow outlined to show the user
     it is the 'current' token.
@@ -143,7 +144,7 @@ public class Token{
     isSelected = select;
   }
   
-  /**
+  /*
     Immediately swap the position (row, column) of this token with another.
     Used to help testing if swapping will result in a match 3.
    */
@@ -155,23 +156,31 @@ public class Token{
     other.setRowColumn(tempRow, tempCol);    
   }
   
-  public boolean isIdle(){
-    return state == IDLE;
-  }
-  
-  /**
+  /*
     Gameplay doesn't keep track if it has already killed a token, so we have
     to keep track of it ourselves to make sure the ticker doesn't get reset.
     
     It only makes sense that falling or swapping tokens cannot be killed.
   */
   public void kill(){ 
-    if(state == IDLE){
+    if(state == IDLE || state == MARKED_FOR_DEATH){
       state = DYING;
     }
   }
+
+  /*
+  */
+  public void markForDeath(){
+    if(state == IDLE){
+      state = MARKED_FOR_DEATH;
+    }
+  }
+
+  public boolean isMarkedForDeath(){
+    return state == MARKED_FOR_DEATH;
+  }
   
-  /**
+  /*
       If the token is dying it is in the process of animating its
       death, which might take a second or so. Once the death animation
       is finished, the token is considered dead.
@@ -182,6 +191,10 @@ public class Token{
   
   public boolean isFalling(){
     return state == FALLING;
+  }
+
+  public boolean isIdle(){
+    return state == IDLE;
   }
   
   public boolean isReturning(){
@@ -196,35 +209,18 @@ public class Token{
     return hasArrivedAtDest;
   }
   
-  /**
-      
+  /*
   */
   public boolean isMoving(){
     return moveDirection != 0;
   }
   
-  /**
+  /*
     TODO: fix this
   */
-  public void dropIntoCell(){    
-    int rTemp = row;
-    int cTemp = column;
-    
+  public void dropIntoCell(){
     row = rowToMoveTo;
     column = colToMoveTo;
-    
-    board[rowToMoveTo][colToMoveTo] = this;
-    
-    // could be swapping
-    if(state == FALLING){
-      // If the token hasn't been overwritten yet
-      if(board[rTemp][cTemp] == this){
-        Token nullToken = new Token();
-        nullToken.setType(TokenType.NULL);
-        nullToken.setRowColumn(rTemp, cTemp);
-        board[rTemp][cTemp] = nullToken;
-      }
-    }
     
     hasArrivedAtDest = false;
     
@@ -257,7 +253,7 @@ public class Token{
     }
     else if(state == DYING){
       // Shrink the token if it is dying.
-      scaleSize -= td * test;
+      scaleSize -= td * 1.25f;
       
       if(scaleSize <= 0){
         //scaleSize = 0.0f;
@@ -292,7 +288,7 @@ public class Token{
       Token needs to be valid and idle for it to be swapped.
   */
   public boolean canBeSwapped(){
-    if(type == TokenType.NULL || state != IDLE || row < START_ROW_INDEX){
+    if(type == TYPE_NULL || state != IDLE || row < START_ROW_INDEX){
       return false;
     }
     return true;
@@ -303,10 +299,18 @@ public class Token{
   *  then we can't have that token get matched.
   */
   public boolean canBeMatched(){
-    if(state != IDLE || type == TokenType.NULL){
+    if(type == TYPE_NULL){
       return false;
     }
-    return true;
+
+    if(state == MARKED_FOR_DEATH || state == IDLE){
+      return true;
+    }
+
+    //if(state != IDLE || type == TYPE_NULL){
+    //  return false;
+    //}
+    return false;
   }
   
   public void swapTo(int r, int c){
@@ -366,7 +370,7 @@ public class Token{
       }
     }
   }
-  
+
   /*
     Calculates the air speed velocity of an unladen swallow.
   */
@@ -419,7 +423,7 @@ public class Token{
     rectMode(CENTER);
     
     // draw a grey box to easily identify dead or null tokens
-    if(DEBUG_ON && (state == DEAD || state == DYING || type == TokenType.NULL)){
+    if(DEBUG_ON && (state == DEAD || state == DYING || type == TYPE_NULL)){
       pushStyle();
       fill(128,128);
       rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);
@@ -459,7 +463,7 @@ public class Token{
       scale(scaleSize >= 0 ? scaleSize : 0);
     }
     
-    if(state != DEAD && type != TokenType.NULL){
+    if(state != DEAD && type != TYPE_NULL){
       AssetStore store = AssetStore.Instance(globalApplet);
       pushStyle();
       imageMode(CENTER);
@@ -476,7 +480,7 @@ public class Token{
       allows us to later on match tokens with wildcards.
   */
   public boolean matchesWith(int other){
-    if(type == TokenType.NULL){
+    if(type == TYPE_NULL){
       return false;
     }
     return type == other;
