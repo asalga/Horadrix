@@ -23,7 +23,6 @@ public class ScreenStory implements IScreen{
    //storyLabel.setText(story[storyPointer]);
    
    storyLabel.setDebug(false);
-   
    //continueInstruction = new RetroLabel(solarWindsFont);
    //continueInstruction.setText("Click to continue");
  }
@@ -61,6 +60,7 @@ public class ScreenStory implements IScreen{
     textPos = -(height/2) + 20;// bit of fudge
     target =  0;// bit of fudge
     clicked = false;
+    extro = false;
   }
   
   // Mouse methods

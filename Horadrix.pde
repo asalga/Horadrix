@@ -64,8 +64,8 @@ SoundManager soundManager;
 
 // Level progression stuff
 final int NUM_LEVELS         = 4;
-final int[] gemsRequired     = new int[]  {5, 10, 15, 20};
-final float[] timePermitted  = new float[]{5,  8, 14, 20};
+final int[] gemsRequired     = new int[]  {1, 2, 15, 20};
+final float[] timePermitted  = new float[]{1,  2, 14, 20};
 
 void setup(){
   size(CANVAS_WIDTH, CANVAS_HEIGHT);
