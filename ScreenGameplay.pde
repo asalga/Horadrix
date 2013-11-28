@@ -233,7 +233,7 @@ public class ScreenGameplay implements IScreen, Subject{
     float td = timer.getDeltaSec();
     
     // Once the player meets their quota...
-    if(gemsWonByPlayer >= gemsRequiredForLevel){
+    if(gemsWonByPlayer >= gemsRequiredForLevel && boardModel.hasMovement() == false){
       gemsWonByPlayer = 0;
       
       if(currLevel < NUM_LEVELS){
