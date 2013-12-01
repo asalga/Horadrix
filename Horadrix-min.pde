@@ -4,17 +4,55 @@
 public class BoardModel{
 
 	// Quality with MATCH_ to avoid conflicts with P5 constants
-	private final int MATCH_LEFT = -1;
-	private final int MATCH_RIGHT = 1;
-	private final int MATCH_UP = -1;
-	private final int MATCH_DOWN = 1;
+	private final int MATCH_LEFT   = -1;
+	private final int MATCH_RIGHT  = 1;
+	private final int MATCH_UP     = -1;
+	private final int MATCH_DOWN   = 1;
 
 	private Token[][] board;
+
+  // Tokens that have been remove from the board, but still need to be rendered for their death animation.
+  private ArrayList<Token> dyingTokens;
+
+  private int numGemsAllowedAtOnce;
+  private int numGemsOnBoard;
+
+  /*
+      Instead of the board knowing how to draw itself, it
+      instead provides an iterator for the screen to render the tokens.
+  */
+  public class Iterator{
+    private int count;
+
+    public Iterator(){
+      count = -1;
+    }
+
+    public boolean next(){
+      count++;
+      return count != BOARD_COLS * BOARD_ROWS;
+    }
+
+    public Token item(){
+      int r = count / BOARD_COLS;
+      int c = count % BOARD_COLS;
+      // required type conversion for pjs
+      return board[Utils.floatToInt(r)][Utils.floatToInt(c)];
+      //count / BOARD_COLS][count % BOARD_COLS];
+    }
+  }
+
+  public Iterator getIterator(){
+    return new Iterator();
+  }
 
 	/*
 	*/
 	public BoardModel(){
+    numGemsOnBoard = 0;
+    numGemsAllowedAtOnce = 0;
 		board = new Token[BOARD_ROWS][BOARD_COLS];
+    dyingTokens = new ArrayList<Token>();
 	}
 
   /*
@@ -95,12 +133,10 @@ public class BoardModel{
     
 	*/
 	public void setToken(int r, int c, Token t){
+    assertTest(r > -1 && r < BOARD_ROWS, "OOB error in getToken");
+    assertTest(c > -1 && c < BOARD_COLS, "OOB error in getToken");
 		board[r][c] = t;
 	}
-
-
-
-
 
   /*
    * Find any 3 matches either going vertically or horizontally and
@@ -113,13 +149,10 @@ public class BoardModel{
   private int markTokensForRemoval(int startIndex, int endIndex){
     
     int numTokensMarked = 0;    
-    
-    int startRow = startIndex;
-    int endRow = endIndex;
-    
+        
     // Mark the matched horizontal gems
     // TODO: Add extra column buffer at end of board to fix matches counter?
-    for(int r = startRow; r <= endRow; r++){
+    for(int r = startIndex; r <= endIndex; r++){
       
       // start with the first token in the first column as the thing we want to match against.
       int tokenTypeToMatchAgainst = board[r][0].getType();
@@ -156,7 +189,8 @@ public class BoardModel{
         }
       }
       
-      // TODO: fix
+      // Each iteration of checking we just increment matches, so the removal code doesn't get a chance to execute
+      // if there is a line touching the border of the game board.
       if(matches >= 3){
         for(int gemC = markerIndex; gemC < markerIndex + matches; gemC++){
           board[r][gemC].markForDeath();
@@ -170,11 +204,11 @@ public class BoardModel{
     //
     // Add extra column buffer at end of board to fix matches counter?
     for(int c = 0; c < BOARD_COLS; c++){
-      int tokenTypeToMatchAgainst = board[startRow][c].getType();
-      int markerIndex = startRow;
+      int tokenTypeToMatchAgainst = board[startIndex][c].getType();
+      int markerIndex = startIndex;
       int matches = 1;
       
-      for(int r = startRow + 1; r <= endRow; r++){
+      for(int r = startIndex + 1; r <= endIndex; r++){
         
         if(board[r][c].matchesWith(tokenTypeToMatchAgainst) && board[r][c].canBeMatched()){
           matches++;
@@ -187,7 +221,7 @@ public class BoardModel{
           tokenTypeToMatchAgainst = board[r][c].getType();
         }
          // Either we found a non-match after at least finding a match 3, or the last match was at the end of the column.
-         else if( (board[r][c].matchesWith(tokenTypeToMatchAgainst) == false && matches >= 3) || (r == endRow && matches >= 3)){
+         else if( (board[r][c].matchesWith(tokenTypeToMatchAgainst) == false && matches >= 3) || (r == endIndex && matches >= 3)){
           
           for(int gemR = markerIndex; gemR < markerIndex + matches; gemR++){
             board[gemR][c].markForDeath();
@@ -201,8 +235,8 @@ public class BoardModel{
       
       if(matches >= 3){
         for(int gemR = markerIndex; gemR < markerIndex + matches; gemR++){
-            board[gemR][c].markForDeath();
-            numTokensMarked++;
+          board[gemR][c].markForDeath();
+          numTokensMarked++;
         }
       }
     }
@@ -398,54 +432,11 @@ public class BoardModel{
     }
 
     if(numTokensArrivedAtDest > 0){
-      markTokensForRemoval(8, 15);
+      markTokensForRemoval(START_ROW_INDEX, BOARD_ROWS-1);
       removeMarkedTokens(true);
       dropTokens();
     }
   }
-
-
-
-  void drawBoard(){
-    
-    pushStyle();
-    noFill();
-    stroke(255);
-    strokeWeight(2);
-    
-    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE);
-    
-    // Draw lower part of the board
-    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2 + START_ROW_INDEX * TOKEN_SIZE, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE - 220);
-    popStyle();
-    
-    // Part of the invisible board needs to be drawn because
-    // the tokens coming into to the board need to be shown animating in.    
-    for(int r = 0; r < START_ROW_INDEX; r++){
-      for(int c = 0; c < BOARD_COLS; c++){
-        Token token = board[r][c];
-
-        if(DEBUG_ON){
-          token.draw();
-        }
-        else{
-          if(token.isMoving()){
-            token.draw();
-          }
-        }
-      }
-    }
-    
-    int startRow = DEBUG_ON ? 0 : START_ROW_INDEX;
-    
-    // Draw the visible part to the player
-    for(int r = startRow; r < BOARD_ROWS; r++){
-      for(int c = 0; c < BOARD_COLS; c++){
-        board[r][c].draw();
-      }
-    }
-  }
-
 
   /*
     Find any null tokens on the board and replace them with a random token.
@@ -491,10 +482,16 @@ public class BoardModel{
   }
 
   /*
+  */
+  public ArrayList<Token> getDyingTokens(){
+    return dyingTokens;
+  }
+
+  /*
       This can only be done if nothing is moving or animating to make
       sure the board stays in a proper state.
   */
-  public void generateNewBoardWithDyingAnimation(boolean dieAnim){        
+  public void generateNewBoardWithDyingAnimation(boolean playDyingAnimation){
     
     fillBoardWithRandomTokens();
     
@@ -504,7 +501,7 @@ public class BoardModel{
         // Set score to zero so once they die, the score total isn't changed.
         board[r][c].setScore(0);
         board[r][c].kill();
-        if(dieAnim){
+        if(playDyingAnimation){
           dyingTokens.add(board[r][c]);
         }
         
@@ -560,7 +557,7 @@ public class BoardModel{
         
         // Don't need to check if already in the list because we're removing it from
         // the board, so it can never be placed from the board into the dying token list more than once.
-        if(tokenToDestroy.isMarkedForDeath()){ //isDying() ){//|| tokenToDestroy.isAlive() == false){
+        if(tokenToDestroy.isMarkedForDeath()){
           tokenToDestroy.kill();
           numRemoved++;
           // On setup we use this method, but we don't actually want to play the animation.
@@ -577,7 +574,32 @@ public class BoardModel{
     }
     return numRemoved;
   }
+
+  /*
+  */
+  public void setNumGemsAllowedAtOnce(int num){
+    numGemsAllowedAtOnce = num;
+  }
   
+  public  int getNumGems(){
+    return numGemsOnBoard;
+  }
+
+  public void ensureGemCount(){
+    while(numGemsOnBoard < numGemsAllowedAtOnce){
+      // We can only add the gem to the part of the board the user doesn't see.
+      // Don't forget getRandom int is inclusive.
+      int r = Utils.getRandomInt(0, START_ROW_INDEX - 1);
+      int c = Utils.getRandomInt(0, BOARD_COLS - 1);
+      Token token = getToken(r, c);
+      
+      if(token.hasGem() == false && token.isMoving() == false){
+        token.setHasGem(true);
+        numGemsOnBoard++;
+      }
+    }
+  }
+
   /**
   */
   private void createNullToken(int r, int c){
@@ -599,7 +621,6 @@ public class BoardModel{
       }
     }
   }
-
 }/**
 */
 public class ScreenSet{
@@ -1143,7 +1164,6 @@ public class ScreenGameplay implements IScreen, Subject{
   
   private int gemsWonByPlayer = 0;
   private int gemsRequiredForLevel;
-  private int numGemsAllowedAtOnce = 2;
 
   private boolean allowInputWhenTokensFalling;
   
@@ -1201,8 +1221,6 @@ public class ScreenGameplay implements IScreen, Subject{
     LayerObserver hudLayer = new HUDLayer(this);
     
     gemsRequiredForLevel = gemsRequired[0];
-
-    dyingTokens = new ArrayList<Token>();
     
     bk =  loadImage("data/images/boards/board.png");
     //bk2 = loadImage("data/images/background/background.png");
@@ -1219,6 +1237,7 @@ public class ScreenGameplay implements IScreen, Subject{
     observers.add(hudLayer);*/
 
     boardModel = new BoardModel();
+    boardModel.setNumGemsAllowedAtOnce(2);
     
     debug = new Debugger();
    
@@ -1239,7 +1258,7 @@ public class ScreenGameplay implements IScreen, Subject{
 
     background(0);
 
-    // Break HUD
+    // Breaks HUD
     /*tint(opacity);
     opacity += 1.0f;
     if(opacity > 255){
@@ -1269,6 +1288,7 @@ public class ScreenGameplay implements IScreen, Subject{
     //rect(0, 0, BOARD_W_IN_PX, BOARD_H_IN_PX);
     //popMatrix();
     
+    ArrayList<Token> dyingTokens = boardModel.getDyingTokens();
     // The dying tokens shrink and the falling tokens get rendered on top of them.
     for(int i = 0; i < dyingTokens.size(); i++){
       dyingTokens.get(i).draw();
@@ -1280,11 +1300,11 @@ public class ScreenGameplay implements IScreen, Subject{
     if(swapToken2 != null){
       swapToken2.draw();
     }
-    
-    boardModel.drawBoard();
 
-
-
+    BoardModel.Iterator iter = boardModel.getIterator();
+    while(iter.next()){
+      iter.item().draw();
+    }
     
     // In some cases it is necessary to see the non-visible tokens
     // above the visible board. Other cases, I want that part covered.
@@ -1299,18 +1319,14 @@ public class ScreenGameplay implements IScreen, Subject{
       popStyle();
     }
     
-    // Draw a box around the grid, just for debugging.
-    //noFill();
-    //stroke(255);
-    //strokeWeight(1);
-    //rect(0, 350, TOKEN_SIZE, 320);
-    
     popMatrix();
     
     // HACK: This line is here as a workaround a bug in Processing.js
     // If removed, the board would translate diagonally on the canvas.
     // when tokens are removed.
     resetMatrix();
+
+
     
     if(layerObserver != null){
       for(int i = 0; i < layerObserver.size(); i++){
@@ -1341,7 +1357,7 @@ public class ScreenGameplay implements IScreen, Subject{
     // NEW BOARD
     if(Keyboard.isKeyDown(KEY_N)){
       // Generating a new board while swapping is unlikely, but prevent it anyway, just in case.
-      if(dyingTokens.size() == 0 && swapToken1 == null && swapToken2 == null){
+      if(boardModel.getDyingTokens().size() == 0 && swapToken1 == null && swapToken2 == null){
         boardModel.generateNewBoardWithDyingAnimation(true);
       }
     }
@@ -1350,7 +1366,7 @@ public class ScreenGameplay implements IScreen, Subject{
     float td = timer.getDeltaSec();
     
     // Once the player meets their quota...
-    if(gemsWonByPlayer >= gemsRequiredForLevel){
+    if(gemsWonByPlayer >= gemsRequiredForLevel && boardModel.hasMovement() == false){
       gemsWonByPlayer = 0;
       
       if(currLevel < NUM_LEVELS){
@@ -1426,6 +1442,8 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
+
+    ArrayList<Token> dyingTokens = boardModel.getDyingTokens();
     // TODO: refactor?
     // Iterate over all the tokens that are dying and increase the score.
     for(int i = 0; i < dyingTokens.size(); i++){
@@ -1438,7 +1456,7 @@ public class ScreenGameplay implements IScreen, Subject{
         
         if(dyingToken.hasGem()){
           gemsWonByPlayer++;
-          numGemsOnBoard--;
+          //numGemsOnBoard--;
         }
         
         addToScore(dyingToken.getScore());
@@ -1454,7 +1472,8 @@ public class ScreenGameplay implements IScreen, Subject{
     // Doing it on level start is actually tricker, since the only tokens that exist are the ones at the top
     // that are faling down.
     if(tokensDestroyed > 0){
-      addGemsToQueuedTokens();
+      //addGemsToQueuedTokens();
+      boardModel.ensureGemCount();
     }
 
     resetMatrix();
@@ -1652,27 +1671,6 @@ public class ScreenGameplay implements IScreen, Subject{
   }
   
   /*
-        Select a random token in the invisible part of the board 
-        and add a gem to it if it doesn't already have one.
-        
-        Used when the player clears a gem from board and we have to 'replace' it.
-  */
-  private void addGemsToQueuedTokens(){
-    while(numGemsOnBoard < numGemsAllowedAtOnce){
-      // We can only add the gem to the part of the board the user doesn't see.
-      // Don't forget getRandom int is inclusive.
-      int r = Utils.getRandomInt(0, START_ROW_INDEX - 1);
-      int c = Utils.getRandomInt(0, BOARD_COLS - 1);
-      Token token = boardModel.getToken(r, c);
-      
-      if(token.hasGem() == false){
-        token.setHasGem(true);
-        numGemsOnBoard++;
-      }
-    }
-  }
-  
-  /*
   */
   void keyPressed(){
     Keyboard.setKeyDown(keyCode, true);
@@ -1747,7 +1745,8 @@ public class ScreenGameplay implements IScreen, Subject{
   public void OnTransitionTo(){
     currLevel++;
     tokensDestroyed = 0;
-    dyingTokens.clear();
+    
+    //dyingTokens.clear();
     
     // Should the score be reset?
     // score = 0;
@@ -1764,11 +1763,14 @@ public class ScreenGameplay implements IScreen, Subject{
     if(currLevel == 4){
       numTokenTypesOnBoard++;
     }
+
+    // Easy way to clear the dying tokens which we don't want animating in the next level.
+    boardModel = new BoardModel();
+    boardModel.setNumGemsAllowedAtOnce(2);
     
     boardModel.generateNewBoardWithDyingAnimation(false);
   }
-}
-/*
+}/*
     Displays game name and credits
 */
 public class ScreenSplash implements IScreen{
@@ -2813,17 +2815,9 @@ final int START_Y = (int)(CANVAS_HEIGHT/2.0f - BOARD_H_IN_PX/2.0f) + debugPosOff
 // Used by the AssetStore
 PApplet globalApplet;
 
-
-int numGemsOnBoard = 0;
-// Tokens that have been remove from the board, but still need to be rendered for their
-// death animation.
-ArrayList<Token> dyingTokens;
 // As the levels increase, more and more token types are added
 // This makes it a slightly harder to match tokens.
-int numTokenTypesOnBoard = 5;
-
-
-
+int numTokenTypesOnBoard = 3;
 
 ScreenSet screens = new ScreenSet();
 ScreenStory screenStory;
@@ -2832,9 +2826,12 @@ SoundManager soundManager;
 
 // Level progression stuff
 final int NUM_LEVELS         = 4;
-final int[] gemsRequired     = new int[]  {1, 2, 15, 20};
-final float[] timePermitted  = new float[]{1,  2, 14, 20};
+final int[] gemsRequired     = new int[]  {5, 10, 15, 20};
+final float[] timePermitted  = new float[]{4,  8, 12, 18};
 
+/*
+    Journey starts here
+*/
 void setup(){
   size(CANVAS_WIDTH, CANVAS_HEIGHT);
    
@@ -3684,7 +3681,6 @@ public class ScreenGameplay implements IScreen, Subject{
   
   private int gemsWonByPlayer = 0;
   private int gemsRequiredForLevel;
-  private int numGemsAllowedAtOnce = 2;
 
   private boolean allowInputWhenTokensFalling;
   
@@ -3742,8 +3738,6 @@ public class ScreenGameplay implements IScreen, Subject{
     LayerObserver hudLayer = new HUDLayer(this);
     
     gemsRequiredForLevel = gemsRequired[0];
-
-    dyingTokens = new ArrayList<Token>();
     
     bk =  loadImage("data/images/boards/board.png");
     //bk2 = loadImage("data/images/background/background.png");
@@ -3760,6 +3754,7 @@ public class ScreenGameplay implements IScreen, Subject{
     observers.add(hudLayer);*/
 
     boardModel = new BoardModel();
+    boardModel.setNumGemsAllowedAtOnce(2);
     
     debug = new Debugger();
    
@@ -3780,7 +3775,7 @@ public class ScreenGameplay implements IScreen, Subject{
 
     background(0);
 
-    // Break HUD
+    // Breaks HUD
     /*tint(opacity);
     opacity += 1.0f;
     if(opacity > 255){
@@ -3810,6 +3805,7 @@ public class ScreenGameplay implements IScreen, Subject{
     //rect(0, 0, BOARD_W_IN_PX, BOARD_H_IN_PX);
     //popMatrix();
     
+    ArrayList<Token> dyingTokens = boardModel.getDyingTokens();
     // The dying tokens shrink and the falling tokens get rendered on top of them.
     for(int i = 0; i < dyingTokens.size(); i++){
       dyingTokens.get(i).draw();
@@ -3821,11 +3817,11 @@ public class ScreenGameplay implements IScreen, Subject{
     if(swapToken2 != null){
       swapToken2.draw();
     }
-    
-    boardModel.drawBoard();
 
-
-
+    BoardModel.Iterator iter = boardModel.getIterator();
+    while(iter.next()){
+      iter.item().draw();
+    }
     
     // In some cases it is necessary to see the non-visible tokens
     // above the visible board. Other cases, I want that part covered.
@@ -3840,18 +3836,14 @@ public class ScreenGameplay implements IScreen, Subject{
       popStyle();
     }
     
-    // Draw a box around the grid, just for debugging.
-    //noFill();
-    //stroke(255);
-    //strokeWeight(1);
-    //rect(0, 350, TOKEN_SIZE, 320);
-    
     popMatrix();
     
     // HACK: This line is here as a workaround a bug in Processing.js
     // If removed, the board would translate diagonally on the canvas.
     // when tokens are removed.
     resetMatrix();
+
+
     
     if(layerObserver != null){
       for(int i = 0; i < layerObserver.size(); i++){
@@ -3882,7 +3874,7 @@ public class ScreenGameplay implements IScreen, Subject{
     // NEW BOARD
     if(Keyboard.isKeyDown(KEY_N)){
       // Generating a new board while swapping is unlikely, but prevent it anyway, just in case.
-      if(dyingTokens.size() == 0 && swapToken1 == null && swapToken2 == null){
+      if(boardModel.getDyingTokens().size() == 0 && swapToken1 == null && swapToken2 == null){
         boardModel.generateNewBoardWithDyingAnimation(true);
       }
     }
@@ -3891,7 +3883,7 @@ public class ScreenGameplay implements IScreen, Subject{
     float td = timer.getDeltaSec();
     
     // Once the player meets their quota...
-    if(gemsWonByPlayer >= gemsRequiredForLevel){
+    if(gemsWonByPlayer >= gemsRequiredForLevel && boardModel.hasMovement() == false){
       gemsWonByPlayer = 0;
       
       if(currLevel < NUM_LEVELS){
@@ -3967,6 +3959,8 @@ public class ScreenGameplay implements IScreen, Subject{
       }
     }
     
+
+    ArrayList<Token> dyingTokens = boardModel.getDyingTokens();
     // TODO: refactor?
     // Iterate over all the tokens that are dying and increase the score.
     for(int i = 0; i < dyingTokens.size(); i++){
@@ -3979,7 +3973,7 @@ public class ScreenGameplay implements IScreen, Subject{
         
         if(dyingToken.hasGem()){
           gemsWonByPlayer++;
-          numGemsOnBoard--;
+          //numGemsOnBoard--;
         }
         
         addToScore(dyingToken.getScore());
@@ -3995,7 +3989,8 @@ public class ScreenGameplay implements IScreen, Subject{
     // Doing it on level start is actually tricker, since the only tokens that exist are the ones at the top
     // that are faling down.
     if(tokensDestroyed > 0){
-      addGemsToQueuedTokens();
+      //addGemsToQueuedTokens();
+      boardModel.ensureGemCount();
     }
 
     resetMatrix();
@@ -4193,27 +4188,6 @@ public class ScreenGameplay implements IScreen, Subject{
   }
   
   /*
-        Select a random token in the invisible part of the board 
-        and add a gem to it if it doesn't already have one.
-        
-        Used when the player clears a gem from board and we have to 'replace' it.
-  */
-  private void addGemsToQueuedTokens(){
-    while(numGemsOnBoard < numGemsAllowedAtOnce){
-      // We can only add the gem to the part of the board the user doesn't see.
-      // Don't forget getRandom int is inclusive.
-      int r = Utils.getRandomInt(0, START_ROW_INDEX - 1);
-      int c = Utils.getRandomInt(0, BOARD_COLS - 1);
-      Token token = boardModel.getToken(r, c);
-      
-      if(token.hasGem() == false){
-        token.setHasGem(true);
-        numGemsOnBoard++;
-      }
-    }
-  }
-  
-  /*
   */
   void keyPressed(){
     Keyboard.setKeyDown(keyCode, true);
@@ -4288,7 +4262,8 @@ public class ScreenGameplay implements IScreen, Subject{
   public void OnTransitionTo(){
     currLevel++;
     tokensDestroyed = 0;
-    dyingTokens.clear();
+    
+    //dyingTokens.clear();
     
     // Should the score be reset?
     // score = 0;
@@ -4305,6 +4280,10 @@ public class ScreenGameplay implements IScreen, Subject{
     if(currLevel == 4){
       numTokenTypesOnBoard++;
     }
+
+    // Easy way to clear the dying tokens which we don't want animating in the next level.
+    boardModel = new BoardModel();
+    boardModel.setNumGemsAllowedAtOnce(2);
     
     boardModel.generateNewBoardWithDyingAnimation(false);
   }
