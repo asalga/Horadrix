@@ -45,8 +45,6 @@ final int START_Y = (int)(CANVAS_HEIGHT/2.0f - BOARD_H_IN_PX/2.0f) + debugPosOff
 // Used by the AssetStore
 PApplet globalApplet;
 
-int numGemsOnBoard = 0;
-
 // As the levels increase, more and more token types are added
 // This makes it a slightly harder to match tokens.
 int numTokenTypesOnBoard = 3;

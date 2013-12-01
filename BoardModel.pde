@@ -4,19 +4,53 @@
 public class BoardModel{
 
 	// Quality with MATCH_ to avoid conflicts with P5 constants
-	private final int MATCH_LEFT = -1;
-	private final int MATCH_RIGHT = 1;
-	private final int MATCH_UP = -1;
-	private final int MATCH_DOWN = 1;
+	private final int MATCH_LEFT   = -1;
+	private final int MATCH_RIGHT  = 1;
+	private final int MATCH_UP     = -1;
+	private final int MATCH_DOWN   = 1;
 
 	private Token[][] board;
 
   // Tokens that have been remove from the board, but still need to be rendered for their death animation.
   private ArrayList<Token> dyingTokens;
 
+  private int numGemsAllowedAtOnce;
+  private int numGemsOnBoard;
+
+  /*
+      Instead of the board knowing how to draw itself, it
+      instead provides an iterator for the screen to render the tokens.
+  */
+  public class Iterator{
+    private int count;
+
+    public Iterator(){
+      count = -1;
+    }
+
+    public boolean next(){
+      count++;
+      return count != BOARD_COLS * BOARD_ROWS;
+    }
+
+    public Token item(){
+      int r = count / BOARD_COLS;
+      int c = count % BOARD_COLS;
+      // required type conversion for pjs
+      return board[Utils.floatToInt(r)][Utils.floatToInt(c)];
+      //count / BOARD_COLS][count % BOARD_COLS];
+    }
+  }
+
+  public Iterator getIterator(){
+    return new Iterator();
+  }
+
 	/*
 	*/
 	public BoardModel(){
+    numGemsOnBoard = 0;
+    numGemsAllowedAtOnce = 0;
 		board = new Token[BOARD_ROWS][BOARD_COLS];
     dyingTokens = new ArrayList<Token>();
 	}
@@ -99,12 +133,10 @@ public class BoardModel{
     
 	*/
 	public void setToken(int r, int c, Token t){
+    assertTest(r > -1 && r < BOARD_ROWS, "OOB error in getToken");
+    assertTest(c > -1 && c < BOARD_COLS, "OOB error in getToken");
 		board[r][c] = t;
 	}
-
-
-
-
 
   /*
    * Find any 3 matches either going vertically or horizontally and
@@ -117,13 +149,10 @@ public class BoardModel{
   private int markTokensForRemoval(int startIndex, int endIndex){
     
     int numTokensMarked = 0;    
-    
-    int startRow = startIndex;
-    int endRow = endIndex;
-    
+        
     // Mark the matched horizontal gems
     // TODO: Add extra column buffer at end of board to fix matches counter?
-    for(int r = startRow; r <= endRow; r++){
+    for(int r = startIndex; r <= endIndex; r++){
       
       // start with the first token in the first column as the thing we want to match against.
       int tokenTypeToMatchAgainst = board[r][0].getType();
@@ -160,7 +189,8 @@ public class BoardModel{
         }
       }
       
-      // TODO: fix
+      // Each iteration of checking we just increment matches, so the removal code doesn't get a chance to execute
+      // if there is a line touching the border of the game board.
       if(matches >= 3){
         for(int gemC = markerIndex; gemC < markerIndex + matches; gemC++){
           board[r][gemC].markForDeath();
@@ -174,11 +204,11 @@ public class BoardModel{
     //
     // Add extra column buffer at end of board to fix matches counter?
     for(int c = 0; c < BOARD_COLS; c++){
-      int tokenTypeToMatchAgainst = board[startRow][c].getType();
-      int markerIndex = startRow;
+      int tokenTypeToMatchAgainst = board[startIndex][c].getType();
+      int markerIndex = startIndex;
       int matches = 1;
       
-      for(int r = startRow + 1; r <= endRow; r++){
+      for(int r = startIndex + 1; r <= endIndex; r++){
         
         if(board[r][c].matchesWith(tokenTypeToMatchAgainst) && board[r][c].canBeMatched()){
           matches++;
@@ -191,7 +221,7 @@ public class BoardModel{
           tokenTypeToMatchAgainst = board[r][c].getType();
         }
          // Either we found a non-match after at least finding a match 3, or the last match was at the end of the column.
-         else if( (board[r][c].matchesWith(tokenTypeToMatchAgainst) == false && matches >= 3) || (r == endRow && matches >= 3)){
+         else if( (board[r][c].matchesWith(tokenTypeToMatchAgainst) == false && matches >= 3) || (r == endIndex && matches >= 3)){
           
           for(int gemR = markerIndex; gemR < markerIndex + matches; gemR++){
             board[gemR][c].markForDeath();
@@ -205,8 +235,8 @@ public class BoardModel{
       
       if(matches >= 3){
         for(int gemR = markerIndex; gemR < markerIndex + matches; gemR++){
-            board[gemR][c].markForDeath();
-            numTokensMarked++;
+          board[gemR][c].markForDeath();
+          numTokensMarked++;
         }
       }
     }
@@ -402,54 +432,11 @@ public class BoardModel{
     }
 
     if(numTokensArrivedAtDest > 0){
-      markTokensForRemoval(8, 15);
+      markTokensForRemoval(START_ROW_INDEX, BOARD_ROWS-1);
       removeMarkedTokens(true);
       dropTokens();
     }
   }
-
-
-
-  void drawBoard(){
-    
-    pushStyle();
-    noFill();
-    stroke(255);
-    strokeWeight(2);
-    
-    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE);
-    
-    // Draw lower part of the board
-    //rect(-TOKEN_SIZE/2, -TOKEN_SIZE/2 + START_ROW_INDEX * TOKEN_SIZE, BOARD_COLS * TOKEN_SIZE, BOARD_ROWS * TOKEN_SIZE - 220);
-    popStyle();
-    
-    // Part of the invisible board needs to be drawn because
-    // the tokens coming into to the board need to be shown animating in.    
-    for(int r = 0; r < START_ROW_INDEX; r++){
-      for(int c = 0; c < BOARD_COLS; c++){
-        Token token = board[r][c];
-
-        if(DEBUG_ON){
-          token.draw();
-        }
-        else{
-          if(token.isMoving()){
-            token.draw();
-          }
-        }
-      }
-    }
-    
-    int startRow = DEBUG_ON ? 0 : START_ROW_INDEX;
-    
-    // Draw the visible part to the player
-    for(int r = startRow; r < BOARD_ROWS; r++){
-      for(int c = 0; c < BOARD_COLS; c++){
-        board[r][c].draw();
-      }
-    }
-  }
-
 
   /*
     Find any null tokens on the board and replace them with a random token.
@@ -570,7 +557,7 @@ public class BoardModel{
         
         // Don't need to check if already in the list because we're removing it from
         // the board, so it can never be placed from the board into the dying token list more than once.
-        if(tokenToDestroy.isMarkedForDeath()){ //isDying() ){//|| tokenToDestroy.isAlive() == false){
+        if(tokenToDestroy.isMarkedForDeath()){
           tokenToDestroy.kill();
           numRemoved++;
           // On setup we use this method, but we don't actually want to play the animation.
@@ -587,7 +574,32 @@ public class BoardModel{
     }
     return numRemoved;
   }
+
+  /*
+  */
+  public void setNumGemsAllowedAtOnce(int num){
+    numGemsAllowedAtOnce = num;
+  }
   
+  public  int getNumGems(){
+    return numGemsOnBoard;
+  }
+
+  public void ensureGemCount(){
+    while(numGemsOnBoard < numGemsAllowedAtOnce){
+      // We can only add the gem to the part of the board the user doesn't see.
+      // Don't forget getRandom int is inclusive.
+      int r = Utils.getRandomInt(0, START_ROW_INDEX - 1);
+      int c = Utils.getRandomInt(0, BOARD_COLS - 1);
+      Token token = getToken(r, c);
+      
+      if(token.hasGem() == false && token.isMoving() == false){
+        token.setHasGem(true);
+        numGemsOnBoard++;
+      }
+    }
+  }
+
   /**
   */
   private void createNullToken(int r, int c){
@@ -609,5 +621,4 @@ public class BoardModel{
       }
     }
   }
-
 }
