@@ -21,7 +21,7 @@ public class ScreenSet{
     curr = s;
   }
   
-  /**
+  /*
       TODO: add awesome transition effect
   */
   public void transitionTo(String s){

@@ -16,6 +16,7 @@ public class BoardModel{
 
   private int numGemsAllowedAtOnce;
   private int numGemsOnBoard;
+  private ScreenGameplay screenGameplay;
 
   /*
       Instead of the board knowing how to draw itself, it
@@ -48,7 +49,8 @@ public class BoardModel{
 
 	/*
 	*/
-	public BoardModel(){
+	public BoardModel(ScreenGameplay s){
+    screenGameplay = s;
     numGemsOnBoard = 0;
     numGemsAllowedAtOnce = 0;
 		board = new Token[BOARD_ROWS][BOARD_COLS];
@@ -433,7 +435,9 @@ public class BoardModel{
 
     if(numTokensArrivedAtDest > 0){
       markTokensForRemoval(START_ROW_INDEX, BOARD_ROWS-1);
-      removeMarkedTokens(true);
+      if(removeMarkedTokens(true) > 2){
+        screenGameplay.test();
+      }
       dropTokens();
     }
   }
@@ -572,6 +576,7 @@ public class BoardModel{
         board[r][c].setSelect(false);
       }
     }
+
     return numRemoved;
   }
 
@@ -579,6 +584,10 @@ public class BoardModel{
   */
   public void setNumGemsAllowedAtOnce(int num){
     numGemsAllowedAtOnce = num;
+  }
+
+  public void reduceGemCount(int i){
+    numGemsOnBoard -= i;
   }
   
   public  int getNumGems(){

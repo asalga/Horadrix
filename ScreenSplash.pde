@@ -49,7 +49,7 @@ public class ScreenSplash implements IScreen{
   
   public void update(){
     ticker.tick();
-    if(ticker.getTotalTime() > 0.5f){
+    if(ticker.getTotalTime() > 0.01f){
       //screens.transitionTo("gameplay");
       screens.transitionTo("story");
     }

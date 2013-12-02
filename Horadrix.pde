@@ -128,3 +128,6 @@ public void keyReleased(){
   screens.curr.keyReleased();
 }
 
+public void stop(){
+  println("STOP TEST");
+}

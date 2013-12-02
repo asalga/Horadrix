@@ -46,6 +46,10 @@ public class ScreenGameplay implements IScreen, Subject{
   
   private float opacity = 0.0;
 
+  public void test(){
+    //soundManager.playMatchSound();
+  }
+
   /**
   */
   public void addObserver(LayerObserver o){
@@ -78,7 +82,7 @@ public class ScreenGameplay implements IScreen, Subject{
   ScreenGameplay(){
     timer = new Ticker();
 
-    allowInputWhenTokensFalling = false;
+    allowInputWhenTokensFalling = true;
     
     LayerObserver hudLayer = new HUDLayer(this);
     
@@ -98,7 +102,9 @@ public class ScreenGameplay implements IScreen, Subject{
     Layer hudLayer = new HUDLayer();
     observers.add(hudLayer);*/
 
-    boardModel = new BoardModel();
+    Keyboard.lockKeys(new int[]{KEY_M});
+
+    boardModel = new BoardModel(this);
     boardModel.setNumGemsAllowedAtOnce(2);
     
     debug = new Debugger();
@@ -241,7 +247,9 @@ public class ScreenGameplay implements IScreen, Subject{
         
     debug.clear();
     
-    levelCountDownTimer.tick();
+    if(levelCountDownTimer != null){
+      levelCountDownTimer.tick();
+    }
         
     // Now, update the two tokens that the user has swapped
     if(swapToken1 != null){
@@ -273,7 +281,7 @@ public class ScreenGameplay implements IScreen, Subject{
           swapToken1.setReturning(true);
           swapToken2.setReturning(true);
           
-          soundManager.playFailSwapSound();
+          //soundManager.playFailSwapSound();
         }
         // Swap was valid
         else{
@@ -282,9 +290,11 @@ public class ScreenGameplay implements IScreen, Subject{
           int test = boardModel.markTokensForRemoval(8, 15);
           
           boardModel.removeMarkedTokens(true);
+          soundManager.playMatchSound();
+
           boardModel.dropTokens();
           deselectCurrentTokens();
-          // !!!
+          
           //soundManager.playSuccessSwapSound();
         } 
       }
@@ -318,7 +328,7 @@ public class ScreenGameplay implements IScreen, Subject{
         
         if(dyingToken.hasGem()){
           gemsWonByPlayer++;
-          //numGemsOnBoard--;
+          boardModel.reduceGemCount(1);
         }
         
         addToScore(dyingToken.getScore());
@@ -545,15 +555,21 @@ public class ScreenGameplay implements IScreen, Subject{
     }
     
     if(Keyboard.isKeyDown(KEY_L)){
-      gemsWonByPlayer = 50;
+      //gemsWonByPlayer = 50;
+      soundManager.playMatchSound();
       //goToNextLevel();
     }
 
+    if(Keyboard.isKeyDown(KEY_M)){
+      soundManager.setMute(!soundManager.isMuted());
+    }
+
     if(Keyboard.isKeyDown(KEY_S)){
-      if(currToken1 != null){
-        currToken1.setHasGem(true);
+      //if(currToken1 != null){
+      //  currToken1.setHasGem(true);
         //setType(6);
-      }
+      //}
+      soundManager.playFailSwapSound();
     }
   }
   
@@ -561,9 +577,7 @@ public class ScreenGameplay implements IScreen, Subject{
   */
   void keyReleased(){
     Keyboard.setKeyDown(keyCode, false);
-    
-    soundManager.setMute(!soundManager.isMuted());
-    
+
     isPaused = Keyboard.isKeyDown(KEY_P);
     if(isPaused == false){
       timer.resume();
@@ -627,7 +641,7 @@ public class ScreenGameplay implements IScreen, Subject{
     }
 
     // Easy way to clear the dying tokens which we don't want animating in the next level.
-    boardModel = new BoardModel();
+    boardModel = new BoardModel(this);
     boardModel.setNumGemsAllowedAtOnce(2);
     
     boardModel.generateNewBoardWithDyingAnimation(false);
