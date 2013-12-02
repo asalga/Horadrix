@@ -17,6 +17,7 @@ public class SoundManager{
     private String path;
 
     public PlayerQueue(String audioPath){
+
       path = audioPath;
       players = new ArrayList<AudioPlayer>();
       appendPlayer();
@@ -50,6 +51,17 @@ public class SoundManager{
       AudioPlayer player = minim.loadFile(path);
       players.add(player);
     }
+
+    public void setMute(boolean m){
+      for(int i = 0; i < players.size(); i++){
+        if(m){
+          players.get(i).mute();
+        }
+        else{
+         players.get(i).unmute(); 
+        }
+      }
+    }
   }
   
   public void init(){
@@ -65,6 +77,9 @@ public class SoundManager{
   
   public void setMute(boolean isMuted){
     muted = isMuted;
+    successSwapPlayer.setMute(muted);
+    failSwapPlayer.setMute(muted);
+    matchPlayer.setMute(muted);
   }
   
   public boolean isMuted(){

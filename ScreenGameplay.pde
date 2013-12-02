@@ -277,7 +277,7 @@ public class ScreenGameplay implements IScreen, Subject{
           swapToken1.setReturning(true);
           swapToken2.setReturning(true);
           
-          //soundManager.playFailSwapSound();
+          soundManager.playFailSwapSound();
         }
         // Swap was valid
         else{
