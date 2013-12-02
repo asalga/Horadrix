@@ -16,8 +16,7 @@ public class BoardModel{
 
   private int numGemsAllowedAtOnce;
   private int numGemsOnBoard;
-  private ScreenGameplay screenGameplay;
-
+  
   /*
       Instead of the board knowing how to draw itself, it
       instead provides an iterator for the screen to render the tokens.
@@ -49,8 +48,8 @@ public class BoardModel{
 
 	/*
 	*/
-	public BoardModel(ScreenGameplay s){
-    screenGameplay = s;
+	public BoardModel(){
+    //screenGameplay = s;
     numGemsOnBoard = 0;
     numGemsAllowedAtOnce = 0;
 		board = new Token[BOARD_ROWS][BOARD_COLS];
@@ -436,7 +435,7 @@ public class BoardModel{
     if(numTokensArrivedAtDest > 0){
       markTokensForRemoval(START_ROW_INDEX, BOARD_ROWS-1);
       if(removeMarkedTokens(true) > 2){
-        screenGameplay.test();
+        soundManager.playMatchSound();
       }
       dropTokens();
     }

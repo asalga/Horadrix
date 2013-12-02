@@ -60,7 +60,7 @@ public class SoundManager{
   
     successSwapPlayer = new PlayerQueue("audio/success_swap.wav");
     failSwapPlayer = new PlayerQueue("audio/fail_swap.wav");
-    matchPlayer = new PlayerQueue("audio/peg.wav");
+    matchPlayer = new PlayerQueue("audio/success_swap.wav");
   }
   
   public void setMute(boolean isMuted){

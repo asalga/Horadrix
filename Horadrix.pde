@@ -129,5 +129,5 @@ public void keyReleased(){
 }
 
 public void stop(){
-  println("STOP TEST");
+  println("Stop test");
 }

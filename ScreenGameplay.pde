@@ -46,10 +46,6 @@ public class ScreenGameplay implements IScreen, Subject{
   
   private float opacity = 0.0;
 
-  public void test(){
-    //soundManager.playMatchSound();
-  }
-
   /**
   */
   public void addObserver(LayerObserver o){
@@ -104,7 +100,7 @@ public class ScreenGameplay implements IScreen, Subject{
 
     Keyboard.lockKeys(new int[]{KEY_M});
 
-    boardModel = new BoardModel(this);
+    boardModel = new BoardModel();
     boardModel.setNumGemsAllowedAtOnce(2);
     
     debug = new Debugger();
@@ -641,7 +637,7 @@ public class ScreenGameplay implements IScreen, Subject{
     }
 
     // Easy way to clear the dying tokens which we don't want animating in the next level.
-    boardModel = new BoardModel(this);
+    boardModel = new BoardModel();
     boardModel.setNumGemsAllowedAtOnce(2);
     
     boardModel.generateNewBoardWithDyingAnimation(false);
