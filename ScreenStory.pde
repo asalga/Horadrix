@@ -1,6 +1,6 @@
 /*  
 */
-public class ScreenStory implements IScreen{
+public class ScreenStory extends IScreen{
 
   private int storyPointer = 0;
   
@@ -15,6 +15,8 @@ public class ScreenStory implements IScreen{
   private boolean extro = false;
   
   private float target;
+
+  //private Background background;
 
   public ScreenStory(){
    solarWindsFont = new RetroFont("data/fonts/solarwinds.png", 14, 16, 2);
@@ -35,7 +37,7 @@ public class ScreenStory implements IScreen{
   
   public void update(){
 
-    screens.transitionTo("gameplay");
+    //screens.transitionTo("gameplay");
 
     if(extro == false){
       textPos += (target - textPos) * easing;
@@ -66,15 +68,9 @@ public class ScreenStory implements IScreen{
   }
   
   // Mouse methods
-  public void mousePressed(){}
   public void mouseReleased(){
     clicked = true;
   }
-  public void mouseDragged(){}
-  public void mouseMoved(){}
-  
-  public void keyPressed(){}
-  public void keyReleased(){}
   
   public String getName(){
     return "story";

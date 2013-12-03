@@ -415,15 +415,18 @@ public class Token{
 
     // pjs giving issues here
     pushMatrix();
-    resetMatrix();
+
+    if(usingPjs){
+      resetMatrix();
+    }
     
-    translate(START_X, START_Y);
+    //translate(START_X, START_Y);
     translate(x, y);
     
     rectMode(CENTER);
     
     // draw a grey box to easily identify dead or null tokens
-    if(DEBUG_ON && (state == DEAD || state == DYING || type == TYPE_NULL)){
+    if(DEBUG_ON){//} && (state == DEAD || state == DYING || type == TYPE_NULL)){
       pushStyle();
       fill(128,128);
       rect(0, 0, TOKEN_SIZE, TOKEN_SIZE);

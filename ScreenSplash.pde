@@ -1,7 +1,7 @@
 /*
     Displays game name and credits
 */
-public class ScreenSplash implements IScreen{
+public class ScreenSplash extends IScreen{
 
   Ticker ticker;
   
@@ -11,9 +11,7 @@ public class ScreenSplash implements IScreen{
   RetroLabel loadingLabel;
   RetroLabel mainTitleLabel;
   
-    public void OnTransitionTo(){
-  }
-
+  public void OnTransitionTo(){}
 
   public ScreenSplash(){
     ticker = new Ticker();
@@ -49,8 +47,7 @@ public class ScreenSplash implements IScreen{
   
   public void update(){
     ticker.tick();
-    if(ticker.getTotalTime() > 0.01f){
-      //screens.transitionTo("gameplay");
+    if(ticker.getTotalTime() > 1.01f){
       screens.transitionTo("story");
     }
   }
@@ -58,12 +55,4 @@ public class ScreenSplash implements IScreen{
   public String getName(){
     return "splash";
   }
-  
-  public void keyReleased(){}
-  public void keyPressed(){}
-  
-  public void mousePressed(){}
-  public void mouseReleased(){}
-  public void mouseDragged(){}
-  public void mouseMoved(){}
 }

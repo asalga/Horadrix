@@ -1,20 +1,21 @@
 /*
     
 */
-public interface IScreen{
+public class IScreen{
   
-  public void draw();
-  public void update();
+  public void draw(){}
+  public void update(){}
   
-  // Mouse methods
-  public void mousePressed();
-  public void mouseReleased();
-  public void mouseDragged();
-  public void mouseMoved();
+  public void mousePressed(){}
+  public void mouseReleased(){}
+  public void mouseDragged(){}
+  public void mouseMoved(){}
   
-  public void keyPressed();
-  public void keyReleased();
-  public void OnTransitionTo();
+  public void keyPressed(){}
+  public void keyReleased(){}
+  public void OnTransitionTo(){}
   
-  public String getName();
+  public String getName(){
+    return "none";
+  }
 }

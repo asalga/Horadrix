@@ -45,6 +45,14 @@ final int START_Y = (int)(CANVAS_HEIGHT/2.0f - BOARD_H_IN_PX/2.0f) + debugPosOff
 // Used by the AssetStore
 PApplet globalApplet;
 
+// For Pjs, if the user has WebGL enabled, we will use it.
+boolean using3DMode = true;
+
+// In the perfect world, this would not be necessary, but unfortunately both
+// Processing and Pjs have bugs that force us to sometimes have to distinguish
+// which version we are using.
+boolean usingPjs = false;
+
 // As the levels increase, more and more token types are added
 // This makes it a slightly harder to match tokens.
 int numTokenTypesOnBoard = 3;
@@ -63,7 +71,7 @@ final float[] timePermitted  = new float[]{4,  8, 12, 18};
     Journey starts here
 */
 void setup(){
-  size(CANVAS_WIDTH, CANVAS_HEIGHT);
+  size(CANVAS_WIDTH, CANVAS_HEIGHT, P2D);
    
   // The style of the game is pixel art, so we don't want anti-aliasing
   noSmooth();

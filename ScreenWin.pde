@@ -1,7 +1,7 @@
 /*
 *
 */
-public class ScreenWin implements IScreen{
+public class ScreenWin extends IScreen{
 
   Ticker ticker;
   
@@ -33,7 +33,6 @@ public class ScreenWin implements IScreen{
   */
   public void draw(){
     background(0);
-    
     title.draw();
     win.draw();
   }
@@ -45,12 +44,4 @@ public class ScreenWin implements IScreen{
   public String getName(){
     return "win";
   }
-  
-  public void keyReleased(){}
-  public void keyPressed(){}
-  
-  public void mousePressed(){}
-  public void mouseReleased(){}
-  public void mouseDragged(){}
-  public void mouseMoved(){}
 }

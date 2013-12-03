@@ -1,7 +1,7 @@
 /*
     This screen is the main gameplay screen.
 */
-public class ScreenGameplay implements IScreen, Subject{
+public class ScreenGameplay extends IScreen implements Subject{
   
   ArrayList<LayerObserver> layerObserver;
 
@@ -188,15 +188,17 @@ public class ScreenGameplay implements IScreen, Subject{
     // HACK: This line is here as a workaround a bug in Processing.js
     // If removed, the board would translate diagonally on the canvas.
     // when tokens are removed.
-    resetMatrix();
-
-
+    if(usingPjs){
+      resetMatrix();
+    }
     
     if(layerObserver != null){
       for(int i = 0; i < layerObserver.size(); i++){
         layerObserver.get(i).draw();
       }
     }
+
+    //debug.addString("FPS: " + frameRate);
     
     debug.draw();
   }
@@ -204,7 +206,8 @@ public class ScreenGameplay implements IScreen, Subject{
   /**
    */
   public void update(){
-    
+    //}
+    //public void fuckyou(){
     // TODO: fix
     // Need to notify that we are paused so the HUD can draw an overlay
     if(isPaused){
@@ -344,7 +347,9 @@ public class ScreenGameplay implements IScreen, Subject{
       boardModel.ensureGemCount();
     }
 
-    resetMatrix();
+    if(usingPjs){
+      resetMatrix();
+    }
     
     // Add a leading zero if seconds is a single digit
     String secStr = "";
@@ -378,9 +383,6 @@ public class ScreenGameplay implements IScreen, Subject{
     return (int)map(mouseX, START_X, START_X + BOARD_W_IN_PX, 0, BOARD_COLS);
   }
     
-  public void mouseMoved(){}
-  public void mouseReleased(){}
-  
   /*
    *
    */

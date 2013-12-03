@@ -1,7 +1,7 @@
 /*
     Displays game name and credits
 */
-public class ScreenGameOver implements IScreen{
+public class ScreenGameOver extends IScreen{
   
   RetroFont solarWindsFont;
 
@@ -39,15 +39,8 @@ public class ScreenGameOver implements IScreen{
   public String getName(){
     return "gameover";
   }
-
-  public void keyReleased(){}
-  public void keyPressed(){}
   
   public void mousePressed(){
     screens.setCurr(new ScreenGameplay());
-  }
-  
-  public void mouseReleased(){}
-  public void mouseDragged(){}
-  public void mouseMoved(){}
+  }  
 }
