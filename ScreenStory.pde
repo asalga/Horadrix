@@ -37,7 +37,7 @@ public class ScreenStory extends IScreen{
   
   public void update(){
 
-    //screens.transitionTo("gameplay");
+    screens.transitionTo("gameplay");
 
     if(extro == false){
       textPos += (target - textPos) * easing;

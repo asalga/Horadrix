@@ -71,7 +71,7 @@ final float[] timePermitted  = new float[]{4,  8, 12, 18};
     Journey starts here
 */
 void setup(){
-  size(CANVAS_WIDTH, CANVAS_HEIGHT, P2D);
+  size(CANVAS_WIDTH, CANVAS_HEIGHT, using3DMode ? P3D :  P2D);
    
   // The style of the game is pixel art, so we don't want anti-aliasing
   noSmooth();

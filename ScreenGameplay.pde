@@ -7,6 +7,9 @@ public class ScreenGameplay extends IScreen implements Subject{
 
   PImage bk;
   PImage bk2;
+
+  PImage shaderTexture;
+  PShader backgroundShader;
   
   // time it takes for the tokens above the ones that were destroyed to start falling down.
   private float DELAY_PAUSE = 2.5f; //0.035f; 
@@ -84,6 +87,10 @@ public class ScreenGameplay extends IScreen implements Subject{
     
     gemsRequiredForLevel = gemsRequired[0];
     
+    //PImage tex1 = loadImage("../ref/arch.png");
+    shaderTexture = loadImage("data/images/background/space1.png");
+    backgroundShader = loadShader("data/shaders/plane_deformation.frag","data/shaders/plane_deformation.vert");
+
     bk =  loadImage("data/images/boards/board.png");
     //bk2 = loadImage("data/images/background/background.png");
     bk2 = loadImage("data/images/boards/board_tightlypacked.png");
@@ -121,6 +128,28 @@ public class ScreenGameplay extends IScreen implements Subject{
   public void draw(){
 
     background(0);
+
+    // 
+    if(using3DMode){
+      shader(backgroundShader);
+
+      backgroundShader.set("width", (float)CANVAS_WIDTH);
+      backgroundShader.set("height", (float)CANVAS_HEIGHT);
+      
+      backgroundShader.set("iChannel0", shaderTexture);
+      backgroundShader.set("time", frameCount/100.0);
+
+      //textureMode(NORMAL);
+      //noStroke();
+      beginShape();
+      vertex(0, 0);
+      vertex(width, 0);
+      vertex(width, height);
+      vertex(0, height);
+      endShape();
+
+      resetShader();
+    }
 
     // Breaks HUD
     /*tint(opacity);
